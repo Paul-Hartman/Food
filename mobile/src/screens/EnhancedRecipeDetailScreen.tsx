@@ -146,31 +146,6 @@ export default function EnhancedRecipeDetailScreen() {
     }
   };
 
-  // For MealDB recipes, show the Flask page directly via iframe
-  if (isMealDB && mealId) {
-    const flaskUrl = `${FLASK_BASE_URL}/recipe/mealdb/${mealId}`;
-
-    // Use iframe to embed the Flask page
-    return (
-      <View style={{ flex: 1 }}>
-        {Platform.OS === 'web' ? (
-          // @ts-ignore - iframe is valid in web
-          <iframe
-            src={flaskUrl}
-            style={{ width: '100%', height: '100%', border: 'none' }}
-            title="Recipe"
-          />
-        ) : (
-          // For mobile, show link to open in browser
-          <View style={styles.centered}>
-            <Text>View recipe at:</Text>
-            <Text style={{ color: '#4CAF50' }}>{flaskUrl}</Text>
-          </View>
-        )}
-      </View>
-    );
-  }
-
   if (loading) {
     return (
       <View style={styles.centered}>
