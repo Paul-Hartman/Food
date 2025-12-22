@@ -11,8 +11,10 @@ import {
   Alert,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { ShoppingData, ShoppingItem, Recipe } from '../types';
+import { ShoppingData, Recipe } from '../types';
 import { api } from '../services/api';
+import { ShoppingListRepository, ShoppingListItem } from '../database/repositories/ShoppingListRepository';
+import { useOnlineStatus } from '../hooks/useOnlineStatus';
 
 const SECTION_EMOJIS: Record<string, string> = {
   Produce: '🥬',
@@ -26,8 +28,9 @@ const SECTION_EMOJIS: Record<string, string> = {
 };
 
 export default function ShoppingScreen() {
-  const [shoppingData, setShoppingData] = useState<ShoppingData | null>(null);
+  const [items, setItems] = useState<ShoppingListItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [selectedRecipes, setSelectedRecipes] = useState<Set<number>>(new Set());
 
@@ -36,23 +39,80 @@ export default function ShoppingScreen() {
   const [addItemModalVisible, setAddItemModalVisible] = useState(false);
   const [newItemName, setNewItemName] = useState('');
   const [newItemQty, setNewItemQty] = useState('1');
-  const [newItemUnit, setNewItemUnit] = useState('item');
+  const [newItemCategory, setNewItemCategory] = useState('Other');
+
+  const { isOnline } = useOnlineStatus();
 
   useFocusEffect(
     useCallback(() => {
-      loadShopping();
-    }, [])
+      loadLocal();
+
+      // Sync with server in background
+      if (isOnline) {
+        syncWithServer();
+      }
+    }, [isOnline])
   );
 
-  const loadShopping = async () => {
+  /**
+   * Load from local database (instant)
+   */
+  const loadLocal = async () => {
     try {
       setLoading(true);
-      const data = await api.getShopping();
-      setShoppingData(data);
+      const localItems = await ShoppingListRepository.getAll();
+      setItems(localItems);
     } catch (err) {
-      console.error(err);
+      console.error('Failed to load shopping list from local DB:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  /**
+   * Sync with server (background, non-blocking)
+   */
+  const syncWithServer = async () => {
+    if (!isOnline) return;
+
+    try {
+      setSyncing(true);
+
+      // Download latest from server
+      const serverData = await api.getShopping();
+
+      // Convert server format to local format
+      const serverItems: Array<{
+        id: number;
+        item: string;
+        quantity?: string;
+        category?: string;
+        checked: boolean;
+      }> = [];
+
+      for (const section of serverData.section_order) {
+        const sectionItems = serverData.sections[section];
+        for (const item of sectionItems) {
+          serverItems.push({
+            id: item.id,
+            item: item.name,
+            quantity: `${item.quantity || ''} ${item.unit || ''}`.trim(),
+            category: section,
+            checked: item.checked,
+          });
+        }
+      }
+
+      // Sync to local database
+      await ShoppingListRepository.syncFromServer(serverItems);
+
+      // Reload UI from local DB
+      await loadLocal();
+    } catch (err) {
+      console.error('Failed to sync with server:', err);
+      // Don't show error - offline mode is graceful
+    } finally {
+      setSyncing(false);
     }
   };
 
@@ -65,15 +125,31 @@ export default function ShoppingScreen() {
     }
   };
 
+  /**
+   * Toggle item (instant local update + background sync)
+   */
   const toggleItem = async (itemId: number) => {
     try {
-      await api.toggleShoppingItem(itemId);
-      loadShopping();
+      // Update local DB immediately
+      await ShoppingListRepository.toggleChecked(itemId);
+
+      // Reload UI from local DB
+      await loadLocal();
+
+      // Sync to server in background (don't await)
+      if (isOnline) {
+        api.toggleShoppingItem(itemId).catch(() => {
+          // Failed to sync - will retry on next sync
+        });
+      }
     } catch (err) {
       console.error(err);
     }
   };
 
+  /**
+   * Clear checked items
+   */
   const clearChecked = async () => {
     Alert.alert(
       'Clear Checked Items',
@@ -85,8 +161,18 @@ export default function ShoppingScreen() {
           style: 'destructive',
           onPress: async () => {
             try {
-              await api.clearCheckedShopping();
-              loadShopping();
+              // Clear from local DB
+              await ShoppingListRepository.clearChecked();
+
+              // Reload UI
+              await loadLocal();
+
+              // Sync to server in background
+              if (isOnline) {
+                api.clearCheckedShopping().catch(() => {
+                  // Failed to sync - will retry on next sync
+                });
+              }
             } catch (err) {
               console.error(err);
             }
@@ -97,6 +183,14 @@ export default function ShoppingScreen() {
   };
 
   const showRecipeModal = () => {
+    if (!isOnline) {
+      Alert.alert(
+        'Internet Required',
+        'Connect to WiFi to browse recipes and generate shopping lists.'
+      );
+      return;
+    }
+
     loadRecipes();
     setSelectedRecipes(new Set());
     setRecipeModalVisible(true);
@@ -120,17 +214,27 @@ export default function ShoppingScreen() {
       return;
     }
 
+    if (!isOnline) {
+      Alert.alert('Internet Required', 'Connect to WiFi to generate shopping lists from recipes.');
+      return;
+    }
+
     try {
       const result = await api.generateShopping(Array.from(selectedRecipes), false, true);
       Alert.alert('Success', `Added ${result.items_added} items to your shopping list!`);
       setRecipeModalVisible(false);
-      loadShopping();
+
+      // Sync from server to get new items
+      await syncWithServer();
     } catch (err) {
       console.error(err);
       Alert.alert('Error', 'Failed to generate shopping list');
     }
   };
 
+  /**
+   * Add manual item (instant local save + background sync)
+   */
   const addManualItem = async () => {
     if (!newItemName.trim()) {
       Alert.alert('Error', 'Please enter an item name');
@@ -138,16 +242,34 @@ export default function ShoppingScreen() {
     }
 
     try {
-      await api.addShoppingItem({
-        name: newItemName.trim(),
-        quantity: parseFloat(newItemQty) || 1,
-        unit: newItemUnit || 'item',
+      // Save to local DB immediately
+      await ShoppingListRepository.add({
+        item: newItemName.trim(),
+        quantity: newItemQty || '1',
+        category: newItemCategory,
+        checked: false,
+        synced: false,
       });
+
+      // Clear form and close modal
       setAddItemModalVisible(false);
       setNewItemName('');
       setNewItemQty('1');
-      setNewItemUnit('item');
-      loadShopping();
+      setNewItemCategory('Other');
+
+      // Reload UI from local DB
+      await loadLocal();
+
+      // Sync to server in background
+      if (isOnline) {
+        api.addShoppingItem({
+          name: newItemName.trim(),
+          quantity: parseFloat(newItemQty) || 1,
+          unit: 'item',
+        }).catch(() => {
+          // Failed to sync - will retry on next sync
+        });
+      }
     } catch (err) {
       console.error(err);
       Alert.alert('Error', 'Failed to add item');
@@ -162,16 +284,42 @@ export default function ShoppingScreen() {
     );
   }
 
-  const hasItems = shoppingData?.section_order && shoppingData.section_order.length > 0;
+  // Group items by category for display
+  const groupedItems: Record<string, ShoppingListItem[]> = {};
+  const sectionOrder: string[] = [];
+
+  for (const item of items) {
+    const category = item.category || 'Other';
+    if (!groupedItems[category]) {
+      groupedItems[category] = [];
+      sectionOrder.push(category);
+    }
+    groupedItems[category].push(item);
+  }
+
+  const hasItems = items.length > 0;
 
   return (
     <View style={styles.container}>
-      {/* Subtitle */}
-      <Text style={styles.subtitle}>Organized by Aldi sections</Text>
+      {/* Subtitle with sync status */}
+      <View style={styles.subtitleRow}>
+        <Text style={styles.subtitle}>
+          {isOnline ? 'Organized by section' : '📱 Offline Mode'}
+        </Text>
+        {syncing && (
+          <View style={styles.syncingBadge}>
+            <ActivityIndicator size="small" color="#666" />
+            <Text style={styles.syncingText}>Syncing...</Text>
+          </View>
+        )}
+      </View>
 
       {/* Action buttons */}
       <View style={styles.actionRow}>
-        <TouchableOpacity style={styles.actionButton} onPress={showRecipeModal}>
+        <TouchableOpacity
+          style={[styles.actionButton, !isOnline && styles.actionButtonDisabled]}
+          onPress={showRecipeModal}
+        >
           <Text style={styles.actionButtonText}>Add from Recipes</Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -188,15 +336,21 @@ export default function ShoppingScreen() {
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyEmoji}>🛒</Text>
           <Text style={styles.emptyText}>Your shopping list is empty</Text>
-          <TouchableOpacity style={styles.emptyButton} onPress={showRecipeModal}>
+          <TouchableOpacity
+            style={[styles.emptyButton, !isOnline && styles.actionButtonDisabled]}
+            onPress={showRecipeModal}
+          >
             <Text style={styles.emptyButtonText}>Add from Recipes</Text>
           </TouchableOpacity>
+          {!isOnline && (
+            <Text style={styles.offlineHint}>Connect to WiFi to browse recipes</Text>
+          )}
         </View>
       ) : (
         <ScrollView style={styles.list} showsVerticalScrollIndicator={false}>
-          {shoppingData!.section_order.map((section) => {
-            const items = shoppingData!.sections[section];
-            const uncheckedCount = items.filter((i) => !i.checked).length;
+          {sectionOrder.map((section) => {
+            const sectionItems = groupedItems[section];
+            const uncheckedCount = sectionItems.filter((i) => !i.checked).length;
 
             return (
               <View key={section} style={styles.section}>
@@ -208,21 +362,21 @@ export default function ShoppingScreen() {
                     <Text style={styles.countText}>{uncheckedCount}</Text>
                   </View>
                 </View>
-                {items.map((item) => (
+                {sectionItems.map((item) => (
                   <TouchableOpacity
                     key={item.id}
                     style={[styles.item, item.checked && styles.itemChecked]}
-                    onPress={() => toggleItem(item.id)}
+                    onPress={() => toggleItem(item.id!)}
                   >
                     <View style={[styles.checkbox, item.checked && styles.checkboxChecked]}>
                       {item.checked && <Text style={styles.checkmark}>✓</Text>}
                     </View>
                     <Text style={[styles.itemName, item.checked && styles.itemNameChecked]}>
-                      {item.name}
+                      {item.item}
                     </Text>
-                    <Text style={styles.itemAmount}>
-                      {item.quantity} {item.unit}
-                    </Text>
+                    {item.quantity && (
+                      <Text style={styles.itemAmount}>{item.quantity}</Text>
+                    )}
                   </TouchableOpacity>
                 ))}
               </View>
@@ -315,9 +469,9 @@ export default function ShoppingScreen() {
               />
               <TextInput
                 style={[styles.input, styles.inputFlex]}
-                placeholder="Unit"
-                value={newItemUnit}
-                onChangeText={setNewItemUnit}
+                placeholder="Category"
+                value={newItemCategory}
+                onChangeText={setNewItemCategory}
               />
             </View>
             <View style={styles.modalButtons}>
@@ -351,11 +505,25 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  subtitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingTop: 8,
+  },
   subtitle: {
     fontSize: 14,
     color: '#666',
-    paddingHorizontal: 16,
-    paddingTop: 8,
+  },
+  syncingBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  syncingText: {
+    fontSize: 12,
+    color: '#666',
   },
   actionRow: {
     flexDirection: 'row',
@@ -368,6 +536,10 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 8,
     alignItems: 'center',
+  },
+  actionButtonDisabled: {
+    backgroundColor: '#ccc',
+    opacity: 0.6,
   },
   secondaryButton: {
     backgroundColor: '#fff',
@@ -491,6 +663,11 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: '600',
     fontSize: 16,
+  },
+  offlineHint: {
+    marginTop: 12,
+    fontSize: 14,
+    color: '#999',
   },
   modalOverlay: {
     flex: 1,
