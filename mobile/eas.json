@@ -25,6 +25,7 @@
     "production": {
       "ios": {
         "appleId": "paul.hartman222@gmail.com",
+        "ascAppId": "6756897041",
         "appleTeamId": "FQY22K9BK3"
       }
     }
