@@ -186,8 +186,8 @@ await profile.addToPantry({ name: 'Eggs', quantity: 12 });
 | Document | Description |
 |----------|-------------|
 | [DEPLOYMENT.md](./DEPLOYMENT.md) | TestFlight deployment guide |
-| [AUTOMATION_PLAN.md](./AUTOMATION_PLAN.md) | Offline mode, auto-start, CI/CD |
-| [OFFLINE_ARCHITECTURE.md](./OFFLINE_ARCHITECTURE.md) | SQLite offline-first design |
+| [OFFLINE_STRATEGY.md](./OFFLINE_STRATEGY.md) | Smart offline caching (shopping, pantry, favorites) |
+| [AUTOMATION_PLAN.md](./AUTOMATION_PLAN.md) | Auto-start server, CI/CD plans |
 | [TESTFLIGHT_SETUP.md](./mobile/TESTFLIGHT_SETUP.md) | Apple Developer setup |
 
 ## Status
