@@ -20,6 +20,47 @@ import {
 const BASE_URL = 'http://192.168.2.38:5025';
 
 class ApiService {
+  private isOnlineCache: boolean = false;
+  private lastHealthCheck: number = 0;
+  private readonly HEALTH_CHECK_INTERVAL = 30000; // 30 seconds
+
+  /**
+   * Check if server is online and accessible
+   */
+  async checkServerHealth(): Promise<boolean> {
+    // Use cached result if recent (within 30 seconds)
+    const now = Date.now();
+    if (now - this.lastHealthCheck < this.HEALTH_CHECK_INTERVAL) {
+      return this.isOnlineCache;
+    }
+
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 2000); // 2 second timeout
+
+      const response = await fetch(`${BASE_URL}/api/health`, {
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      this.isOnlineCache = response.ok;
+      this.lastHealthCheck = now;
+      return response.ok;
+    } catch {
+      this.isOnlineCache = false;
+      this.lastHealthCheck = now;
+      return false;
+    }
+  }
+
+  /**
+   * Get current online status (uses cache)
+   */
+  isOnline(): boolean {
+    return this.isOnlineCache;
+  }
+
   private async fetchJson<T>(url: string, options?: RequestInit): Promise<T> {
     const response = await fetch(`${BASE_URL}${url}`, {
       ...options,
