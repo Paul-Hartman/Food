@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Food App - Discover</title>
+    <link rel="icon" type="image/svg+xml" href="/static/images/recipe.svg">
+    <link rel="stylesheet" href="/static/css/style.css?v=20241218">
+</head>
+<body>
+    <div class="meal-select-container">
+        <h1>What are you planning?</h1>
+        <p class="subtitle">Choose a meal to find recipes</p>
+
+        <div class="meal-select-grid">
+            <a href="/swipe/breakfast" class="meal-card-select">
+                <span class="icon">&#9728;</span>
+                <span class="label">Breakfast</span>
+            </a>
+            <a href="/swipe/lunch" class="meal-card-select">
+                <span class="icon">&#127774;</span>
+                <span class="label">Lunch</span>
+            </a>
+            <a href="/swipe/dinner" class="meal-card-select">
+                <span class="icon">&#127769;</span>
+                <span class="label">Dinner</span>
+            </a>
+            <a href="/swipe/snack" class="meal-card-select">
+                <span class="icon">&#127871;</span>
+                <span class="label">Snack</span>
+            </a>
+        </div>
+
+        <a href="/interested" class="tonight-deck-link" id="interested-link" style="display:none;">
+            <span>View Interested Recipes</span>
+            <span class="count" id="interested-count">0</span>
+        </a>
+
+        <a href="/cooking-deck" class="tonight-deck-link" id="cooking-deck-link" style="display:none;margin-top:8px;background:var(--success-light);color:var(--success);">
+            <span>Tonight's Cooking Deck</span>
+            <span class="count" id="deck-count" style="background:var(--success);">0</span>
+        </a>
+    </div>
+
+    <nav class="bottom-nav">
+        <a href="/" class="nav-item">
+            <div class="nav-item-icon"><img src="/static/images/recipe.svg" alt="Recipes"></div>
+            Recipes
+        </a>
+        <a href="/discover" class="nav-item active">
+            <span class="icon">&#128293;</span>
+            Discover
+        </a>
+        <a href="/shopping" class="nav-item">
+            <div class="nav-item-icon"><img src="/static/images/shopping.svg" alt="Shopping"></div>
+            Shopping
+        </a>
+        <a href="/nutrition" class="nav-item">
+            <div class="nav-item-icon"><img src="/static/images/chart.svg" alt="Nutrition"></div>
+            Nutrition
+        </a>
+    </nav>
+
+    <script>
+        async function loadCounts() {
+            try {
+                // Load interested count
+                const intResponse = await fetch('/api/interested');
+                const interested = await intResponse.json();
+                if (interested.length > 0) {
+                    document.getElementById('interested-link').style.display = 'flex';
+                    document.getElementById('interested-count').textContent = interested.length;
+                }
+
+                // Load cooking deck count
+                const deckResponse = await fetch('/api/cooking-deck');
+                const deck = await deckResponse.json();
+                let totalDeck = 0;
+                Object.values(deck.meals).forEach(meals => {
+                    totalDeck += meals.length;
+                });
+                if (totalDeck > 0) {
+                    document.getElementById('cooking-deck-link').style.display = 'flex';
+                    document.getElementById('deck-count').textContent = totalDeck;
+                }
+            } catch (error) {
+                console.error('Failed to load counts:', error);
+            }
+        }
+
+        loadCounts();
+    </script>
+</body>
+</html>

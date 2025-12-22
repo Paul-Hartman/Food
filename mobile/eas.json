@@ -1,0 +1,24 @@
+{
+  "build": {
+    "altstore": {
+      "distribution": "internal",
+      "ios": {
+        "simulator": false,
+        "buildConfiguration": "Release"
+      }
+    },
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "ios": {
+        "simulator": false,
+        "buildConfiguration": "Release"
+      }
+    },
+    "production": {
+      "ios": {
+        "simulator": false
+      }
+    }
+  }
+}

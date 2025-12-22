@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Cooking - Food App</title>
+    <link rel="icon" type="image/svg+xml" href="/static/images/recipe.svg">
+    <link rel="stylesheet" href="/static/css/style.css?v=20241218">
+    <style>
+        /* Card deck area */
+        .step-deck {
+            position: relative;
+            perspective: 1000px;
+            height: calc(100vh - 340px);
+            min-height: 320px;
+            max-height: 450px;
+            margin: 0 -16px;
+        }
+
+        .step-card-3d {
+            position: absolute;
+            width: calc(100% - 40px);
+            height: 100%;
+            left: 20px;
+            background: var(--card-bg);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
+            transform-style: preserve-3d;
+            transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .step-card-3d.active {
+            transform: translateX(0) rotateY(0) scale(1);
+            z-index: 10;
+            opacity: 1;
+        }
+
+        .step-card-3d.prev {
+            transform: translateX(-85%) rotateY(25deg) scale(0.85);
+            z-index: 5;
+            opacity: 0.4;
+            pointer-events: none;
+        }
+
+        .step-card-3d.next {
+            transform: translateX(85%) rotateY(-25deg) scale(0.85);
+            z-index: 5;
+            opacity: 0.4;
+            pointer-events: none;
+        }
+
+        .step-card-3d.far-prev, .step-card-3d.far-next {
+            transform: translateX(150%) scale(0.7);
+            z-index: 1;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .step-card-3d.far-prev { transform: translateX(-150%) scale(0.7); }
+
+        /* Card Content */
+        .card-step-header {
+            padding: 16px;
+            text-align: center;
+            border-bottom: 1px solid var(--border);
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            position: relative;
+        }
+        .step-emoji {
+            font-size: 2rem;
+            margin-bottom: 4px;
+        }
+        .step-num-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            background: rgba(255,255,255,0.25);
+            border-radius: 50%;
+            font-size: 0.9rem;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+        .step-card-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        /* Drop Zone */
+        .drop-zone {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border: 3px dashed transparent;
+            border-radius: var(--radius-lg);
+            transition: all 0.3s ease;
+            pointer-events: none;
+            z-index: 100;
+        }
+        .drop-zone.active {
+            border-color: var(--success);
+            background: rgba(39, 174, 96, 0.15);
+        }
+        .drop-zone.active::after {
+            content: 'Drop here!';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--success);
+        }
+
+        /* Stacked ingredients on card */
+        .stacked-ingredients {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            z-index: 50;
+        }
+        .stacked-chip {
+            background: var(--success);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.65rem;
+            font-weight: 600;
+            white-space: nowrap;
+            animation: stackIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        @keyframes stackIn {
+            from { transform: translateX(50px) scale(0.5); opacity: 0; }
+            to { transform: translateX(0) scale(1); opacity: 1; }
+        }
+
+        .card-step-body {
+            flex: 1;
+            padding: 16px;
+            overflow-y: auto;
+        }
+        .step-instruction-text {
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: var(--text);
+            margin-bottom: 12px;
+        }
+        .step-tip-box {
+            background: var(--warning-light);
+            border-left: 4px solid var(--warning);
+            padding: 10px 12px;
+            border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+            color: var(--text);
+            font-size: 0.85rem;
+        }
+        .timer-action-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            padding: 12px;
+            background: var(--secondary);
+            color: white;
+            border: none;
+            border-radius: var(--radius);
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 12px;
+        }
+
+        /* Navigation */
+        .card-step-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            border-top: 1px solid var(--border);
+            background: var(--bg);
+        }
+        .step-nav-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 10px 16px;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .step-nav-btn.prev-action {
+            background: var(--bg-dark);
+            color: var(--text-light);
+            border: 1px solid var(--border);
+        }
+        .step-nav-btn.next-action {
+            background: var(--primary);
+            color: white;
+        }
+        .step-nav-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        .step-counter-text { font-size: 0.8rem; color: var(--text-light); }
+
+        /* Progress Header */
+        .cooking-progress-header {
+            background: var(--card-bg);
+            padding: 12px 16px;
+            border-radius: var(--radius);
+            margin-bottom: 12px;
+            box-shadow: var(--shadow);
+        }
+        .cooking-progress-header h2 {
+            font-size: 1rem;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .progress-track {
+            height: 6px;
+            background: var(--border);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .progress-track-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--success));
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+
+        /* Ingredient Dock */
+        .ingredient-dock {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            padding: 12px;
+            margin-top: 12px;
+            box-shadow: var(--shadow);
+            min-height: 80px;
+        }
+        .dock-header {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-light);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .dock-cards {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            min-height: 50px;
+        }
+        .dock-empty {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            text-align: center;
+            width: 100%;
+            padding: 12px;
+        }
+
+        /* Draggable Ingredient Card */
+        .ingredient-chip {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 8px 14px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: grab;
+            user-select: none;
+            touch-action: none;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+        }
+        .ingredient-chip:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.5);
+        }
+        .ingredient-chip.dragging {
+            cursor: grabbing;
+            transform: scale(1.1) rotate(-3deg);
+            opacity: 0.9;
+            z-index: 1000;
+            position: fixed;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        .ingredient-chip.added {
+            background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+            pointer-events: none;
+        }
+        .ingredient-chip .amount {
+            background: rgba(255,255,255,0.25);
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 0.7rem;
+        }
+
+        /* Flying animation for auto-stack */
+        .ingredient-chip.flying {
+            position: fixed !important;
+            z-index: 2000 !important;
+            transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+            pointer-events: none;
+        }
+
+        /* Done screen */
+        .done-screen {
+            text-align: center;
+            padding: 60px 20px;
+        }
+        .done-screen .done-emoji { font-size: 4rem; margin-bottom: 16px; }
+        .done-screen h2 { margin-bottom: 8px; }
+        .done-screen p { color: var(--text-light); margin-bottom: 24px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+            <a href="/cooking-deck" class="back-btn">&larr; Back</a>
+            <h1 id="recipe-name" style="font-size:1rem;">Loading...</h1>
+            <div style="width:60px;"></div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Progress Card -->
+        <div class="cooking-progress-header">
+            <h2>&#128293; Cooking Progress</h2>
+            <div class="progress-track">
+                <div class="progress-track-fill" id="progress-fill" style="width: 0%"></div>
+            </div>
+        </div>
+
+        <!-- 3D Card Deck -->
+        <div class="step-deck" id="step-deck">
+            <div class="loading">
+                <div class="loading-spinner"></div>
+                Loading steps...
+            </div>
+        </div>
+
+        <!-- Swipe dots -->
+        <div class="swipe-indicator" id="swipe-dots"></div>
+
+        <!-- Ingredient Dock -->
+        <div class="ingredient-dock" id="ingredient-dock">
+            <div class="dock-header">&#127859; Drag ingredients onto the card</div>
+            <div class="dock-cards" id="dock-cards">
+                <div class="dock-empty">No ingredients for this step</div>
+            </div>
+        </div>
+    </div>
+
+    <nav class="bottom-nav">
+        <a href="/" class="nav-item">
+            <div class="nav-item-icon"><img src="/static/images/recipe.svg" alt="Recipes"></div>
+            Recipes
+        </a>
+        <a href="/discover" class="nav-item">
+            <span class="icon">&#128293;</span>
+            Discover
+        </a>
+        <a href="/shopping" class="nav-item">
+            <div class="nav-item-icon"><img src="/static/images/shopping.svg" alt="Shopping"></div>
+            Shopping
+        </a>
+        <a href="/nutrition" class="nav-item">
+            <div class="nav-item-icon"><img src="/static/images/chart.svg" alt="Nutrition"></div>
+            Nutrition
+        </a>
+    </nav>
+
+    <!-- Timer Modal -->
+    <div class="modal-overlay" id="timer-modal" style="display:none;">
+        <div class="modal">
+            <h2>&#9201; Timer</h2>
+            <div class="timer-display" id="timer-display">00:00</div>
+            <div class="modal-actions">
+                <button class="btn btn-outline" onclick="stopTimer()">Cancel</button>
+                <button class="btn btn-primary" id="timer-start-btn" onclick="startTimer()">Start</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const recipeId = {{ recipe_id }};
+        let steps = [];
+        let currentStep = 0;
+        let totalSteps = 0;
+        let timerInterval = null;
+        let timerSeconds = 0;
+
+        // Track added ingredients per step
+        let addedIngredients = {}; // { stepIndex: [ingredientNames] }
+
+        // Step type emojis
+        function getStepEmoji(step) {
+            const title = step.title.toLowerCase();
+            if (title.includes('blend')) return '&#127744;';
+            if (title.includes('pour')) return '&#129379;';
+            if (title.includes('add')) return '&#10133;';
+            if (title.includes('mix') || title.includes('stir')) return '&#129348;';
+            if (title.includes('gather') || title.includes('prep')) return '&#128203;';
+            if (title.includes('season')) return '&#129474;';
+            if (title.includes('heat') || title.includes('cook') || title.includes('brown') || title.includes('simmer') || title.includes('toast')) return '&#128293;';
+            if (title.includes('rest') || title.includes('wait')) return '&#9203;';
+            if (title.includes('serve') || title.includes('enjoy') || title.includes('done') || title.includes('fluff')) return '&#127881;';
+            if (title.includes('flip')) return '&#128260;';
+            if (title.includes('chop') || title.includes('cut')) return '&#128298;';
+            if (title.includes('liquid') || title.includes('boil')) return '&#128167;';
+            if (title.includes('cover')) return '&#129687;';
+            if (title.includes('mash')) return '&#129382;';
+            return '&#128104;&#8205;&#127859;';
+        }
+
+        async function loadSteps() {
+            try {
+                const response = await fetch(`/api/recipes/${recipeId}/steps`);
+                const data = await response.json();
+                steps = data.steps;
+                totalSteps = data.total_steps;
+                document.getElementById('recipe-name').textContent = data.recipe_name;
+
+                // Initialize added ingredients tracking
+                steps.forEach((_, i) => { addedIngredients[i] = []; });
+
+                renderSteps();
+                renderDots();
+                renderIngredientDock();
+                updateProgress();
+            } catch (error) {
+                document.getElementById('step-deck').innerHTML =
+                    '<div class="empty-state"><p>Failed to load cooking steps</p></div>';
+            }
+        }
+
+        function renderSteps() {
+            const deck = document.getElementById('step-deck');
+            deck.innerHTML = steps.map((step, index) => {
+                let cardClass = 'step-card-3d';
+                if (index === currentStep) cardClass += ' active';
+                else if (index === currentStep - 1) cardClass += ' prev';
+                else if (index === currentStep + 1) cardClass += ' next';
+                else if (index < currentStep) cardClass += ' far-prev';
+                else cardClass += ' far-next';
+
+                const emoji = getStepEmoji(step);
+                const added = addedIngredients[index] || [];
+
+                return `
+                <div class="${cardClass}" data-step="${index}">
+                    <div class="drop-zone" id="drop-zone-${index}"></div>
+                    <div class="card-step-header">
+                        <div class="stacked-ingredients" id="stacked-${index}">
+                            ${added.map(ing => `<div class="stacked-chip">${ing}</div>`).join('')}
+                        </div>
+                        <div class="step-emoji">${emoji}</div>
+                        <div class="step-num-badge">${index + 1}</div>
+                        <h3 class="step-card-title">${step.title}</h3>
+                    </div>
+                    <div class="card-step-body">
+                        <p class="step-instruction-text">${step.instruction}</p>
+                        ${step.tips ? `<div class="step-tip-box">&#128161; ${step.tips}</div>` : ''}
+                        ${step.timer_needed && step.duration_min ? `
+                            <button class="timer-action-btn" onclick="showTimer(${step.duration_min})">
+                                &#9201; Set Timer: ${step.duration_min} min
+                            </button>
+                        ` : ''}
+                    </div>
+                    <div class="card-step-nav">
+                        <button class="step-nav-btn prev-action" onclick="prevStep()" ${index === 0 ? 'disabled' : ''}>
+                            &larr; Back
+                        </button>
+                        <span class="step-counter-text">${index + 1} / ${totalSteps}</span>
+                        ${index === totalSteps - 1 ? `
+                            <button class="step-nav-btn next-action" onclick="finishCooking()">
+                                Done! &#127881;
+                            </button>
+                        ` : `
+                            <button class="step-nav-btn next-action" onclick="nextStep()">
+                                Next &rarr;
+                            </button>
+                        `}
+                    </div>
+                </div>
+            `}).join('');
+
+            initSwipe();
+            initDropZones();
+        }
+
+        function renderIngredientDock() {
+            const dock = document.getElementById('dock-cards');
+            const step = steps[currentStep];
+
+            if (!step || !step.ingredients || step.ingredients.length === 0) {
+                dock.innerHTML = '<div class="dock-empty">No ingredients for this step</div>';
+                return;
+            }
+
+            const added = addedIngredients[currentStep] || [];
+
+            dock.innerHTML = step.ingredients.map((ing, i) => {
+                const isAdded = added.includes(ing.display_name);
+                return `
+                    <div class="ingredient-chip ${isAdded ? 'added' : ''}"
+                         data-ingredient="${i}"
+                         data-name="${ing.display_name}"
+                         data-amount="${ing.amount}"
+                         data-unit="${ing.unit}"
+                         data-inventory-id="${ing.inventory_id || ''}"
+                         data-amount-g="${ing.amount_g || ''}"
+                         draggable="true">
+                        <span>${ing.display_name}</span>
+                        <span class="amount">${ing.amount}${ing.unit}</span>
+                        ${isAdded ? '&#10003;' : ''}
+                    </div>
+                `;
+            }).join('');
+
+            // Make chips draggable
+            initDraggableChips();
+        }
+
+        function initDraggableChips() {
+            const chips = document.querySelectorAll('.ingredient-chip:not(.added)');
+
+            chips.forEach(chip => {
+                let isDragging = false;
+                let startX, startY, offsetX, offsetY;
+
+                const onStart = (e) => {
+                    if (chip.classList.contains('added')) return;
+
+                    isDragging = true;
+                    chip.classList.add('dragging');
+
+                    const rect = chip.getBoundingClientRect();
+                    const clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+                    const clientY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
+
+                    offsetX = clientX - rect.left;
+                    offsetY = clientY - rect.top;
+
+                    chip.style.position = 'fixed';
+                    chip.style.left = (clientX - offsetX) + 'px';
+                    chip.style.top = (clientY - offsetY) + 'px';
+                    chip.style.width = rect.width + 'px';
+
+                    // Show drop zone
+                    const dropZone = document.getElementById(`drop-zone-${currentStep}`);
+                    if (dropZone) dropZone.classList.add('active');
+                };
+
+                const onMove = (e) => {
+                    if (!isDragging) return;
+                    e.preventDefault();
+
+                    const clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+                    const clientY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
+
+                    chip.style.left = (clientX - offsetX) + 'px';
+                    chip.style.top = (clientY - offsetY) + 'px';
+                };
+
+                const onEnd = (e) => {
+                    if (!isDragging) return;
+                    isDragging = false;
+
+                    const dropZone = document.getElementById(`drop-zone-${currentStep}`);
+                    if (dropZone) dropZone.classList.remove('active');
+
+                    // Check if dropped on card
+                    const clientX = e.type.includes('touch') ? e.changedTouches[0].clientX : e.clientX;
+                    const clientY = e.type.includes('touch') ? e.changedTouches[0].clientY : e.clientY;
+
+                    const activeCard = document.querySelector('.step-card-3d.active');
+                    if (activeCard) {
+                        const cardRect = activeCard.getBoundingClientRect();
+                        if (clientX >= cardRect.left && clientX <= cardRect.right &&
+                            clientY >= cardRect.top && clientY <= cardRect.bottom) {
+                            // Dropped on card!
+                            addIngredientToStep(chip);
+                            return;
+                        }
+                    }
+
+                    // Reset position if not dropped on card
+                    chip.classList.remove('dragging');
+                    chip.style.position = '';
+                    chip.style.left = '';
+                    chip.style.top = '';
+                    chip.style.width = '';
+                };
+
+                chip.addEventListener('mousedown', onStart);
+                chip.addEventListener('touchstart', onStart, { passive: false });
+
+                document.addEventListener('mousemove', onMove);
+                document.addEventListener('touchmove', onMove, { passive: false });
+
+                document.addEventListener('mouseup', onEnd);
+                document.addEventListener('touchend', onEnd);
+            });
+        }
+
+        function addIngredientToStep(chip) {
+            const name = chip.dataset.name;
+            const inventoryId = chip.dataset.inventoryId;
+            const amountG = parseFloat(chip.dataset.amountG) || 0;
+
+            // Add to tracking
+            if (!addedIngredients[currentStep].includes(name)) {
+                addedIngredients[currentStep].push(name);
+            }
+
+            // Add visual chip to card
+            const stacked = document.getElementById(`stacked-${currentStep}`);
+            if (stacked) {
+                const stackedChip = document.createElement('div');
+                stackedChip.className = 'stacked-chip';
+                stackedChip.textContent = `${chip.dataset.amount}${chip.dataset.unit} ${name}`;
+                stacked.appendChild(stackedChip);
+            }
+
+            // Mark chip as added
+            chip.classList.remove('dragging');
+            chip.classList.add('added');
+            chip.style.position = '';
+            chip.style.left = '';
+            chip.style.top = '';
+            chip.style.width = '';
+            chip.innerHTML = `<span>${name}</span> &#10003;`;
+
+            // Deduct from inventory if we have an inventory ID
+            if (inventoryId && amountG > 0) {
+                deductFromInventory(inventoryId, amountG);
+            }
+
+            // Vibrate for feedback
+            if ('vibrate' in navigator) navigator.vibrate(50);
+        }
+
+        async function deductFromInventory(inventoryId, amountG) {
+            try {
+                await fetch(`/api/pantry/inventory/${inventoryId}/deduct`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ amount_g: amountG })
+                });
+            } catch (error) {
+                console.error('Failed to deduct from inventory:', error);
+            }
+        }
+
+        function autoStackRemainingIngredients() {
+            // Get all un-added ingredients for current step
+            const step = steps[currentStep];
+            if (!step || !step.ingredients) return Promise.resolve();
+
+            const added = addedIngredients[currentStep] || [];
+            const remaining = step.ingredients.filter(ing => !added.includes(ing.display_name));
+
+            if (remaining.length === 0) return Promise.resolve();
+
+            // Animate each remaining ingredient flying to the card
+            const promises = remaining.map((ing, index) => {
+                return new Promise(resolve => {
+                    setTimeout(() => {
+                        // Find the chip in dock
+                        const chip = document.querySelector(`.ingredient-chip[data-name="${ing.display_name}"]:not(.added)`);
+                        if (!chip) {
+                            // Just add it to tracking
+                            if (!addedIngredients[currentStep].includes(ing.display_name)) {
+                                addedIngredients[currentStep].push(ing.display_name);
+                            }
+                            resolve();
+                            return;
+                        }
+
+                        // Get positions
+                        const chipRect = chip.getBoundingClientRect();
+                        const activeCard = document.querySelector('.step-card-3d.active');
+                        const cardRect = activeCard ? activeCard.getBoundingClientRect() : { left: 200, top: 150 };
+
+                        // Clone and animate
+                        const clone = chip.cloneNode(true);
+                        clone.classList.add('flying');
+                        clone.style.left = chipRect.left + 'px';
+                        clone.style.top = chipRect.top + 'px';
+                        clone.style.width = chipRect.width + 'px';
+                        document.body.appendChild(clone);
+
+                        // Trigger animation
+                        requestAnimationFrame(() => {
+                            clone.style.left = (cardRect.right - 100) + 'px';
+                            clone.style.top = (cardRect.top + 20 + index * 25) + 'px';
+                            clone.style.transform = 'scale(0.7)';
+                            clone.style.opacity = '0.8';
+                        });
+
+                        // Clean up and add to card
+                        setTimeout(() => {
+                            clone.remove();
+                            addIngredientToStep(chip);
+                            resolve();
+                        }, 500);
+
+                    }, index * 150); // Stagger the animations
+                });
+            });
+
+            return Promise.all(promises);
+        }
+
+        function initDropZones() {
+            // Drop zones are visual only - drag detection handled in chip events
+        }
+
+        function renderDots() {
+            const dotsContainer = document.getElementById('swipe-dots');
+            dotsContainer.innerHTML = steps.map((_, i) =>
+                `<div class="swipe-dot ${i === currentStep ? 'active' : ''}"></div>`
+            ).join('');
+        }
+
+        function updateCardClasses() {
+            const cards = document.querySelectorAll('.step-card-3d');
+            cards.forEach((card, index) => {
+                card.className = 'step-card-3d';
+                if (index === currentStep) card.classList.add('active');
+                else if (index === currentStep - 1) card.classList.add('prev');
+                else if (index === currentStep + 1) card.classList.add('next');
+                else if (index < currentStep) card.classList.add('far-prev');
+                else card.classList.add('far-next');
+            });
+            document.querySelectorAll('.swipe-dot').forEach((dot, i) => {
+                dot.classList.toggle('active', i === currentStep);
+            });
+        }
+
+        function initSwipe() {
+            const deck = document.getElementById('step-deck');
+            let startX = 0, currentX = 0, isDragging = false;
+
+            deck.addEventListener('touchstart', e => {
+                // Don't interfere with ingredient dragging
+                if (e.target.closest('.ingredient-chip')) return;
+                startX = e.touches[0].clientX;
+                isDragging = true;
+            });
+            deck.addEventListener('touchmove', e => {
+                if (!isDragging) return;
+                currentX = e.touches[0].clientX;
+            });
+            deck.addEventListener('touchend', () => {
+                if (!isDragging) return;
+                isDragging = false;
+                const diff = currentX - startX;
+                if (diff < -60 && currentStep < totalSteps - 1) nextStep();
+                else if (diff > 60 && currentStep > 0) prevStep();
+            });
+        }
+
+        async function nextStep() {
+            if (currentStep >= totalSteps - 1) return;
+
+            // Auto-stack any remaining ingredients before moving
+            await autoStackRemainingIngredients();
+
+            currentStep++;
+            updateCardClasses();
+            updateProgress();
+            renderIngredientDock();
+        }
+
+        function prevStep() {
+            if (currentStep <= 0) return;
+            currentStep--;
+            updateCardClasses();
+            updateProgress();
+            renderIngredientDock();
+        }
+
+        function updateProgress() {
+            const progress = ((currentStep + 1) / totalSteps) * 100;
+            document.getElementById('progress-fill').style.width = `${progress}%`;
+        }
+
+        function showTimer(minutes) {
+            timerSeconds = minutes * 60;
+            updateTimerDisplay();
+            document.getElementById('timer-modal').style.display = 'flex';
+        }
+
+        function updateTimerDisplay() {
+            const mins = Math.floor(timerSeconds / 60);
+            const secs = timerSeconds % 60;
+            document.getElementById('timer-display').textContent =
+                `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function startTimer() {
+            const btn = document.getElementById('timer-start-btn');
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+                btn.textContent = 'Resume';
+            } else {
+                btn.textContent = 'Pause';
+                timerInterval = setInterval(() => {
+                    timerSeconds--;
+                    updateTimerDisplay();
+                    if (timerSeconds <= 0) {
+                        clearInterval(timerInterval);
+                        timerInterval = null;
+                        btn.textContent = 'Start';
+                        if ('vibrate' in navigator) navigator.vibrate([200, 100, 200, 100, 200]);
+                        alert('Timer done!');
+                        document.getElementById('timer-modal').style.display = 'none';
+                    }
+                }, 1000);
+            }
+        }
+
+        function stopTimer() {
+            if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+            document.getElementById('timer-start-btn').textContent = 'Start';
+            document.getElementById('timer-modal').style.display = 'none';
+        }
+
+        async function finishCooking() {
+            // Auto-stack final step ingredients
+            await autoStackRemainingIngredients();
+
+            try {
+                await fetch('/api/nutrition/log', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ recipe_id: recipeId, meal_type: 'snack', servings_eaten: 1 })
+                });
+            } catch (error) { console.error('Error logging:', error); }
+
+            document.querySelector('.container').innerHTML = `
+                <div class="done-screen">
+                    <div class="done-emoji">&#127881;</div>
+                    <h2>Great job!</h2>
+                    <p>Your meal has been logged. Enjoy!</p>
+                    <a href="/cooking-deck" class="btn btn-primary">Back to Cooking Deck</a>
+                    <a href="/nutrition" class="btn btn-outline" style="margin-top: 12px;">View Nutrition</a>
+                </div>
+            `;
+        }
+
+        document.addEventListener('keydown', e => {
+            if (e.key === 'ArrowRight') nextStep();
+            if (e.key === 'ArrowLeft') prevStep();
+        });
+
+        loadSteps();
+    </script>
+</body>
+</html>

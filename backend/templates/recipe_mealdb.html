@@ -1,0 +1,2255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Recipe - Food App</title>
+    <link rel="icon" type="image/svg+xml" href="/static/images/recipe.svg">
+    <link rel="stylesheet" href="/static/css/style.css?v=20241218">
+    <style>
+        .ingredient-card-link {
+            text-decoration: none;
+            color: inherit;
+        }
+        /* Playing card style ingredient cards - only in recipe grid */
+        .recipe-grid .interactive-card {
+            aspect-ratio: 3/4;
+            display: block;
+        }
+        .ingredient-card-wrapper {
+            background: var(--card-bg);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            overflow: hidden;
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
+        }
+        .ingredient-image {
+            height: 45%;
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+            padding: 8px;
+        }
+        .ingredient-image img {
+            max-width: 100%;
+            max-height: 100%;
+            width: auto;
+            height: auto;
+            object-fit: contain;
+            transition: transform 0.4s ease;
+        }
+        .interactive-card:hover .ingredient-image img {
+            transform: scale(1.05);
+        }
+        .ingredient-name {
+            font-weight: 600;
+            font-size: 0.9rem;
+            padding: 10px 8px 4px;
+            text-align: center;
+            line-height: 1.3;
+            min-height: 2.6em;
+            word-wrap: break-word;
+            hyphens: auto;
+        }
+        .ingredient-amount {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            text-align: center;
+            padding: 0 8px 8px;
+            font-weight: 500;
+        }
+        .ingredient-amount-secondary {
+            color: var(--text-muted);
+            font-size: 0.7rem;
+            opacity: 0.8;
+        }
+        .ingredient-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 3px;
+            justify-content: center;
+            margin-top: 6px;
+            max-width: 100%;
+        }
+        .ingredient-tag {
+            font-size: 0.55rem;
+            padding: 2px 5px;
+            border-radius: 8px;
+            background: var(--gray-100);
+            color: var(--text-secondary);
+            white-space: nowrap;
+            text-transform: lowercase;
+        }
+        /* Tag color coding by category */
+        .ingredient-tag.flavor { background: #fef3c7; color: #92400e; }  /* amber - flavor */
+        .ingredient-tag.spicy { background: #fee2e2; color: #dc2626; }   /* red - heat */
+        .ingredient-tag.sweet { background: #fce7f3; color: #be185d; }   /* pink - sweet */
+        .ingredient-tag.sour { background: #fef9c3; color: #a16207; }    /* yellow - sour */
+        .ingredient-tag.umami { background: #f3e8ff; color: #7c3aed; }   /* purple - umami */
+        .ingredient-tag.dairy { background: #ecfeff; color: #0891b2; }   /* cyan - dairy */
+        .ingredient-tag.health { background: #dcfce7; color: #16a34a; }  /* green - health */
+        .ingredient-tag.energy { background: #ffedd5; color: #ea580c; }  /* orange - energy */
+        .ingredient-tag.protein { background: #fecaca; color: #b91c1c; } /* red-light - protein */
+        .ingredient-tag.vegan { background: #d1fae5; color: #059669; }   /* emerald - vegan */
+
+        /* Synergy banner */
+        .synergy-banner {
+            background: linear-gradient(135deg, #fef3c7, #fde68a);
+            border-radius: var(--radius);
+            padding: 12px 16px;
+            margin-bottom: 16px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .synergy-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: white;
+            padding: 6px 10px;
+            border-radius: 16px;
+            font-size: 0.75rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .synergy-icon {
+            font-size: 1rem;
+        }
+        .synergy-effect {
+            font-weight: 600;
+            color: var(--text);
+        }
+        .synergy-desc {
+            color: var(--text-secondary);
+            font-size: 0.65rem;
+        }
+
+        /* Unit toggle button */
+        .unit-toggle-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            font-size: 0.75rem;
+            background: var(--gray-100);
+            border: 1px solid var(--gray-200);
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-left: auto;
+        }
+        .unit-toggle-btn:hover {
+            background: var(--gray-200);
+        }
+        .unit-toggle-btn .icon {
+            font-size: 0.9rem;
+        }
+        .section-title-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .section-title-row .section-title {
+            margin-bottom: 0;
+        }
+
+        /* Step cards - matching cooking view */
+        .steps-deck {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 16px;
+        }
+        .step-category-divider {
+            grid-column: 1 / -1;
+        }
+        .step-card {
+            background: var(--card-bg);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            transition: all 0.3s ease;
+            aspect-ratio: 3/4;
+            display: flex;
+            flex-direction: column;
+        }
+        .step-card:hover {
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-2px);
+        }
+        .step-card-image {
+            height: 45%;
+            position: relative;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+        .step-card-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .step-card-image-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(0,0,0,0.3), rgba(0,0,0,0.6));
+        }
+        .step-number-badge {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: white;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+        }
+        .step-number-badge.prep { background: #9b59b6; }
+        .step-number-badge.mix { background: #3498db; }
+        .step-number-badge.cook { background: #e74c3c; }
+        .step-number-badge.wait { background: #f39c12; }
+        .step-number-badge.serve { background: #27ae60; }
+        .step-type-icon {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            color: white;
+        }
+        .step-card-body {
+            padding: 10px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .step-card-title {
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-bottom: 4px;
+            color: var(--text);
+        }
+        .step-card-instruction {
+            font-size: 0.72rem;
+            line-height: 1.35;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            flex: 1;
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 4;
+            -webkit-box-orient: vertical;
+        }
+        .step-card-tags {
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+            margin-top: auto;
+        }
+        .step-tag {
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.65rem;
+            font-weight: 500;
+        }
+        .step-tag.prep { background: #9b59b620; color: #9b59b6; }
+        .step-tag.mix { background: #3498db20; color: #3498db; }
+        .step-tag.cook { background: #e74c3c20; color: #e74c3c; }
+        .step-tag.wait { background: #f39c1220; color: #f39c12; }
+        .step-tag.serve { background: #27ae6020; color: #27ae60; }
+        .step-tag.timer { background: #f39c1220; color: #f39c12; }
+
+        .step-category-divider {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 16px 0 12px;
+            padding: 0;
+        }
+        .step-category-divider:first-child {
+            margin-top: 0;
+        }
+        .step-category-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+        }
+        .step-category-icon.prep { background: #9b59b620; color: #9b59b6; }
+        .step-category-icon.mix { background: #3498db20; color: #3498db; }
+        .step-category-icon.cook { background: #e74c3c20; color: #e74c3c; }
+        .step-category-icon.wait { background: #f39c1220; color: #f39c12; }
+        .step-category-icon.serve { background: #27ae6020; color: #27ae60; }
+        .step-category-label {
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        .step-category-count {
+            margin-left: auto;
+            background: var(--gray-100);
+            padding: 3px 10px;
+            border-radius: 10px;
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+        }
+
+        /* Serving size controls */
+        .serving-control {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 20px;
+            padding: 4px 12px;
+            margin-top: 8px;
+        }
+        .serving-btn {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(255,255,255,0.3);
+            color: white;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+        .serving-btn:hover {
+            background: rgba(255,255,255,0.5);
+            transform: scale(1.1);
+        }
+        .serving-btn:active {
+            transform: scale(0.95);
+        }
+        .serving-value {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: white;
+            min-width: 60px;
+            text-align: center;
+        }
+        .scaled-badge {
+            background: var(--primary);
+            color: white;
+            font-size: 0.6rem;
+            padding: 2px 6px;
+            border-radius: 8px;
+            margin-left: 4px;
+        }
+
+        /* Nutrition section */
+        .nutrition-section {
+            background: var(--card-bg);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow);
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+        .nutrition-section h3 {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 16px;
+            font-size: 1rem;
+        }
+        .nutrition-per-serving {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            font-weight: normal;
+            margin-left: auto;
+        }
+        .nutrition-stat {
+            margin-bottom: 14px;
+        }
+        .nutrition-stat:last-child {
+            margin-bottom: 0;
+        }
+        .nutrition-stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 6px;
+        }
+        .nutrition-stat-name {
+            font-weight: 500;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .nutrition-stat-name .icon {
+            font-size: 1rem;
+        }
+        .nutrition-stat-values {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+        }
+        .nutrition-stat-amount {
+            font-weight: 600;
+            color: var(--text);
+        }
+        .nutrition-stat-dv {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+        .nutrition-bar {
+            height: 10px;
+            background: var(--gray-100);
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        .nutrition-bar-fill {
+            height: 100%;
+            border-radius: 5px;
+            transition: width 0.5s ease;
+        }
+        .nutrition-bar-fill.calories { background: linear-gradient(90deg, #e74c3c, #c0392b); }
+        .nutrition-bar-fill.protein { background: linear-gradient(90deg, #3498db, #2980b9); }
+        .nutrition-bar-fill.carbs { background: linear-gradient(90deg, #f39c12, #d68910); }
+        .nutrition-bar-fill.fat { background: linear-gradient(90deg, #27ae60, #1e8449); }
+        .nutrition-bar-fill.fiber { background: linear-gradient(90deg, #9b59b6, #7d3c98); }
+        .nutrition-bar-fill.sodium { background: linear-gradient(90deg, #95a5a6, #7f8c8d); }
+        .nutrition-bar-fill.sugar { background: linear-gradient(90deg, #e91e63, #c2185b); }
+
+        /* Over 100% daily value warning */
+        .nutrition-stat-dv.high {
+            color: #e74c3c;
+            font-weight: 600;
+        }
+        .nutrition-stat-dv.moderate {
+            color: #f39c12;
+        }
+    </style>
+</head>
+<body>
+    <div id="recipe-content">
+        <div class="loading" style="padding: 40px;">
+            <div class="loading-spinner"></div>
+            Loading recipe...
+        </div>
+    </div>
+
+    <div class="action-buttons" id="action-buttons" style="display: none;">
+        <a href="#" class="btn btn-outline" id="youtube-btn" target="_blank" style="display:none;">
+            <img src="/static/images/recipe.svg" alt="Watch">
+            Video
+        </a>
+        <a href="#" class="btn btn-primary" id="cook-btn">
+            <img src="/static/images/timer.svg" alt="Cook">
+            Start Cooking
+        </a>
+    </div>
+
+    <nav class="bottom-nav">
+        <a href="/" class="nav-item">
+            <div class="nav-item-icon"><img src="/static/images/recipe.svg" alt="Recipes"></div>
+            Recipes
+        </a>
+        <a href="/discover" class="nav-item">
+            <span class="icon">&#128293;</span>
+            Discover
+        </a>
+        <a href="/shopping" class="nav-item">
+            <div class="nav-item-icon"><img src="/static/images/shopping.svg" alt="Shopping"></div>
+            Shopping
+        </a>
+        <a href="/nutrition" class="nav-item">
+            <div class="nav-item-icon"><img src="/static/images/chart.svg" alt="Nutrition"></div>
+            Nutrition
+        </a>
+    </nav>
+
+    <script>
+        const mealId = '{{ meal_id }}';
+        let recipeData = null;
+        let currentServings = null;
+        let originalServings = null;
+        let nutritionDataLoaded = false;  // Track if nutrition has been loaded
+        let cachedNutritionHTML = null;   // Cache nutrition HTML after first calculation
+
+        // =====================================
+        // 3D INTERACTIVE CARD EFFECTS
+        // =====================================
+        function handle3DMove(e, card) {
+            const rect = card.getBoundingClientRect();
+            const centerX = rect.width / 2;
+            const centerY = rect.height / 2;
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
+            // Smaller cards get gentler rotation (max 8° for small, 12° for large)
+            const isSmallCard = rect.width < 150;
+            const maxRotation = isSmallCard ? 8 : 12;
+            const scale = isSmallCard ? 1.03 : 1.02;
+            const lift = isSmallCard ? 8 : 12;
+
+            // Calculate rotation
+            const rotateX = ((mouseY - centerY) / centerY) * -maxRotation;
+            const rotateY = ((mouseX - centerX) / centerX) * maxRotation;
+
+            // Apply 3D transform to card inner
+            const inner = card.querySelector('.card-inner');
+            if (inner) {
+                inner.style.transform = `perspective(800px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateZ(${lift}px) scale3d(${scale}, ${scale}, 1)`;
+            }
+
+            // Update glare position (subtler for small cards)
+            const glare = card.querySelector('.card-glare');
+            if (glare) {
+                const glareX = (mouseX / rect.width) * 100;
+                const glareY = (mouseY / rect.height) * 100;
+                const glareOpacity = isSmallCard ? 0.15 : 0.25;
+                glare.style.backgroundImage = `radial-gradient(circle at ${glareX}% ${glareY}%, rgba(255,255,255,${glareOpacity * 2}) 0%, transparent 50%)`;
+                glare.style.opacity = '1';
+            }
+
+            // Show glow (subtler for small cards)
+            const glow = card.querySelector('.card-glow');
+            if (glow) {
+                glow.style.opacity = isSmallCard ? '0.3' : '0.5';
+            }
+        }
+
+        function handle3DLeave(card) {
+            const inner = card.querySelector('.card-inner');
+            if (inner) {
+                inner.style.transform = 'perspective(800px) rotateX(0) rotateY(0) translateZ(0) scale3d(1, 1, 1)';
+            }
+
+            const glare = card.querySelector('.card-glare');
+            if (glare) {
+                glare.style.opacity = '0';
+            }
+
+            const glow = card.querySelector('.card-glow');
+            if (glow) {
+                glow.style.opacity = '0';
+            }
+        }
+
+        // =====================================
+        // INGREDIENT TAGS DATABASE
+        // =====================================
+        // Tags: flavor profiles, dietary info, health effects, synergies
+
+        const ingredientTags = {
+            // SPICY / HEAT
+            'chili': ['spicy', 'metabolism'],
+            'chilli': ['spicy', 'metabolism'],
+            'cayenne': ['spicy', 'metabolism'],
+            'jalapeño': ['spicy'],
+            'jalapeno': ['spicy'],
+            'habanero': ['spicy'],
+            'sriracha': ['spicy', 'umami'],
+            'hot sauce': ['spicy'],
+            'paprika': ['smoky'],
+            'chipotle': ['smoky', 'spicy'],
+            'crushed red pepper': ['spicy'],
+            'red pepper flakes': ['spicy'],
+            'black pepper': ['peppery', 'enhancer'],
+            'white pepper': ['peppery'],
+            'szechuan': ['numbing', 'spicy'],
+            'gochugaru': ['spicy', 'smoky'],
+            'gochujang': ['spicy', 'umami', 'fermented'],
+            'wasabi': ['spicy', 'sinus-clearing'],
+            'horseradish': ['spicy', 'sinus-clearing'],
+            'mustard': ['tangy', 'pungent'],
+
+            // SWEET
+            'sugar': ['sweet'],
+            'honey': ['sweet', 'antibacterial'],
+            'maple syrup': ['sweet', 'minerals'],
+            'maple': ['sweet'],
+            'brown sugar': ['sweet', 'molasses'],
+            'molasses': ['sweet', 'iron'],
+            'agave': ['sweet'],
+            'stevia': ['sweet', 'zero-cal'],
+            'vanilla': ['sweet', 'aromatic'],
+            'chocolate': ['sweet', 'mood-boost'],
+            'cocoa': ['antioxidants', 'mood-boost'],
+            'cinnamon': ['sweet', 'blood-sugar'],
+            'caramel': ['sweet'],
+            'date': ['sweet', 'fiber'],
+            'raisin': ['sweet', 'iron'],
+            'dried fruit': ['sweet', 'fiber'],
+
+            // SOUR / ACIDIC
+            'lemon': ['sour', 'vitamin-c', 'brightening'],
+            'lime': ['sour', 'vitamin-c', 'brightening'],
+            'orange': ['citrus', 'vitamin-c'],
+            'grapefruit': ['citrus', 'bitter', 'vitamin-c'],
+            'vinegar': ['sour', 'probiotic'],
+            'apple cider vinegar': ['sour', 'probiotic', 'digestion'],
+            'balsamic': ['sour', 'sweet'],
+            'wine': ['acidic', 'tannins'],
+            'tamarind': ['sour', 'tangy'],
+            'sumac': ['sour', 'fruity'],
+            'yogurt': ['tangy', 'probiotic', 'dairy'],
+            'sour cream': ['tangy', 'dairy'],
+            'buttermilk': ['tangy', 'dairy'],
+            'tomato': ['acidic', 'umami', 'lycopene'],
+
+            // UMAMI / SAVORY
+            'soy sauce': ['umami', 'salty', 'fermented'],
+            'fish sauce': ['umami', 'funky', 'fermented'],
+            'oyster sauce': ['umami', 'sweet'],
+            'miso': ['umami', 'fermented', 'probiotic'],
+            'parmesan': ['umami', 'dairy', 'aged'],
+            'parmigiano': ['umami', 'dairy', 'aged'],
+            'anchovy': ['umami', 'omega-3'],
+            'anchovies': ['umami', 'omega-3'],
+            'mushroom': ['umami', 'earthy', 'vitamin-d'],
+            'shiitake': ['umami', 'immune-boost'],
+            'porcini': ['umami', 'earthy'],
+            'truffle': ['umami', 'earthy', 'luxury'],
+            'worcestershire': ['umami', 'fermented'],
+            'bouillon': ['umami', 'salty'],
+            'stock': ['umami', 'collagen'],
+            'broth': ['umami'],
+            'dashi': ['umami'],
+            'kombu': ['umami', 'minerals'],
+            'seaweed': ['umami', 'iodine'],
+            'nori': ['umami', 'iodine'],
+            'nutritional yeast': ['umami', 'b-vitamins', 'vegan'],
+
+            // BITTER
+            'coffee': ['bitter', 'caffeine', 'energy'],
+            'espresso': ['bitter', 'caffeine', 'energy'],
+            'dark chocolate': ['bitter', 'antioxidants'],
+            'arugula': ['bitter', 'peppery'],
+            'radicchio': ['bitter'],
+            'endive': ['bitter'],
+            'kale': ['bitter', 'superfood'],
+            'brussels sprout': ['bitter', 'cruciferous'],
+            'broccoli': ['bitter', 'cruciferous', 'vitamin-c'],
+            'beer': ['bitter', 'alcohol'],
+
+            // DAIRY
+            'milk': ['dairy', 'calcium'],
+            'cream': ['dairy', 'rich'],
+            'butter': ['dairy', 'rich'],
+            'cheese': ['dairy', 'calcium', 'umami'],
+            'cheddar': ['dairy', 'sharp'],
+            'mozzarella': ['dairy', 'mild'],
+            'feta': ['dairy', 'tangy', 'salty'],
+            'goat cheese': ['dairy', 'tangy'],
+            'ricotta': ['dairy', 'mild'],
+            'mascarpone': ['dairy', 'rich'],
+            'ghee': ['dairy', 'high-heat'],
+
+            // HERBS - FRESH/AROMATIC
+            'basil': ['aromatic', 'fresh', 'anti-inflammatory'],
+            'mint': ['cooling', 'fresh', 'digestion'],
+            'cilantro': ['fresh', 'citrusy', 'detox'],
+            'coriander': ['citrusy', 'warm'],
+            'parsley': ['fresh', 'iron', 'breath-freshener'],
+            'dill': ['fresh', 'anise-like'],
+            'chive': ['mild-onion', 'fresh'],
+            'tarragon': ['anise-like', 'French'],
+            'oregano': ['earthy', 'Mediterranean'],
+            'thyme': ['earthy', 'antiseptic'],
+            'rosemary': ['piney', 'memory-boost'],
+            'sage': ['earthy', 'savory'],
+            'bay leaf': ['aromatic', 'subtle'],
+            'bay': ['aromatic', 'subtle'],
+            'lemongrass': ['citrusy', 'aromatic'],
+            'kaffir lime': ['citrusy', 'aromatic'],
+
+            // SPICES - WARM
+            'cumin': ['earthy', 'warm', 'digestion'],
+            'coriander seed': ['citrusy', 'warm'],
+            'turmeric': ['earthy', 'anti-inflammatory', 'golden'],
+            'ginger': ['warming', 'anti-nausea', 'digestion'],
+            'cardamom': ['aromatic', 'warming'],
+            'clove': ['warming', 'numbing', 'antiseptic'],
+            'nutmeg': ['warming', 'sweet'],
+            'allspice': ['warming', 'complex'],
+            'star anise': ['licorice', 'warming'],
+            'fennel': ['licorice', 'digestion'],
+            'fenugreek': ['maple-like', 'bitter'],
+            'curry': ['warming', 'complex'],
+            'garam masala': ['warming', 'aromatic'],
+            'five spice': ['warming', 'complex'],
+            'ras el hanout': ['complex', 'floral'],
+            'za\'atar': ['herby', 'tangy', 'Middle-Eastern'],
+
+            // ALLIUMS
+            'garlic': ['pungent', 'immune-boost', 'aromatic'],
+            'onion': ['pungent', 'sweet-when-cooked'],
+            'shallot': ['mild-onion', 'sweet'],
+            'scallion': ['mild-onion', 'fresh'],
+            'green onion': ['mild-onion', 'fresh'],
+            'leek': ['mild-onion', 'sweet'],
+            'ramp': ['garlicky', 'seasonal'],
+
+            // PROTEINS
+            'chicken': ['protein', 'lean'],
+            'beef': ['protein', 'iron', 'b12'],
+            'pork': ['protein', 'b-vitamins'],
+            'lamb': ['protein', 'iron', 'gamey'],
+            'turkey': ['protein', 'lean'],
+            'duck': ['protein', 'rich'],
+            'fish': ['protein', 'omega-3'],
+            'salmon': ['protein', 'omega-3', 'brain-food'],
+            'tuna': ['protein', 'omega-3'],
+            'cod': ['protein', 'mild'],
+            'haddock': ['protein', 'mild'],
+            'shrimp': ['protein', 'low-cal'],
+            'prawn': ['protein', 'low-cal'],
+            'crab': ['protein', 'sweet'],
+            'lobster': ['protein', 'luxury'],
+            'scallop': ['protein', 'sweet'],
+            'mussel': ['protein', 'iron'],
+            'clam': ['protein', 'iron'],
+            'squid': ['protein'],
+            'octopus': ['protein'],
+            'egg': ['protein', 'complete-protein', 'choline'],
+            'tofu': ['protein', 'vegan', 'soy'],
+            'tempeh': ['protein', 'fermented', 'vegan'],
+            'seitan': ['protein', 'vegan', 'gluten'],
+            'chickpea': ['protein', 'fiber', 'vegan'],
+            'lentil': ['protein', 'fiber', 'vegan'],
+            'black bean': ['protein', 'fiber', 'vegan'],
+            'kidney bean': ['protein', 'fiber', 'vegan'],
+
+            // NUTS & SEEDS
+            'almond': ['nutty', 'vitamin-e', 'protein'],
+            'walnut': ['nutty', 'omega-3', 'brain-food'],
+            'cashew': ['creamy', 'mild'],
+            'peanut': ['nutty', 'protein'],
+            'pistachio': ['nutty', 'green'],
+            'pecan': ['buttery', 'sweet'],
+            'hazelnut': ['nutty', 'aromatic'],
+            'macadamia': ['buttery', 'rich'],
+            'pine nut': ['buttery', 'mild'],
+            'sesame': ['nutty', 'calcium'],
+            'tahini': ['nutty', 'creamy'],
+            'sunflower seed': ['nutty', 'vitamin-e'],
+            'pumpkin seed': ['nutty', 'zinc'],
+            'chia': ['omega-3', 'fiber'],
+            'flax': ['omega-3', 'fiber'],
+            'hemp': ['protein', 'omega-3'],
+
+            // GRAINS & CARBS
+            'rice': ['starchy', 'gluten-free'],
+            'pasta': ['starchy', 'comfort'],
+            'noodle': ['starchy', 'comfort'],
+            'bread': ['starchy', 'comfort'],
+            'flour': ['starchy'],
+            'oat': ['fiber', 'heart-healthy'],
+            'quinoa': ['protein', 'complete-protein', 'gluten-free'],
+            'barley': ['fiber', 'chewy'],
+            'farro': ['nutty', 'chewy'],
+            'couscous': ['starchy', 'quick-cooking'],
+            'bulgur': ['nutty', 'fiber'],
+            'polenta': ['creamy', 'corn'],
+            'cornmeal': ['corn', 'gluten-free'],
+
+            // VEGETABLES
+            'potato': ['starchy', 'comfort', 'potassium'],
+            'sweet potato': ['starchy', 'beta-carotene'],
+            'carrot': ['sweet', 'beta-carotene'],
+            'beet': ['earthy', 'nitrates', 'endurance'],
+            'spinach': ['iron', 'superfood'],
+            'lettuce': ['fresh', 'hydrating'],
+            'cabbage': ['crunchy', 'cruciferous'],
+            'celery': ['crunchy', 'hydrating', 'low-cal'],
+            'cucumber': ['fresh', 'hydrating', 'cooling'],
+            'zucchini': ['mild', 'low-cal'],
+            'eggplant': ['meaty', 'absorbent'],
+            'aubergine': ['meaty', 'absorbent'],
+            'bell pepper': ['sweet', 'vitamin-c'],
+            'pepper': ['sweet', 'vitamin-c'],
+            'corn': ['sweet', 'starchy'],
+            'pea': ['sweet', 'protein'],
+            'asparagus': ['earthy', 'prebiotic'],
+            'artichoke': ['earthy', 'prebiotic'],
+            'avocado': ['creamy', 'healthy-fats', 'potassium'],
+
+            // FRUITS
+            'apple': ['sweet', 'fiber', 'crunchy'],
+            'banana': ['sweet', 'potassium', 'energy'],
+            'berry': ['antioxidants', 'sweet'],
+            'blueberry': ['antioxidants', 'brain-food'],
+            'strawberry': ['sweet', 'vitamin-c'],
+            'raspberry': ['sweet-tart', 'fiber'],
+            'blackberry': ['sweet-tart', 'antioxidants'],
+            'mango': ['tropical', 'vitamin-c'],
+            'pineapple': ['tropical', 'bromelain', 'digestion'],
+            'papaya': ['tropical', 'digestion'],
+            'coconut': ['tropical', 'MCTs', 'energy'],
+            'grape': ['sweet', 'resveratrol'],
+            'melon': ['hydrating', 'sweet'],
+            'watermelon': ['hydrating', 'lycopene'],
+            'peach': ['sweet', 'juicy'],
+            'plum': ['sweet-tart'],
+            'cherry': ['sweet-tart', 'anti-inflammatory'],
+            'pomegranate': ['antioxidants', 'tangy'],
+            'fig': ['sweet', 'fiber'],
+            'passion fruit': ['tropical', 'tangy'],
+
+            // OILS & FATS
+            'olive oil': ['healthy-fats', 'Mediterranean'],
+            'coconut oil': ['MCTs', 'high-heat'],
+            'sesame oil': ['nutty', 'aromatic'],
+            'avocado oil': ['healthy-fats', 'high-heat'],
+            'vegetable oil': ['neutral'],
+            'canola oil': ['neutral'],
+            'lard': ['rich', 'traditional'],
+            'bacon fat': ['smoky', 'umami'],
+
+            // ALCOHOL
+            'wine': ['acidic', 'complex'],
+            'red wine': ['tannins', 'resveratrol'],
+            'white wine': ['acidic', 'bright'],
+            'beer': ['malty', 'bitter'],
+            'sake': ['umami', 'subtle'],
+            'mirin': ['sweet', 'umami'],
+            'rum': ['sweet', 'caramel'],
+            'bourbon': ['vanilla', 'caramel'],
+            'whiskey': ['smoky', 'complex'],
+            'brandy': ['fruity', 'warming'],
+            'vodka': ['neutral', 'alcohol'],
+        };
+
+        // SYNERGY EFFECTS - special interactions between ingredients
+        const ingredientSynergies = {
+            'black pepper+turmeric': { effect: 'enhanced absorption', description: 'Piperine increases curcumin absorption by 2000%', icon: '⚡' },
+            'turmeric+black pepper': { effect: 'enhanced absorption', description: 'Piperine increases curcumin absorption by 2000%', icon: '⚡' },
+            'tomato+olive oil': { effect: 'lycopene boost', description: 'Fat increases lycopene absorption', icon: '❤️' },
+            'olive oil+tomato': { effect: 'lycopene boost', description: 'Fat increases lycopene absorption', icon: '❤️' },
+            'lemon+iron': { effect: 'iron absorption', description: 'Vitamin C enhances iron uptake', icon: '💪' },
+            'vitamin-c+iron': { effect: 'iron absorption', description: 'Vitamin C enhances iron uptake', icon: '💪' },
+            'garlic+onion': { effect: 'flavor base', description: 'Classic aromatics foundation', icon: '🧅' },
+            'onion+garlic': { effect: 'flavor base', description: 'Classic aromatics foundation', icon: '🧅' },
+            'ginger+garlic': { effect: 'immune boost', description: 'Powerful antimicrobial combo', icon: '🛡️' },
+            'garlic+ginger': { effect: 'immune boost', description: 'Powerful antimicrobial combo', icon: '🛡️' },
+            'cinnamon+honey': { effect: 'soothing', description: 'Traditional remedy combination', icon: '🍯' },
+            'honey+cinnamon': { effect: 'soothing', description: 'Traditional remedy combination', icon: '🍯' },
+            'cocoa+cayenne': { effect: 'Mayan heat', description: 'Ancient chocolate preparation', icon: '🔥' },
+            'cayenne+cocoa': { effect: 'Mayan heat', description: 'Ancient chocolate preparation', icon: '🔥' },
+            'basil+tomato': { effect: 'Italian classic', description: 'Perfect flavor pairing', icon: '🇮🇹' },
+            'tomato+basil': { effect: 'Italian classic', description: 'Perfect flavor pairing', icon: '🇮🇹' },
+            'lime+cilantro': { effect: 'fresh & bright', description: 'Mexican/Thai flavor bomb', icon: '🌿' },
+            'cilantro+lime': { effect: 'fresh & bright', description: 'Mexican/Thai flavor bomb', icon: '🌿' },
+            'soy sauce+ginger': { effect: 'umami depth', description: 'Asian cooking essential', icon: '🥢' },
+            'ginger+soy sauce': { effect: 'umami depth', description: 'Asian cooking essential', icon: '🥢' },
+            'lemon+garlic': { effect: 'brightness', description: 'Mediterranean finishing combo', icon: '☀️' },
+            'garlic+lemon': { effect: 'brightness', description: 'Mediterranean finishing combo', icon: '☀️' },
+        };
+
+        // Get tags for an ingredient (fuzzy matching)
+        function getIngredientTags(ingredientName) {
+            const name = ingredientName.toLowerCase().trim();
+
+            // Direct match first
+            if (ingredientTags[name]) {
+                return ingredientTags[name];
+            }
+
+            // Partial match - check if any key is contained in the name or vice versa
+            for (const [key, tags] of Object.entries(ingredientTags)) {
+                if (name.includes(key) || key.includes(name)) {
+                    return tags;
+                }
+            }
+
+            // Check for compound ingredients
+            const words = name.split(/[\s,]+/);
+            for (const word of words) {
+                if (ingredientTags[word]) {
+                    return ingredientTags[word];
+                }
+            }
+
+            return [];
+        }
+
+        // Detect synergies between ingredients in a recipe
+        function detectSynergies(ingredients) {
+            const synergies = [];
+            const names = ingredients.map(i => i.name.toLowerCase());
+
+            for (const [combo, synergy] of Object.entries(ingredientSynergies)) {
+                const [ing1, ing2] = combo.split('+');
+                const hasIng1 = names.some(n => n.includes(ing1) || ing1.includes(n));
+                const hasIng2 = names.some(n => n.includes(ing2) || ing2.includes(n));
+
+                if (hasIng1 && hasIng2) {
+                    // Avoid duplicates (since we have both a+b and b+a)
+                    if (!synergies.find(s => s.effect === synergy.effect)) {
+                        synergies.push(synergy);
+                    }
+                }
+            }
+
+            return synergies;
+        }
+
+        // Get CSS class for a tag based on its category
+        function getTagClass(tag) {
+            const tagLower = tag.toLowerCase();
+
+            // Spicy/heat
+            if (['spicy', 'peppery', 'numbing', 'warming', 'hot'].includes(tagLower)) return 'spicy';
+
+            // Sweet
+            if (['sweet', 'caramel', 'molasses', 'maple-like'].includes(tagLower)) return 'sweet';
+
+            // Sour/acidic
+            if (['sour', 'tangy', 'acidic', 'citrus', 'brightening', 'tart'].includes(tagLower)) return 'sour';
+
+            // Umami/savory
+            if (['umami', 'savory', 'fermented', 'funky', 'aged', 'salty'].includes(tagLower)) return 'umami';
+
+            // Dairy
+            if (['dairy', 'creamy', 'rich', 'calcium'].includes(tagLower)) return 'dairy';
+
+            // Health benefits
+            if (['anti-inflammatory', 'antioxidants', 'immune-boost', 'digestion', 'probiotic',
+                 'vitamin-c', 'vitamin-d', 'vitamin-e', 'iron', 'omega-3', 'brain-food',
+                 'superfood', 'detox', 'heart-healthy', 'blood-sugar', 'lycopene',
+                 'beta-carotene', 'minerals', 'fiber', 'prebiotic', 'antibacterial',
+                 'antiseptic', 'anti-nausea', 'memory-boost', 'endurance', 'nitrates',
+                 'potassium', 'zinc', 'iodine', 'b-vitamins', 'b12', 'choline', 'collagen',
+                 'resveratrol', 'bromelain', 'MCTs', 'healthy-fats'].includes(tagLower)) return 'health';
+
+            // Energy
+            if (['energy', 'caffeine', 'metabolism', 'mood-boost'].includes(tagLower)) return 'energy';
+
+            // Protein
+            if (['protein', 'complete-protein', 'lean'].includes(tagLower)) return 'protein';
+
+            // Vegan/plant-based
+            if (['vegan', 'vegetarian', 'plant-based'].includes(tagLower)) return 'vegan';
+
+            // Default - flavor profile
+            return 'flavor';
+        }
+
+        // Render tags HTML for an ingredient (limit to 3 most interesting)
+        function renderIngredientTags(ingredientName) {
+            const tags = getIngredientTags(ingredientName);
+            if (!tags || tags.length === 0) return '';
+
+            // Prioritize interesting tags (health/energy first, then flavor)
+            const priorityOrder = ['health', 'energy', 'spicy', 'umami', 'vegan', 'protein', 'sweet', 'sour', 'dairy', 'flavor'];
+            const sortedTags = [...tags].sort((a, b) => {
+                const classA = getTagClass(a);
+                const classB = getTagClass(b);
+                return priorityOrder.indexOf(classA) - priorityOrder.indexOf(classB);
+            });
+
+            // Take top 2-3 tags
+            const displayTags = sortedTags.slice(0, 3);
+
+            return `
+                <div class="ingredient-tags">
+                    ${displayTags.map(tag => `<span class="ingredient-tag ${getTagClass(tag)}">${tag}</span>`).join('')}
+                </div>
+            `;
+        }
+
+        // Parse quantity string to extract number and unit
+        function parseQuantity(quantity) {
+            if (!quantity) return { number: null, unit: '', original: quantity };
+
+            const q = quantity.trim();
+
+            // Handle fractions like "1/2", "1 1/2"
+            const fractionMatch = q.match(/^(\d+)?\s*(\d+)\/(\d+)\s*(.*)$/);
+            if (fractionMatch) {
+                const whole = fractionMatch[1] ? parseInt(fractionMatch[1]) : 0;
+                const num = parseInt(fractionMatch[2]);
+                const denom = parseInt(fractionMatch[3]);
+                const unit = fractionMatch[4] || '';
+                return { number: whole + (num / denom), unit: unit.trim(), original: q };
+            }
+
+            // Handle decimals and whole numbers
+            const numberMatch = q.match(/^([\d.]+)\s*(.*)$/);
+            if (numberMatch) {
+                return { number: parseFloat(numberMatch[1]), unit: numberMatch[2].trim(), original: q };
+            }
+
+            // No number found (e.g., "to taste", "pinch")
+            return { number: null, unit: q, original: q };
+        }
+
+        // Format number nicely (convert decimals back to fractions when appropriate)
+        function formatNumber(num) {
+            if (num === null) return '';
+
+            const whole = Math.floor(num);
+            const decimal = num - whole;
+
+            // Common fractions
+            const fractions = [
+                { val: 0.25, str: '¼' },
+                { val: 0.33, str: '⅓' },
+                { val: 0.5, str: '½' },
+                { val: 0.66, str: '⅔' },
+                { val: 0.75, str: '¾' },
+                { val: 0.125, str: '⅛' },
+                { val: 0.375, str: '⅜' },
+                { val: 0.625, str: '⅝' },
+                { val: 0.875, str: '⅞' },
+            ];
+
+            // Find closest fraction
+            for (const f of fractions) {
+                if (Math.abs(decimal - f.val) < 0.05) {
+                    if (whole === 0) return f.str;
+                    return `${whole} ${f.str}`;
+                }
+            }
+
+            // Round to 1 decimal place if needed
+            if (decimal > 0) {
+                return num.toFixed(1).replace(/\.0$/, '');
+            }
+            return whole.toString();
+        }
+
+        // Atomic ingredients - only truly indivisible items (raw eggs)
+        // Most things can be subdivided (lemons, onions, etc.)
+        const atomicIngredients = [
+            'egg', 'eggs'  // Raw whole eggs can't be divided
+            // Note: egg yolk/white are separate - you CAN separate them
+            // Hard boiled eggs can be divided, so context matters
+        ];
+
+        // Check if a unit/ingredient should be atomic (whole numbers only)
+        function isAtomic(unit, ingredientName = '') {
+            const lowerUnit = (unit || '').toLowerCase();
+            const lowerIng = (ingredientName || '').toLowerCase();
+
+            for (const atomic of atomicIngredients) {
+                if (lowerUnit.includes(atomic) || lowerIng.includes(atomic)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // Scale a quantity string by a multiplier
+        function scaleQuantity(quantity, multiplier, ingredientName = '') {
+            const parsed = parseQuantity(quantity);
+
+            // Handle special units that imply quantity of 1 when no number given
+            const implicitOneUnits = ['pinch', 'pinches', 'dash', 'dashes', 'handful', 'handfuls'];
+            const unitLower = (parsed.unit || '').toLowerCase();
+
+            // Gram equivalents for small measures (based on common estimates)
+            const smallMeasureGrams = {
+                'pinch': 0.5,    // ~0.3-0.5g for salt/spices
+                'pinches': 0.5,
+                'dash': 0.5,
+                'dashes': 0.5,
+                'handful': 30,
+                'handfuls': 30
+            };
+
+            if (parsed.number === null) {
+                // Check if it's a unit that implies 1
+                if (implicitOneUnits.includes(unitLower)) {
+                    const baseGrams = smallMeasureGrams[unitLower] || 1;
+                    const scaledGrams = baseGrams * multiplier;
+
+                    // For pinch/dash: show grams when >= 1g, otherwise show pinches
+                    if (unitLower === 'pinch' || unitLower === 'pinches' || unitLower === 'dash' || unitLower === 'dashes') {
+                        if (scaledGrams >= 1) {
+                            // Show in grams (or tsp if >= 5g)
+                            if (scaledGrams >= 5) {
+                                const tsp = scaledGrams / 5;
+                                return tsp % 1 === 0 ? `${tsp} tsp` : `${tsp.toFixed(1)} tsp`;
+                            }
+                            return `${scaledGrams.toFixed(1)}g`;
+                        }
+                        const count = Math.max(1, Math.round(multiplier));
+                        const unit = unitLower.includes('pinch') ? (count === 1 ? 'pinch' : 'pinches') : (count === 1 ? 'dash' : 'dashes');
+                        return `${count} ${unit}`;
+                    }
+                    if (unitLower === 'handful' || unitLower === 'handfuls') {
+                        const count = Math.max(1, Math.round(multiplier));
+                        return `${count} ${count === 1 ? 'handful' : 'handfuls'}`;
+                    }
+                }
+                return quantity; // Can't scale "to taste" etc
+            }
+
+            let scaled = parsed.number * multiplier;
+
+            // Round atomic ingredients to nearest whole number (minimum 1)
+            if (isAtomic(parsed.unit, ingredientName)) {
+                scaled = Math.max(1, Math.round(scaled));
+                return parsed.unit ? `${scaled} ${parsed.unit}` : scaled.toString();
+            }
+
+            const formattedNum = formatNumber(scaled);
+            return parsed.unit ? `${formattedNum} ${parsed.unit}` : formattedNum;
+        }
+
+        // Scale quantities mentioned in step instructions
+        function scaleStepInstruction(instruction, ingredients, multiplier) {
+            if (multiplier === 1) return instruction;
+
+            let scaled = instruction;
+
+            // Build a map of ingredient names for context-aware scaling
+            const ingMap = {};
+            ingredients.forEach(ing => {
+                ingMap[ing.name.toLowerCase()] = ing.name;
+            });
+
+            // Pattern to match quantities: "100g", "2 cups", "1/2 tsp", "1 1/2 tablespoons", etc.
+            // This matches: number (with optional fraction) followed by optional unit
+            const qtyPattern = /(\d+\s+\d+\/\d+|\d+\/\d+|\d+\.?\d*)\s*(g|kg|ml|l|oz|lb|cup|cups|tbsp|tablespoon|tablespoons|tsp|teaspoon|teaspoons|pound|pounds|ounce|ounces|litre|litres|liter|liters|pint|pints|quart|quarts|gallon|gallons|bunch|bunches|handful|handfuls|pinch|pinches|dash|dashes|slice|slices|piece|pieces|clove|cloves|sprig|sprigs|leaf|leaves|can|cans|packet|packets|bag|bags|box|boxes|jar|jars|bottle|bottles|stick|sticks|head|heads|stalk|stalks|rib|ribs|rasher|rashers|fillet|fillets|breast|breasts|thigh|thighs|drumstick|drumsticks|wing|wings|leg|legs|chop|chops|steak|steaks|sausage|sausages|egg|eggs|potato|potatoes|tomato|tomatoes|onion|onions|carrot|carrots|pepper|peppers|)?/gi;
+
+            scaled = scaled.replace(qtyPattern, (match, num, unit) => {
+                if (!num) return match;
+
+                // Parse the number (handle fractions)
+                let value;
+                if (num.includes('/')) {
+                    if (num.includes(' ')) {
+                        // Mixed fraction like "1 1/2"
+                        const parts = num.split(' ');
+                        const whole = parseInt(parts[0]);
+                        const fracParts = parts[1].split('/');
+                        value = whole + (parseInt(fracParts[0]) / parseInt(fracParts[1]));
+                    } else {
+                        // Simple fraction like "1/2"
+                        const fracParts = num.split('/');
+                        value = parseInt(fracParts[0]) / parseInt(fracParts[1]);
+                    }
+                } else {
+                    value = parseFloat(num);
+                }
+
+                // Scale the value
+                let scaledValue = value * multiplier;
+
+                // Check if this unit is atomic
+                const unitLower = (unit || '').toLowerCase();
+                if (isAtomic(unitLower, '')) {
+                    scaledValue = Math.max(1, Math.round(scaledValue));
+                    return unit ? `${scaledValue} ${unit}` : scaledValue.toString();
+                }
+
+                // Format nicely
+                const formatted = formatNumber(scaledValue);
+                return unit ? `${formatted} ${unit}` : formatted;
+            });
+
+            return scaled;
+        }
+
+        // Change serving size
+        function changeServings(delta) {
+            const newServings = Math.max(1, currentServings + delta);
+            if (newServings !== currentServings) {
+                currentServings = newServings;
+                renderRecipe();
+            }
+        }
+
+        // =====================================
+        // UNIT CONVERSION SYSTEM
+        // =====================================
+
+        // Current display mode: 'original', 'metric', 'customary'
+        let unitDisplayMode = 'original';
+
+        // Gram weights for atomic/countable items (per 1 item)
+        const atomicGramWeights = {
+            'egg': 50, 'eggs': 50,
+            'onion': 150, 'onions': 150,
+            'garlic clove': 3, 'clove': 3, 'cloves': 3,
+            'lemon': 60, 'lemons': 60,
+            'lime': 60, 'limes': 60,
+            'tomato': 120, 'tomatoes': 120,
+            'potato': 150, 'potatoes': 150,
+            'carrot': 60, 'carrots': 60,
+            'apple': 180, 'apples': 180,
+            'banana': 120, 'bananas': 120,
+            'orange': 130, 'oranges': 130,
+            'pepper': 150, 'peppers': 150,
+            'bay leaf': 0.5, 'bay leaves': 0.5,
+            'cinnamon stick': 3, 'cinnamon sticks': 3,
+            'cardamom pod': 1, 'cardamom pods': 1, 'cardamom': 1,
+            'star anise': 2,
+            'vanilla pod': 5, 'vanilla bean': 5,
+            'chicken breast': 200, 'chicken breasts': 200,
+            'chicken thigh': 130, 'chicken thighs': 130,
+            'rasher': 25, 'rashers': 25,
+            'sausage': 70, 'sausages': 70,
+            'slice': 30, 'slices': 30,
+            'fillet': 150, 'fillets': 150,
+            'steak': 225, 'steaks': 225,
+            'chop': 150, 'chops': 150,
+        };
+
+        // Conversions TO grams (1 unit = X grams)
+        const toGrams = {
+            // Metric
+            'g': 1, 'gram': 1, 'grams': 1,
+            'kg': 1000, 'kilogram': 1000, 'kilograms': 1000,
+            'ml': 1, 'milliliter': 1, 'milliliters': 1, 'millilitre': 1, 'millilitres': 1,
+            'l': 1000, 'liter': 1000, 'liters': 1000, 'litre': 1000, 'litres': 1000,
+            // Customary volume (water density = 1g/ml assumed for liquids)
+            'cup': 240, 'cups': 240,
+            'tbsp': 15, 'tablespoon': 15, 'tablespoons': 15, 'tbs': 15, 'tblsp': 15,
+            'tsp': 5, 'teaspoon': 5, 'teaspoons': 5,
+            'fl oz': 30, 'fluid ounce': 30, 'fluid ounces': 30,
+            'pint': 473, 'pints': 473,
+            'quart': 946, 'quarts': 946,
+            // Customary weight
+            'oz': 28, 'ounce': 28, 'ounces': 28,
+            'lb': 454, 'lbs': 454, 'pound': 454, 'pounds': 454,
+            // Small measures
+            'pinch': 1, 'dash': 0.5,  // 1 pinch = ~1 gram
+            'stick': 113, 'sticks': 113, // Butter stick
+        };
+
+        // Convert a quantity to grams
+        function convertToGrams(quantity, ingredientName) {
+            const parsed = parseQuantity(quantity);
+            if (parsed.number === null) return null;
+
+            const unit = parsed.unit.toLowerCase();
+            const ingLower = ingredientName.toLowerCase();
+
+            // Check for atomic item weight first (by ingredient name or unit)
+            for (const [key, weight] of Object.entries(atomicGramWeights)) {
+                if (ingLower.includes(key) || unit.includes(key)) {
+                    return Math.round(parsed.number * weight);
+                }
+            }
+
+            // Check for unit conversion
+            const gramsPerUnit = toGrams[unit];
+            if (gramsPerUnit) {
+                return Math.round(parsed.number * gramsPerUnit);
+            }
+
+            // No unit or unrecognized - estimate 30g per item
+            return Math.round(parsed.number * 30);
+        }
+
+        // Convert grams to customary measurement (cups, tbsp, etc.)
+        function gramsToCustomary(grams, ingredientName) {
+            if (!grams || grams <= 0) return null;
+
+            const ingLower = ingredientName.toLowerCase();
+
+            // For liquids (water, stock, milk, etc.) - convert to cups/tbsp
+            const isLiquid = ['water', 'stock', 'broth', 'milk', 'cream', 'oil', 'juice', 'wine', 'vinegar'].some(l => ingLower.includes(l));
+
+            if (isLiquid) {
+                if (grams >= 240) {
+                    const cups = grams / 240;
+                    return `${formatNumber(cups)} cup${cups !== 1 ? 's' : ''}`;
+                } else if (grams >= 15) {
+                    const tbsp = grams / 15;
+                    return `${formatNumber(tbsp)} tbsp`;
+                } else {
+                    const tsp = grams / 5;
+                    return `${formatNumber(tsp)} tsp`;
+                }
+            }
+
+            // For dry goods - keep in weight (oz/lb)
+            if (grams >= 454) {
+                const lbs = grams / 454;
+                return `${formatNumber(lbs)} lb`;
+            } else if (grams >= 28) {
+                const oz = grams / 28;
+                return `${formatNumber(oz)} oz`;
+            }
+
+            return `${grams}g`; // Fallback for very small amounts
+        }
+
+        // Format quantity with gram equivalent shown
+        function formatQuantityWithGrams(quantity, ingredientName, multiplier = 1) {
+            const scaled = scaleQuantity(quantity, multiplier, ingredientName);
+            const grams = convertToGrams(scaled, ingredientName);
+
+            if (unitDisplayMode === 'original') {
+                return scaled;
+            } else if (unitDisplayMode === 'metric') {
+                // Show metric (grams/ml)
+                if (grams) {
+                    const ingLower = ingredientName.toLowerCase();
+                    const isLiquid = ['water', 'stock', 'broth', 'milk', 'cream', 'oil', 'juice', 'wine', 'vinegar'].some(l => ingLower.includes(l));
+                    return isLiquid ? `${grams}ml` : `${grams}g`;
+                }
+                return scaled;
+            } else if (unitDisplayMode === 'customary') {
+                // Show customary (cups, oz, etc.)
+                if (grams) {
+                    const customary = gramsToCustomary(grams, ingredientName);
+                    if (customary) return customary;
+                }
+                return scaled;
+            }
+
+            return scaled;
+        }
+
+        // Get both displays for dual view
+        function getQuantityDisplays(quantity, ingredientName, multiplier = 1) {
+            const scaled = scaleQuantity(quantity, multiplier, ingredientName);
+            const grams = convertToGrams(scaled, ingredientName);
+
+            const ingLower = ingredientName.toLowerCase();
+            const isLiquid = ['water', 'stock', 'broth', 'milk', 'cream', 'oil', 'juice', 'wine', 'vinegar'].some(l => ingLower.includes(l));
+
+            // Check if already metric
+            const parsed = parseQuantity(scaled);
+            const isMetric = ['g', 'kg', 'ml', 'l', 'gram', 'grams', 'kilogram', 'liter', 'litre'].includes(parsed.unit.toLowerCase());
+
+            return {
+                original: scaled,
+                metric: grams ? (isLiquid ? `${grams}ml` : `${grams}g`) : null,
+                customary: grams ? gramsToCustomary(grams, ingredientName) : null,
+                isMetric: isMetric
+            };
+        }
+
+        // Toggle unit display mode
+        function toggleUnits() {
+            const modes = ['original', 'metric', 'customary'];
+            const currentIndex = modes.indexOf(unitDisplayMode);
+            unitDisplayMode = modes[(currentIndex + 1) % modes.length];
+            renderRecipe();
+        }
+
+        // =====================================
+        // NUTRITION CALCULATION
+        // =====================================
+
+        // Daily values (based on 2000 cal diet)
+        const dailyValues = {
+            calories: 2000,
+            protein: 50,   // g
+            carbs: 275,    // g
+            fat: 78,       // g
+            fiber: 28,     // g
+            sodium: 2300,  // mg
+            sugar: 50      // g
+        };
+
+        // Nutrition per 100g for common ingredients (estimated)
+        const nutritionDatabase = {
+            // Proteins
+            chicken: { calories: 165, protein: 31, carbs: 0, fat: 4, fiber: 0, sodium: 74, sugar: 0 },
+            turkey: { calories: 135, protein: 30, carbs: 0, fat: 1, fiber: 0, sodium: 70, sugar: 0 },
+            beef: { calories: 250, protein: 26, carbs: 0, fat: 17, fiber: 0, sodium: 72, sugar: 0 },
+            steak: { calories: 271, protein: 26, carbs: 0, fat: 18, fiber: 0, sodium: 59, sugar: 0 },
+            pork: { calories: 242, protein: 27, carbs: 0, fat: 14, fiber: 0, sodium: 62, sugar: 0 },
+            bacon: { calories: 541, protein: 37, carbs: 1, fat: 42, fiber: 0, sodium: 1717, sugar: 0 },
+            lamb: { calories: 282, protein: 25, carbs: 0, fat: 20, fiber: 0, sodium: 72, sugar: 0 },
+            salmon: { calories: 208, protein: 20, carbs: 0, fat: 13, fiber: 0, sodium: 59, sugar: 0 },
+            tuna: { calories: 132, protein: 28, carbs: 0, fat: 1, fiber: 0, sodium: 50, sugar: 0 },
+            fish: { calories: 140, protein: 24, carbs: 0, fat: 4, fiber: 0, sodium: 60, sugar: 0 },
+            shrimp: { calories: 99, protein: 24, carbs: 0, fat: 0.3, fiber: 0, sodium: 111, sugar: 0 },
+            prawn: { calories: 99, protein: 24, carbs: 0, fat: 0.3, fiber: 0, sodium: 111, sugar: 0 },
+            egg: { calories: 155, protein: 13, carbs: 1, fat: 11, fiber: 0, sodium: 124, sugar: 1 },
+            tofu: { calories: 76, protein: 8, carbs: 2, fat: 4, fiber: 0, sodium: 7, sugar: 0 },
+
+            // Dairy
+            milk: { calories: 42, protein: 3, carbs: 5, fat: 1, fiber: 0, sodium: 44, sugar: 5 },
+            cream: { calories: 340, protein: 2, carbs: 3, fat: 36, fiber: 0, sodium: 34, sugar: 3 },
+            cheese: { calories: 402, protein: 25, carbs: 1, fat: 33, fiber: 0, sodium: 621, sugar: 0 },
+            parmesan: { calories: 431, protein: 38, carbs: 4, fat: 29, fiber: 0, sodium: 1529, sugar: 1 },
+            cheddar: { calories: 403, protein: 25, carbs: 1, fat: 33, fiber: 0, sodium: 621, sugar: 0 },
+            mozzarella: { calories: 280, protein: 28, carbs: 3, fat: 17, fiber: 0, sodium: 628, sugar: 1 },
+            butter: { calories: 717, protein: 1, carbs: 0, fat: 81, fiber: 0, sodium: 11, sugar: 0 },
+            yogurt: { calories: 61, protein: 3, carbs: 5, fat: 3, fiber: 0, sodium: 46, sugar: 5 },
+
+            // Carbs
+            rice: { calories: 130, protein: 3, carbs: 28, fat: 0, fiber: 0, sodium: 1, sugar: 0 },
+            pasta: { calories: 131, protein: 5, carbs: 25, fat: 1, fiber: 2, sodium: 1, sugar: 1 },
+            spaghetti: { calories: 131, protein: 5, carbs: 25, fat: 1, fiber: 2, sodium: 1, sugar: 1 },
+            noodle: { calories: 138, protein: 5, carbs: 25, fat: 2, fiber: 1, sodium: 5, sugar: 0 },
+            bread: { calories: 265, protein: 9, carbs: 49, fat: 3, fiber: 3, sodium: 491, sugar: 5 },
+            flour: { calories: 364, protein: 10, carbs: 76, fat: 1, fiber: 3, sodium: 2, sugar: 0 },
+            potato: { calories: 77, protein: 2, carbs: 17, fat: 0, fiber: 2, sodium: 6, sugar: 1 },
+            oat: { calories: 389, protein: 17, carbs: 66, fat: 7, fiber: 11, sodium: 2, sugar: 1 },
+
+            // Vegetables
+            onion: { calories: 40, protein: 1, carbs: 9, fat: 0, fiber: 2, sodium: 4, sugar: 4 },
+            garlic: { calories: 149, protein: 6, carbs: 33, fat: 0, fiber: 2, sodium: 17, sugar: 1 },
+            tomato: { calories: 18, protein: 1, carbs: 4, fat: 0, fiber: 1, sodium: 5, sugar: 3 },
+            carrot: { calories: 41, protein: 1, carbs: 10, fat: 0, fiber: 3, sodium: 69, sugar: 5 },
+            broccoli: { calories: 34, protein: 3, carbs: 7, fat: 0, fiber: 3, sodium: 33, sugar: 2 },
+            spinach: { calories: 23, protein: 3, carbs: 4, fat: 0, fiber: 2, sodium: 79, sugar: 0 },
+            lettuce: { calories: 15, protein: 1, carbs: 3, fat: 0, fiber: 1, sodium: 28, sugar: 1 },
+            pepper: { calories: 31, protein: 1, carbs: 6, fat: 0, fiber: 2, sodium: 4, sugar: 4 },
+            mushroom: { calories: 22, protein: 3, carbs: 3, fat: 0, fiber: 1, sodium: 5, sugar: 2 },
+            celery: { calories: 14, protein: 1, carbs: 3, fat: 0, fiber: 2, sodium: 80, sugar: 1 },
+            zucchini: { calories: 17, protein: 1, carbs: 3, fat: 0, fiber: 1, sodium: 8, sugar: 3 },
+            cucumber: { calories: 15, protein: 1, carbs: 4, fat: 0, fiber: 1, sodium: 2, sugar: 2 },
+            corn: { calories: 86, protein: 3, carbs: 19, fat: 1, fiber: 2, sodium: 15, sugar: 3 },
+            pea: { calories: 81, protein: 5, carbs: 14, fat: 0, fiber: 5, sodium: 5, sugar: 6 },
+            bean: { calories: 127, protein: 9, carbs: 23, fat: 0, fiber: 8, sodium: 1, sugar: 0 },
+            cabbage: { calories: 25, protein: 1, carbs: 6, fat: 0, fiber: 3, sodium: 18, sugar: 3 },
+            cauliflower: { calories: 25, protein: 2, carbs: 5, fat: 0, fiber: 2, sodium: 30, sugar: 2 },
+            asparagus: { calories: 20, protein: 2, carbs: 4, fat: 0, fiber: 2, sodium: 2, sugar: 2 },
+            eggplant: { calories: 25, protein: 1, carbs: 6, fat: 0, fiber: 3, sodium: 2, sugar: 3 },
+            aubergine: { calories: 25, protein: 1, carbs: 6, fat: 0, fiber: 3, sodium: 2, sugar: 3 },
+
+            // Fruits
+            apple: { calories: 52, protein: 0, carbs: 14, fat: 0, fiber: 2, sodium: 1, sugar: 10 },
+            banana: { calories: 89, protein: 1, carbs: 23, fat: 0, fiber: 3, sodium: 1, sugar: 12 },
+            orange: { calories: 47, protein: 1, carbs: 12, fat: 0, fiber: 2, sodium: 0, sugar: 9 },
+            lemon: { calories: 29, protein: 1, carbs: 9, fat: 0, fiber: 3, sodium: 2, sugar: 3 },
+            lime: { calories: 30, protein: 1, carbs: 11, fat: 0, fiber: 3, sodium: 2, sugar: 2 },
+            mango: { calories: 60, protein: 1, carbs: 15, fat: 0, fiber: 2, sodium: 1, sugar: 14 },
+            strawberry: { calories: 32, protein: 1, carbs: 8, fat: 0, fiber: 2, sodium: 1, sugar: 5 },
+            blueberry: { calories: 57, protein: 1, carbs: 14, fat: 0, fiber: 2, sodium: 1, sugar: 10 },
+            raspberry: { calories: 52, protein: 1, carbs: 12, fat: 1, fiber: 7, sodium: 1, sugar: 4 },
+            grape: { calories: 69, protein: 1, carbs: 18, fat: 0, fiber: 1, sodium: 2, sugar: 16 },
+            pineapple: { calories: 50, protein: 1, carbs: 13, fat: 0, fiber: 1, sodium: 1, sugar: 10 },
+            coconut: { calories: 354, protein: 3, carbs: 15, fat: 33, fiber: 9, sodium: 20, sugar: 6 },
+            avocado: { calories: 160, protein: 2, carbs: 9, fat: 15, fiber: 7, sodium: 7, sugar: 1 },
+
+            // Oils and fats
+            oil: { calories: 884, protein: 0, carbs: 0, fat: 100, fiber: 0, sodium: 0, sugar: 0 },
+            olive: { calories: 884, protein: 0, carbs: 0, fat: 100, fiber: 0, sodium: 2, sugar: 0 },
+            vegetable: { calories: 884, protein: 0, carbs: 0, fat: 100, fiber: 0, sodium: 0, sugar: 0 },
+
+            // Sugars and sweeteners
+            sugar: { calories: 387, protein: 0, carbs: 100, fat: 0, fiber: 0, sodium: 0, sugar: 100 },
+            honey: { calories: 304, protein: 0, carbs: 82, fat: 0, fiber: 0, sodium: 4, sugar: 82 },
+            maple: { calories: 260, protein: 0, carbs: 67, fat: 0, fiber: 0, sodium: 12, sugar: 60 },
+
+            // Condiments and sauces
+            soy: { calories: 53, protein: 8, carbs: 5, fat: 0, fiber: 1, sodium: 5493, sugar: 1 },
+            ketchup: { calories: 112, protein: 1, carbs: 28, fat: 0, fiber: 0, sodium: 907, sugar: 22 },
+            mayonnaise: { calories: 680, protein: 1, carbs: 0, fat: 75, fiber: 0, sodium: 635, sugar: 0 },
+            mustard: { calories: 66, protein: 4, carbs: 5, fat: 4, fiber: 3, sodium: 1135, sugar: 2 },
+            vinegar: { calories: 18, protein: 0, carbs: 0, fat: 0, fiber: 0, sodium: 2, sugar: 0 },
+            worcestershire: { calories: 78, protein: 0, carbs: 19, fat: 0, fiber: 0, sodium: 980, sugar: 11 },
+
+            // Nuts and seeds
+            almond: { calories: 579, protein: 21, carbs: 22, fat: 50, fiber: 13, sodium: 1, sugar: 4 },
+            walnut: { calories: 654, protein: 15, carbs: 14, fat: 65, fiber: 7, sodium: 2, sugar: 3 },
+            peanut: { calories: 567, protein: 26, carbs: 16, fat: 49, fiber: 9, sodium: 18, sugar: 4 },
+            cashew: { calories: 553, protein: 18, carbs: 30, fat: 44, fiber: 3, sodium: 12, sugar: 6 },
+            sesame: { calories: 573, protein: 18, carbs: 23, fat: 50, fiber: 12, sodium: 11, sugar: 0 },
+
+            // Herbs and spices (small amounts, low impact)
+            salt: { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0, sodium: 38758, sugar: 0 },
+            pepper: { calories: 251, protein: 10, carbs: 64, fat: 3, fiber: 25, sodium: 20, sugar: 1 },
+            cinnamon: { calories: 247, protein: 4, carbs: 81, fat: 1, fiber: 53, sodium: 10, sugar: 2 },
+            cumin: { calories: 375, protein: 18, carbs: 44, fat: 22, fiber: 11, sodium: 168, sugar: 2 },
+            paprika: { calories: 282, protein: 14, carbs: 54, fat: 13, fiber: 35, sodium: 68, sugar: 10 },
+            oregano: { calories: 265, protein: 9, carbs: 69, fat: 4, fiber: 43, sodium: 25, sugar: 4 },
+            basil: { calories: 23, protein: 3, carbs: 3, fat: 1, fiber: 2, sodium: 4, sugar: 0 },
+            parsley: { calories: 36, protein: 3, carbs: 6, fat: 1, fiber: 3, sodium: 56, sugar: 1 },
+            thyme: { calories: 101, protein: 6, carbs: 24, fat: 2, fiber: 14, sodium: 9, sugar: 0 },
+            rosemary: { calories: 131, protein: 3, carbs: 21, fat: 6, fiber: 14, sodium: 26, sugar: 0 },
+            ginger: { calories: 80, protein: 2, carbs: 18, fat: 1, fiber: 2, sodium: 13, sugar: 2 },
+            turmeric: { calories: 312, protein: 10, carbs: 67, fat: 3, fiber: 23, sodium: 27, sugar: 3 },
+            chili: { calories: 40, protein: 2, carbs: 9, fat: 0, fiber: 2, sodium: 9, sugar: 5 },
+            curry: { calories: 325, protein: 14, carbs: 58, fat: 14, fiber: 35, sodium: 52, sugar: 3 },
+
+            // Legumes
+            lentil: { calories: 116, protein: 9, carbs: 20, fat: 0, fiber: 8, sodium: 2, sugar: 2 },
+            chickpea: { calories: 164, protein: 9, carbs: 27, fat: 3, fiber: 8, sodium: 7, sugar: 5 },
+
+            // Grains
+            quinoa: { calories: 120, protein: 4, carbs: 21, fat: 2, fiber: 3, sodium: 7, sugar: 1 },
+            couscous: { calories: 112, protein: 4, carbs: 23, fat: 0, fiber: 1, sodium: 5, sugar: 0 },
+
+            // Stocks and broths (very low nutrition - mostly water)
+            stock: { calories: 5, protein: 0.5, carbs: 0.5, fat: 0, fiber: 0, sodium: 300, sugar: 0 },
+            broth: { calories: 5, protein: 0.5, carbs: 0.5, fat: 0, fiber: 0, sodium: 300, sugar: 0 },
+            water: { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0, sodium: 0, sugar: 0 },
+
+            // Default fallback
+            default: { calories: 50, protein: 2, carbs: 10, fat: 1, fiber: 2, sodium: 20, sugar: 2 }
+        };
+
+        // Measurement conversions to grams (approximate)
+        const measurementToGrams = {
+            // Volume measurements (varies by ingredient, using averages)
+            'cup': 240,
+            'cups': 240,
+            'c': 240,
+            'tablespoon': 15,
+            'tablespoons': 15,
+            'tbsp': 15,
+            'tbs': 15,
+            'tblsp': 15,
+            'tbls': 15,
+            'teaspoon': 5,
+            'teaspoons': 5,
+            'tsp': 5,
+            'ml': 1,
+            'milliliter': 1,
+            'milliliters': 1,
+            'l': 1000,
+            'liter': 1000,
+            'liters': 1000,
+            'litre': 1000,
+            'litres': 1000,
+            'lt': 1000,
+            'fl oz': 30,
+            'fluid ounce': 30,
+            'fluid ounces': 30,
+            'pint': 473,
+            'pints': 473,
+            'quart': 946,
+            'quarts': 946,
+            'gallon': 3785,
+            'gallons': 3785,
+
+            // Weight measurements
+            'g': 1,
+            'gram': 1,
+            'grams': 1,
+            'kg': 1000,
+            'kilogram': 1000,
+            'kilograms': 1000,
+            'oz': 28,
+            'ounce': 28,
+            'ounces': 28,
+            'lb': 454,
+            'lbs': 454,
+            'pound': 454,
+            'pounds': 454,
+
+            // Count measurements (average grams per item)
+            'piece': 100,
+            'pieces': 100,
+            'slice': 30,
+            'slices': 30,
+            'clove': 3,
+            'cloves': 3,
+            'sprig': 2,
+            'sprigs': 2,
+            'bunch': 50,
+            'bunches': 50,
+            'leaf': 1,
+            'leaves': 1,
+            'stalk': 40,
+            'stalks': 40,
+            'head': 600,
+            'heads': 600,
+            'medium': 100,
+            'large': 150,
+            'small': 50,
+            'pinch': 1,  // 1 pinch = ~1 gram
+            'dash': 0.5,
+            'to taste': 1,
+            'handful': 30,
+            'stick': 5,
+            'sticks': 5,
+            'pod': 1,
+            'pods': 1,
+
+            // Default for unknown units
+            'default': 30
+        };
+
+        // Convert quantity string to grams
+        function convertToGrams(quantity, ingredientName) {
+            const parsed = parseQuantity(quantity);
+            if (parsed.number === null) {
+                // Non-numeric quantities like "to taste" - minimal contribution
+                return 1;
+            }
+
+            let unitLower = (parsed.unit || '').toLowerCase().trim();
+            const ingLower = ingredientName.toLowerCase();
+
+            // Strip common modifiers from unit
+            unitLower = unitLower.replace(/\s*(chopped|diced|sliced|minced|crushed|fresh|dried|ground|whole|of)\s*/gi, ' ').trim();
+
+            // Look up conversion factor (try exact match first)
+            let gramsPerUnit = measurementToGrams[unitLower];
+
+            // If no exact match, try partial match for known units
+            if (!gramsPerUnit) {
+                const unitParts = unitLower.split(/\s+/);
+                for (const part of unitParts) {
+                    if (measurementToGrams[part]) {
+                        gramsPerUnit = measurementToGrams[part];
+                        break;
+                    }
+                }
+            }
+
+            // Special handling for specific ingredients when no unit given
+            if (!gramsPerUnit) {
+                // Eggs - ~50g each
+                if (ingLower.includes('egg')) {
+                    gramsPerUnit = 50;
+                }
+                // Onions - ~150g each
+                else if (ingLower.includes('onion')) {
+                    gramsPerUnit = 150;
+                }
+                // Garlic cloves - ~3g each
+                else if (ingLower.includes('garlic')) {
+                    gramsPerUnit = 3;
+                }
+                // Lemons/limes - ~60g each
+                else if (ingLower.includes('lemon') || ingLower.includes('lime')) {
+                    gramsPerUnit = 60;
+                }
+                // Tomatoes - ~120g each
+                else if (ingLower.includes('tomato')) {
+                    gramsPerUnit = 120;
+                }
+                // Potatoes - ~150g each
+                else if (ingLower.includes('potato')) {
+                    gramsPerUnit = 150;
+                }
+                // Carrots - ~60g each
+                else if (ingLower.includes('carrot')) {
+                    gramsPerUnit = 60;
+                }
+                // Peppers - ~150g each
+                else if (ingLower.includes('pepper') && !ingLower.includes('black pepper')) {
+                    gramsPerUnit = 150;
+                }
+                // Apples - ~180g each
+                else if (ingLower.includes('apple')) {
+                    gramsPerUnit = 180;
+                }
+                // Bananas - ~120g each
+                else if (ingLower.includes('banana')) {
+                    gramsPerUnit = 120;
+                }
+                // Chicken breasts - ~200g each
+                else if (ingLower.includes('chicken breast')) {
+                    gramsPerUnit = 200;
+                }
+                // Generic "pods" (cardamom etc) - tiny
+                else if (unitLower.includes('pod')) {
+                    gramsPerUnit = 1;
+                }
+                // Sprigs (herbs) - tiny
+                else if (unitLower.includes('sprig')) {
+                    gramsPerUnit = 2;
+                }
+                // Default for truly unknown: assume small amount (30g)
+                else {
+                    gramsPerUnit = 30;
+                }
+            }
+
+            return parsed.number * gramsPerUnit;
+        }
+
+        // Get nutrition for an ingredient (per 100g) from database
+        function getIngredientNutrition(ingredientName) {
+            const nameLower = ingredientName.toLowerCase();
+
+            // Look for matching key in database
+            for (const [key, nutrition] of Object.entries(nutritionDatabase)) {
+                if (nameLower.includes(key)) {
+                    return { ...nutrition };
+                }
+            }
+
+            return { ...nutritionDatabase.default };
+        }
+
+        // Calculate total recipe nutrition from all ingredients
+        function calculateRecipeNutrition(ingredients) {
+            const totals = {
+                calories: 0,
+                protein: 0,
+                carbs: 0,
+                fat: 0,
+                fiber: 0,
+                sodium: 0,
+                sugar: 0
+            };
+
+            for (const ing of ingredients) {
+                const grams = convertToGrams(ing.quantity, ing.name);
+                const nutritionPer100g = getIngredientNutrition(ing.name);
+
+                // Scale nutrition by actual grams (nutrition values are per 100g)
+                const factor = grams / 100;
+
+                totals.calories += nutritionPer100g.calories * factor;
+                totals.protein += nutritionPer100g.protein * factor;
+                totals.carbs += nutritionPer100g.carbs * factor;
+                totals.fat += nutritionPer100g.fat * factor;
+                totals.fiber += nutritionPer100g.fiber * factor;
+                totals.sodium += nutritionPer100g.sodium * factor;
+                totals.sugar += nutritionPer100g.sugar * factor;
+            }
+
+            return totals;
+        }
+
+        // Get per-serving nutrition (always calculate for 1 serving)
+        function getPerServingNutrition(ingredients, servings) {
+            const totalNutrition = calculateRecipeNutrition(ingredients);
+
+            return {
+                calories: Math.round(totalNutrition.calories / servings),
+                protein: Math.round(totalNutrition.protein * 10 / servings) / 10,
+                carbs: Math.round(totalNutrition.carbs * 10 / servings) / 10,
+                fat: Math.round(totalNutrition.fat * 10 / servings) / 10,
+                fiber: Math.round(totalNutrition.fiber * 10 / servings) / 10,
+                sodium: Math.round(totalNutrition.sodium / servings),
+                sugar: Math.round(totalNutrition.sugar * 10 / servings) / 10
+            };
+        }
+
+        // Render nutrition section - uses cached HTML if available, otherwise calculates immediately
+        function renderNutritionSection() {
+            // If we have cached nutrition HTML, use it (no re-calculation needed)
+            if (cachedNutritionHTML) {
+                return cachedNutritionHTML;
+            }
+
+            // First render - calculate nutrition immediately (no loading spinner)
+            const { ingredients } = recipeData;
+            const nutrition = getPerServingNutrition(ingredients, originalServings);
+            nutritionDataLoaded = true;
+
+            const nutrients = [
+                { key: 'calories', name: 'Calories', icon: '&#128293;', unit: 'kcal', dv: dailyValues.calories },
+                { key: 'protein', name: 'Protein', icon: '&#127830;', unit: 'g', dv: dailyValues.protein },
+                { key: 'carbs', name: 'Carbohydrates', icon: '&#127834;', unit: 'g', dv: dailyValues.carbs },
+                { key: 'fat', name: 'Fat', icon: '&#129361;', unit: 'g', dv: dailyValues.fat },
+                { key: 'fiber', name: 'Fiber', icon: '&#127807;', unit: 'g', dv: dailyValues.fiber },
+                { key: 'sodium', name: 'Sodium', icon: '&#129474;', unit: 'mg', dv: dailyValues.sodium },
+                { key: 'sugar', name: 'Sugar', icon: '&#127852;', unit: 'g', dv: dailyValues.sugar }
+            ];
+
+            cachedNutritionHTML = `
+                <div class="nutrition-section" id="nutrition-section">
+                    <h3>
+                        <img src="/static/images/chart.svg" alt="Nutrition" style="width:20px;">
+                        Nutrition Facts
+                        <span class="nutrition-per-serving">per serving (estimated)</span>
+                    </h3>
+                    ${nutrients.map(n => {
+                        const value = nutrition[n.key] || 0;
+                        const dvPercent = Math.round((value / n.dv) * 100);
+                        const barWidth = Math.min(100, dvPercent);
+                        let dvClass = '';
+                        if (dvPercent >= 100) dvClass = 'high';
+                        else if (dvPercent >= 50) dvClass = 'moderate';
+
+                        return `
+                            <div class="nutrition-stat">
+                                <div class="nutrition-stat-header">
+                                    <span class="nutrition-stat-name"><span class="icon">${n.icon}</span>${n.name}</span>
+                                    <div class="nutrition-stat-values">
+                                        <span class="nutrition-stat-amount">${value}${n.unit}</span>
+                                        <span class="nutrition-stat-dv ${dvClass}">${dvPercent}% DV</span>
+                                    </div>
+                                </div>
+                                <div class="nutrition-bar">
+                                    <div class="nutrition-bar-fill ${n.key}" style="width: ${barWidth}%"></div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+
+            return cachedNutritionHTML;
+        }
+
+        // Fetch nutrition from backend API and update display
+        async function loadNutritionData(ingredients, servings) {
+            try {
+                const response = await fetch('/api/nutrition/recipe', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ingredients, servings })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch nutrition data');
+                }
+
+                const data = await response.json();
+                updateNutritionDisplay(data);
+            } catch (error) {
+                console.error('Nutrition API error:', error);
+                // Fallback to client-side calculation
+                const nutrition = getPerServingNutrition(ingredients, servings);
+                updateNutritionDisplayFromLocal(nutrition);
+            }
+        }
+
+        // Update nutrition display with API data
+        function updateNutritionDisplay(data) {
+            const section = document.getElementById('nutrition-section');
+            if (!section) return;
+
+            const nutrition = data.per_serving;
+            const dvPercent = data.percent_daily_value;
+
+            const nutrients = [
+                { key: 'calories', name: 'Calories', icon: '&#128293;', unit: 'kcal' },
+                { key: 'protein', name: 'Protein', icon: '&#127830;', unit: 'g' },
+                { key: 'carbs', name: 'Carbohydrates', icon: '&#127834;', unit: 'g' },
+                { key: 'fat', name: 'Fat', icon: '&#129361;', unit: 'g' },
+                { key: 'fiber', name: 'Fiber', icon: '&#127807;', unit: 'g' },
+                { key: 'sodium', name: 'Sodium', icon: '&#129474;', unit: 'mg' },
+                { key: 'sugar', name: 'Sugar', icon: '&#127852;', unit: 'g' }
+            ];
+
+            section.innerHTML = `
+                <h3>
+                    <img src="/static/images/chart.svg" alt="Nutrition" style="width:20px;">
+                    Nutrition Facts
+                    <span class="nutrition-per-serving">per serving (${data.servings} servings total)</span>
+                </h3>
+                ${nutrients.map(n => {
+                    const value = nutrition[n.key] || 0;
+                    const dv = dvPercent[n.key] || 0;
+                    const barWidth = Math.min(100, dv);
+                    let dvClass = '';
+                    if (dv >= 100) dvClass = 'high';
+                    else if (dv >= 50) dvClass = 'moderate';
+
+                    return `
+                        <div class="nutrition-stat">
+                            <div class="nutrition-stat-header">
+                                <span class="nutrition-stat-name"><span class="icon">${n.icon}</span>${n.name}</span>
+                                <div class="nutrition-stat-values">
+                                    <span class="nutrition-stat-amount">${value}${n.unit}</span>
+                                    <span class="nutrition-stat-dv ${dvClass}">${dv}% DV</span>
+                                </div>
+                            </div>
+                            <div class="nutrition-bar">
+                                <div class="nutrition-bar-fill ${n.key}" style="width: ${barWidth}%"></div>
+                            </div>
+                        </div>
+                    `;
+                }).join('')}
+            `;
+        }
+
+        // Fallback: update from local calculation
+        function updateNutritionDisplayFromLocal(nutrition) {
+            const section = document.getElementById('nutrition-section');
+            if (!section) return;
+
+            const nutrients = [
+                { key: 'calories', name: 'Calories', icon: '&#128293;', unit: 'kcal', dv: dailyValues.calories },
+                { key: 'protein', name: 'Protein', icon: '&#127830;', unit: 'g', dv: dailyValues.protein },
+                { key: 'carbs', name: 'Carbohydrates', icon: '&#127834;', unit: 'g', dv: dailyValues.carbs },
+                { key: 'fat', name: 'Fat', icon: '&#129361;', unit: 'g', dv: dailyValues.fat },
+                { key: 'fiber', name: 'Fiber', icon: '&#127807;', unit: 'g', dv: dailyValues.fiber },
+                { key: 'sodium', name: 'Sodium', icon: '&#129474;', unit: 'mg', dv: dailyValues.sodium },
+                { key: 'sugar', name: 'Sugar', icon: '&#127852;', unit: 'g', dv: dailyValues.sugar }
+            ];
+
+            section.innerHTML = `
+                <h3>
+                    <img src="/static/images/chart.svg" alt="Nutrition" style="width:20px;">
+                    Nutrition Facts
+                    <span class="nutrition-per-serving">per serving (estimated)</span>
+                </h3>
+                ${nutrients.map(n => {
+                    const value = nutrition[n.key] || 0;
+                    const dvPercent = Math.round((value / n.dv) * 100);
+                    const barWidth = Math.min(100, dvPercent);
+                    let dvClass = '';
+                    if (dvPercent >= 100) dvClass = 'high';
+                    else if (dvPercent >= 50) dvClass = 'moderate';
+
+                    return `
+                        <div class="nutrition-stat">
+                            <div class="nutrition-stat-header">
+                                <span class="nutrition-stat-name"><span class="icon">${n.icon}</span>${n.name}</span>
+                                <div class="nutrition-stat-values">
+                                    <span class="nutrition-stat-amount">${value}${n.unit}</span>
+                                    <span class="nutrition-stat-dv ${dvClass}">${dvPercent}% DV</span>
+                                </div>
+                            </div>
+                            <div class="nutrition-bar">
+                                <div class="nutrition-bar-fill ${n.key}" style="width: ${barWidth}%"></div>
+                            </div>
+                        </div>
+                    `;
+                }).join('')}
+            `;
+        }
+
+        // Step type detection keywords
+        const stepTypes = {
+            prep: {
+                keywords: ['chop', 'dice', 'slice', 'cut', 'peel', 'mince', 'grate', 'wash', 'rinse', 'drain', 'measure', 'julienne', 'cube', 'quarter', 'halve', 'trim', 'deseed', 'core', 'zest'],
+                icon: '&#128298;',
+                color: '#9b59b6',
+                label: 'Mise en Place'
+            },
+            cook: {
+                keywords: ['cook', 'fry', 'bake', 'roast', 'boil', 'simmer', 'saute', 'sear', 'grill', 'broil', 'steam', 'heat', 'brown', 'caramelize', 'reduce', 'deep-fry', 'pan-fry', 'stir-fry', 'melt', 'pan', 'pot', 'oven', 'skillet', 'wok', 'add', 'pour', 'mix', 'stir', 'combine', 'whisk', 'beat', 'blend', 'fold', 'toss', 'incorporate', 'season', 'coat', 'bread', 'marinate', 'soak', 'prepare'],
+                icon: '&#128293;',
+                color: '#e74c3c',
+                label: 'Cooking'
+            },
+            wait: {
+                keywords: ['wait', 'let', 'rest', 'cool', 'set', 'chill', 'refrigerate', 'freeze', 'rise', 'proof', 'stand'],
+                icon: '&#9202;',
+                color: '#f39c12',
+                label: 'Timing'
+            },
+            serve: {
+                keywords: ['serve', 'plate', 'garnish', 'top', 'drizzle', 'sprinkle', 'finish', 'arrange', 'present', 'enjoy'],
+                icon: '&#127869;',
+                color: '#27ae60',
+                label: 'Serving'
+            }
+        };
+
+        function detectStepType(instruction) {
+            const lowerInstr = instruction.toLowerCase();
+
+            // Check for cooking indicators first (these override prep)
+            const cookingIndicators = ['pan', 'pot', 'oven', 'skillet', 'wok', 'heat', 'melt', 'fry', 'bake', 'roast', 'boil', 'simmer', 'saute', 'sear', 'grill', 'broil', 'steam', 'brown', 'caramelize', 'reduce', 'add to', 'pour into', 'stir in'];
+            for (const indicator of cookingIndicators) {
+                if (lowerInstr.includes(indicator)) {
+                    return 'cook';
+                }
+            }
+
+            // Then check other types in order
+            for (const [type, config] of Object.entries(stepTypes)) {
+                for (const keyword of config.keywords) {
+                    if (lowerInstr.includes(keyword)) {
+                        return type;
+                    }
+                }
+            }
+            return 'cook'; // Default
+        }
+
+        // Generate mise en place steps from ingredients
+        // Groups ingredients that are used together in the same cooking step
+        function generateMiseEnPlace(ingredients, steps, multiplier = 1) {
+            const miseSteps = [];
+            const usedIngredients = new Set();
+
+            // For each cooking step, find which ingredients are mentioned
+            // and create a mise en place group for ingredients used together
+            steps.forEach((step, stepIndex) => {
+                const stepLower = step.instruction.toLowerCase();
+                const ingredientsInStep = [];
+
+                ingredients.forEach(ing => {
+                    const ingName = ing.name.toLowerCase();
+                    // Check if ingredient is mentioned in this step
+                    if (stepLower.includes(ingName) && !usedIngredients.has(ing.name)) {
+                        ingredientsInStep.push(ing);
+                        usedIngredients.add(ing.name);
+                    }
+                });
+
+                if (ingredientsInStep.length > 0) {
+                    // Separate items that need cutting vs just measuring
+                    const needsCutting = ingredientsInStep.filter(ing => {
+                        const q = (ing.quantity || '').toLowerCase();
+                        return q.includes('chop') || q.includes('dice') || q.includes('slice') ||
+                               q.includes('mince') || q.includes('cut') || q.includes('julienne') ||
+                               q.includes('cubed') || q.includes('grated') || q.includes('zest');
+                    });
+                    const justMeasure = ingredientsInStep.filter(ing => !needsCutting.includes(ing));
+
+                    // Create cutting step if needed
+                    if (needsCutting.length > 0) {
+                        const ingList = needsCutting.map(i => `${formatQuantityWithGrams(i.quantity, i.name, multiplier)} ${i.name}`).join(', ');
+                        miseSteps.push({
+                            type: 'cut',
+                            instruction: `Cut and prepare: ${ingList}`,
+                            ingredients: needsCutting,
+                            forStep: stepIndex + 1
+                        });
+                    }
+
+                    // Create measuring step
+                    if (justMeasure.length > 0) {
+                        const ingList = justMeasure.map(i => `${formatQuantityWithGrams(i.quantity, i.name, multiplier)} ${i.name}`).join(', ');
+                        const bowlLabel = ingredientsInStep.length > 1 ? ` (Bowl ${miseSteps.length + 1})` : '';
+                        miseSteps.push({
+                            type: 'measure',
+                            instruction: `Measure out${bowlLabel}: ${ingList}`,
+                            ingredients: justMeasure,
+                            forStep: stepIndex + 1
+                        });
+                    }
+                }
+            });
+
+            // Add any remaining ingredients not mentioned in steps
+            const remainingIngredients = ingredients.filter(ing => !usedIngredients.has(ing.name));
+            if (remainingIngredients.length > 0) {
+                const ingList = remainingIngredients.map(i => `${formatQuantityWithGrams(i.quantity, i.name, multiplier)} ${i.name}`).join(', ');
+                miseSteps.push({
+                    type: 'measure',
+                    instruction: `Measure remaining ingredients: ${ingList}`,
+                    ingredients: remainingIngredients,
+                    forStep: null
+                });
+            }
+
+            return miseSteps;
+        }
+
+        async function loadRecipe() {
+            try {
+                const response = await fetch(`/api/mealdb/recipe/${mealId}`);
+                recipeData = await response.json();
+
+                // Initialize servings
+                originalServings = parseInt(recipeData.recipe.servings) || 4;
+                if (currentServings === null) {
+                    currentServings = originalServings;
+                }
+
+                renderRecipe();
+                document.getElementById('action-buttons').style.display = 'flex';
+                document.getElementById('cook-btn').href = `/cook/mealdb/${mealId}`;
+
+                if (recipeData.recipe.youtube_url) {
+                    document.getElementById('youtube-btn').href = recipeData.recipe.youtube_url;
+                    document.getElementById('youtube-btn').style.display = 'flex';
+                }
+            } catch (error) {
+                document.getElementById('recipe-content').innerHTML =
+                    '<div class="empty-state"><p>Failed to load recipe</p></div>';
+            }
+        }
+
+        function renderRecipe() {
+            const { recipe, ingredients, steps } = recipeData;
+
+            // Calculate scaling multiplier
+            const multiplier = currentServings / originalServings;
+            const isScaled = multiplier !== 1;
+
+            // Generate mise en place steps from ingredients (with scaled quantities)
+            // Group ingredients by which step they first appear in
+            const miseEnPlaceSteps = generateMiseEnPlace(ingredients, steps, multiplier);
+
+            // All original recipe steps become cooking steps (in order)
+            const cookingSteps = steps.map((step, index) => ({
+                ...step,
+                originalIndex: index,
+                type: detectStepType(step.instruction)
+            }));
+
+            document.getElementById('recipe-content').innerHTML = `
+                <div class="recipe-header" style="padding: 12px 16px;">
+                    <div style="display: flex; align-items: center; gap: 16px;">
+                        <a href="javascript:history.back()" class="back-btn" style="color: white;">
+                            <img src="/static/images/arrow-left.svg" alt="Back" style="width:16px;filter:brightness(0) invert(1);">
+                        </a>
+                        ${recipe.image_url
+                            ? `<div style="width: 100px; height: 100px; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.3); flex-shrink: 0;">
+                                <img src="${recipe.image_url}" alt="${recipe.name}" style="width: 100%; height: 100%; object-fit: cover;">
+                               </div>`
+                            : ''}
+                        <div style="flex: 1; text-align: left;">
+                            <h1 style="font-size: 1.3rem; margin: 0;">${recipe.name}</h1>
+                            <div class="card-tags" style="justify-content: flex-start; margin-top: 4px;">
+                                ${recipe.category ? `<span class="card-tag" style="background:rgba(255,255,255,0.2);color:white;font-size:0.7rem;">${recipe.category}</span>` : ''}
+                                ${recipe.cuisine ? `<span class="card-tag" style="background:rgba(255,255,255,0.2);color:white;font-size:0.7rem;">${recipe.cuisine}</span>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="recipe-header-content" style="margin-top: 12px;">
+                         <div class="serving-control">
+                            <button class="serving-btn" onclick="changeServings(-1)">−</button>
+                            <span class="serving-value">${currentServings} servings</span>
+                            <button class="serving-btn" onclick="changeServings(1)">+</button>
+                        </div>
+                        <div class="recipe-stats">
+                            <div class="stat">
+                                <img src="/static/images/recipe.svg" alt="Steps" class="stat-icon" style="filter:brightness(0) invert(1);">
+                                <div class="stat-value">${steps.length}</div>
+                                <div class="stat-label">Steps</div>
+                            </div>
+                            <div class="stat">
+                                <img src="/static/images/ingredient.svg" alt="Ingredients" class="stat-icon" style="filter:brightness(0) invert(1);">
+                                <div class="stat-value">${ingredients.length}</div>
+                                <div class="stat-label">Ingredients</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-title-row">
+                        <h2 class="section-title">
+                            <img src="/static/images/ingredient.svg" alt="Ingredients">
+                            Ingredients ${isScaled ? `<span class="scaled-badge">×${multiplier.toFixed(1)}</span>` : ''}
+                        </h2>
+                        <button class="unit-toggle-btn" onclick="toggleUnits()">
+                            <span class="icon">&#9878;</span>
+                            ${unitDisplayMode === 'original' ? 'Original' : unitDisplayMode === 'metric' ? 'Metric' : 'US'}
+                        </button>
+                    </div>
+                    ${(() => {
+                        const synergies = detectSynergies(ingredients);
+                        if (synergies.length === 0) return '';
+                        return `
+                            <div class="synergy-banner">
+                                ${synergies.map(s => `
+                                    <div class="synergy-item" title="${s.description}">
+                                        <span class="synergy-icon">${s.icon}</span>
+                                        <span class="synergy-effect">${s.effect}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        `;
+                    })()}
+                    <div class="recipe-grid" style="grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 16px;">
+                        ${ingredients.map((ing, index) => {
+                            const displays = getQuantityDisplays(ing.quantity, ing.name, multiplier);
+                            const primaryQty = unitDisplayMode === 'metric' ? (displays.metric || displays.original)
+                                             : unitDisplayMode === 'customary' ? (displays.customary || displays.original)
+                                             : displays.original;
+                            // Show secondary only if different from primary and in original mode
+                            const showSecondary = unitDisplayMode === 'original' && displays.metric && !displays.isMetric;
+                            return `
+                            <a href="/ingredient/${encodeURIComponent(ing.name)}" class="interactive-card bounce-in" style="animation-delay: ${index * 0.03}s" onmousemove="handle3DMove(event, this)" onmouseleave="handle3DLeave(this)">
+                                <div class="card-glow"></div>
+                                <div class="card-inner ingredient-card-wrapper">
+                                    <div class="card-glare"></div>
+                                    <div class="ingredient-image">
+                                        <img src="${ing.image_url}" alt="${ing.name}"
+                                             onerror="this.src='/static/images/ingredient.svg'">
+                                    </div>
+                                    <div class="ingredient-name">${ing.name}</div>
+                                    <div class="ingredient-amount">${primaryQty}</div>
+                                    ${showSecondary ? `<div class="ingredient-amount-secondary">(${displays.metric})</div>` : ''}
+                                    ${renderIngredientTags(ing.name)}
+                                </div>
+                            </a>
+                        `}).join('')}
+                    </div>
+                </div>
+
+                <div class="section">
+                    ${renderNutritionSection()}
+                </div>
+
+                ${miseEnPlaceSteps.length > 0 ? `
+                <div class="section">
+                    <h2 class="section-title">
+                        <img src="/static/images/ingredient.svg" alt="Mise en Place">
+                        Mise en Place
+                    </h2>
+                    <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 16px;">
+                        Measure and prep everything first - cooking is easier when ingredients are ready
+                    </p>
+
+                    <div class="steps-deck">
+                        ${miseEnPlaceSteps.map((step, i) => {
+                            const isCut = step.type === 'cut';
+                            const icon = isCut ? '&#128298;' : '&#129383;'; // knife or measuring cup
+                            const label = isCut ? 'Cut & Prep' : 'Measure';
+                            const color = isCut ? 'prep' : 'mix';
+                            const forStepLabel = step.forStep ? ` → Step ${step.forStep}` : '';
+                            return `
+                                <div class="step-card bounce-in" style="animation-delay: ${i * 0.05}s">
+                                    <div class="step-card-image">
+                                        <img src="${recipe.image_url}" alt="Prep ${i + 1}">
+                                        <div class="step-card-image-overlay"></div>
+                                        <div class="step-number-badge ${color}">${i + 1}</div>
+                                        <div class="step-type-icon">${icon}</div>
+                                    </div>
+                                    <div class="step-card-body">
+                                        <div class="step-card-title">${label}${forStepLabel}</div>
+                                        <p class="step-card-instruction">${step.instruction}</p>
+                                        <div class="step-card-tags">
+                                            <span class="step-tag ${color}">${label}</span>
+                                            ${step.forStep ? `<span class="step-tag wait">For Step ${step.forStep}</span>` : ''}
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+                ` : ''}
+
+                <div class="section" style="margin-bottom: 160px;">
+                    <h2 class="section-title">
+                        <img src="/static/images/recipe.svg" alt="Steps">
+                        Cooking Steps
+                    </h2>
+
+                    <div class="steps-deck">
+                        ${cookingSteps.map((step, i) => {
+                            const config = stepTypes[step.type];
+                            const scaledInstruction = scaleStepInstruction(step.instruction, ingredients, multiplier);
+                            return `
+                                <div class="interactive-card step-card bounce-in" style="animation-delay: ${i * 0.05}s" onmousemove="handle3DMove(event, this)" onmouseleave="handle3DLeave(this)">
+                                    <div class="card-glow"></div>
+                                    <div class="card-inner">
+                                        <div class="card-glare"></div>
+                                        <div class="step-card-image">
+                                            <img src="${recipe.image_url}" alt="Step ${i + 1}">
+                                            <div class="step-card-image-overlay"></div>
+                                            <div class="step-number-badge ${step.type}">${i + 1}</div>
+                                            <div class="step-type-icon">${config.icon}</div>
+                                        </div>
+                                        <div class="step-card-body">
+                                            <div class="step-card-title">${step.title || 'Step ' + (i + 1)}</div>
+                                            <p class="step-card-instruction">${scaledInstruction}</p>
+                                            <div class="step-card-tags">
+                                                <span class="step-tag ${step.type}">${config.label}</span>
+                                                ${step.timer_needed ? '<span class="step-tag timer">&#9202; Timer</span>' : ''}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        loadRecipe();
+    </script>
+</body>
+</html>

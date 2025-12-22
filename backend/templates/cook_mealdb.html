@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Cooking - Food App</title>
+    <link rel="stylesheet" href="/static/css/style.css?v=20241218">
+    <style>
+        .cooking-container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg);
+        }
+
+        .cooking-header {
+            padding: 16px 60px;
+            background: var(--card-bg);
+            border-bottom: 1px solid var(--border);
+            position: relative;
+            text-align: center;
+        }
+
+        .cooking-header h1 {
+            font-size: 1.1rem;
+            margin: 0 0 8px 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .exit-btn {
+            position: absolute;
+            top: 50%;
+            left: 12px;
+            transform: translateY(-50%);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+
+        .exit-btn:hover {
+            background: var(--danger);
+            border-color: var(--danger);
+        }
+
+        .exit-btn:hover img {
+            filter: brightness(0) invert(1);
+        }
+
+        .exit-btn img {
+            width: 18px;
+            height: 18px;
+        }
+
+        .progress-bar {
+            height: 4px;
+            background: var(--border);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--primary);
+            transition: width 0.3s ease;
+        }
+
+        /* Card carousel layout */
+        .step-deck {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .carousel-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            max-width: 900px;
+            gap: 16px;
+        }
+
+        /* Arrow buttons */
+        .carousel-arrow {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            flex-shrink: 0;
+            z-index: 20;
+        }
+
+        .carousel-arrow:hover:not(:disabled) {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .carousel-arrow:hover:not(:disabled) img {
+            filter: brightness(0) invert(1);
+        }
+
+        .carousel-arrow:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .carousel-arrow img {
+            width: 20px;
+            height: 20px;
+        }
+
+        /* Cards container */
+        .cards-viewport {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+            position: relative;
+            height: 60vh;
+            max-height: 500px;
+            perspective: 1500px;
+        }
+
+        /* Individual cards */
+        .step-card-wrapper {
+            position: absolute;
+            width: 280px;
+            max-width: 35%;
+            height: 100%;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-style: preserve-3d;
+        }
+
+        .step-card-wrapper.active {
+            transform: translateX(0) scale(1);
+            z-index: 10;
+            opacity: 1;
+        }
+
+        .step-card-wrapper.prev {
+            transform: translateX(-110%) scale(0.85);
+            z-index: 5;
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        .step-card-wrapper.next {
+            transform: translateX(110%) scale(0.85);
+            z-index: 5;
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        .step-card-wrapper.hidden {
+            transform: translateX(200%) scale(0.7);
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .step-card {
+            width: 100%;
+            height: 100%;
+            background: var(--card-bg);
+            border-radius: var(--radius-lg);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .step-card-wrapper.active .step-card {
+            box-shadow: 0 15px 50px rgba(0,0,0,0.25);
+        }
+
+        .step-image {
+            height: 140px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            position: relative;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .step-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .step-image-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 12px;
+            background: linear-gradient(transparent, rgba(0,0,0,0.7));
+            color: white;
+            font-size: 0.8rem;
+        }
+
+        .step-number-badge {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            width: 36px;
+            height: 36px;
+            background: var(--primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            font-weight: 700;
+            color: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+
+        /* Step type badge */
+        .step-type-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: white;
+            text-transform: uppercase;
+        }
+
+        .step-type-badge.prep { background: #9b59b6; }
+        .step-type-badge.cook { background: #e67e22; }
+        .step-type-badge.wait { background: #3498db; }
+        .step-type-badge.serve { background: #27ae60; }
+
+        .step-body {
+            flex: 1;
+            padding: 16px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .step-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text);
+        }
+
+        .step-instruction {
+            font-size: 0.85rem;
+            line-height: 1.6;
+            color: var(--text);
+            flex: 1;
+        }
+
+        /* Embedded Timer */
+        .timer-container {
+            background: var(--bg);
+            border-radius: var(--radius);
+            padding: 12px;
+            margin-top: 12px;
+            text-align: center;
+        }
+
+        .timer-display {
+            font-size: 2rem;
+            font-weight: 700;
+            font-family: 'SF Mono', Monaco, monospace;
+            color: var(--primary);
+            margin-bottom: 8px;
+        }
+
+        .timer-display.running {
+            color: var(--success);
+        }
+
+        .timer-display.finished {
+            color: var(--danger);
+            animation: timer-pulse 0.5s infinite;
+        }
+
+        @keyframes timer-pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .timer-controls {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+        }
+
+        .timer-btn {
+            padding: 6px 16px;
+            border-radius: var(--radius);
+            border: none;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .timer-btn.start {
+            background: var(--success);
+            color: white;
+        }
+
+        .timer-btn.pause {
+            background: var(--warning);
+            color: white;
+        }
+
+        .timer-btn.reset {
+            background: var(--border);
+            color: var(--text);
+        }
+
+        .timer-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .timer-preset-btns {
+            display: flex;
+            gap: 6px;
+            justify-content: center;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+        }
+
+        .timer-preset {
+            padding: 4px 10px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            background: var(--card-bg);
+            font-size: 0.7rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .timer-preset:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* Step indicators */
+        .step-indicators {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            padding: 12px;
+            flex-wrap: wrap;
+        }
+
+        .step-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--border-dark);
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .step-dot.active {
+            background: var(--primary);
+            transform: scale(1.4);
+        }
+
+        .step-dot.completed {
+            background: var(--success);
+        }
+
+        /* Footer */
+        .step-footer {
+            padding: 12px 16px;
+            background: var(--card-bg);
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .step-counter {
+            font-size: 0.9rem;
+            color: var(--text-light);
+            font-weight: 500;
+        }
+
+        /* Done overlay */
+        .done-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, var(--success) 0%, #1e8449 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            z-index: 100;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.5s ease;
+        }
+
+        .done-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .done-icon {
+            width: 100px;
+            height: 100px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            animation: pulse-done 2s infinite;
+        }
+
+        @keyframes pulse-done {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .done-overlay h1 {
+            font-size: 1.8rem;
+            margin-bottom: 8px;
+        }
+
+        .done-overlay p {
+            opacity: 0.9;
+            margin-bottom: 20px;
+        }
+
+        .done-btn {
+            padding: 12px 24px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 2px solid white;
+            border-radius: var(--radius);
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .done-btn:hover {
+            background: white;
+            color: var(--success);
+        }
+
+        /* Mobile adjustments */
+        @media (max-width: 600px) {
+            .step-card-wrapper {
+                width: 240px;
+                max-width: 60%;
+            }
+
+            .step-card-wrapper.prev,
+            .step-card-wrapper.next {
+                transform: translateX(-80%) scale(0.75);
+                opacity: 0.4;
+            }
+
+            .step-card-wrapper.next {
+                transform: translateX(80%) scale(0.75);
+            }
+
+            .carousel-arrow {
+                width: 40px;
+                height: 40px;
+            }
+
+            .cards-viewport {
+                height: 55vh;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="cooking-container">
+        <header class="cooking-header">
+            <a href="/recipe/mealdb/{{ meal_id }}" class="exit-btn" title="Exit cooking mode">
+                <img src="/static/images/x.svg" alt="Exit">
+            </a>
+            <h1 id="recipe-name">Loading...</h1>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+            </div>
+        </header>
+
+        <div class="step-deck" id="step-deck">
+            <div class="loading">
+                <div class="loading-spinner"></div>
+                Loading recipe...
+            </div>
+        </div>
+
+        <div class="step-indicators" id="step-indicators"></div>
+
+        <footer class="step-footer" id="step-footer" style="display:none;">
+            <span class="step-counter" id="step-counter">1 / 1</span>
+        </footer>
+    </div>
+
+    <div class="done-overlay" id="done-overlay">
+        <div class="done-icon">
+            <img src="/static/images/celebration.svg" alt="Done" style="width:50px;filter:brightness(0) invert(1);">
+        </div>
+        <h1>Bon Appetit!</h1>
+        <p>Your dish is ready to serve</p>
+        <a href="/recipe/mealdb/{{ meal_id }}" class="done-btn">Back to Recipe</a>
+    </div>
+
+    <script>
+        const mealId = '{{ meal_id }}';
+        let allSteps = [];  // Combined mise en place + cooking steps
+        let currentStep = 0;
+        let recipeImage = '';
+        let timers = {};  // Track timers by step index
+
+        // Detect step type from instruction text
+        function detectStepType(instruction) {
+            const text = instruction.toLowerCase();
+            const cookingIndicators = ['heat', 'cook', 'fry', 'bake', 'roast', 'boil', 'simmer', 'sauté', 'saute', 'grill', 'broil', 'steam', 'stir', 'brown', 'sear', 'reduce', 'toast', 'warm', 'melt'];
+            const prepIndicators = ['chop', 'dice', 'slice', 'mince', 'cut', 'peel', 'wash', 'measure', 'combine', 'mix', 'whisk', 'prep', 'prepare', 'gather'];
+            const waitIndicators = ['wait', 'rest', 'let', 'allow', 'cool', 'chill', 'refrigerate', 'marinate', 'set aside', 'minutes', 'hour'];
+            const serveIndicators = ['serve', 'plate', 'garnish', 'top with', 'enjoy', 'present'];
+
+            if (serveIndicators.some(i => text.includes(i))) return 'serve';
+            if (cookingIndicators.some(i => text.includes(i))) return 'cook';
+            if (waitIndicators.some(i => text.includes(i))) return 'wait';
+            if (prepIndicators.some(i => text.includes(i))) return 'prep';
+            return 'cook';
+        }
+
+        // Generate mise en place steps from ingredients
+        function generateMiseEnPlace(ingredients, steps) {
+            const miseSteps = [];
+            const usedIngredients = new Set();
+
+            // Detect cutting instructions from quantities
+            const cuttingTerms = ['chopped', 'diced', 'sliced', 'minced', 'cubed', 'grated', 'zest', 'julienne', 'crushed'];
+
+            // Group: ingredients that need cutting vs just measuring
+            const needsCutting = ingredients.filter(ing => {
+                const qty = (ing.quantity || '').toLowerCase();
+                return cuttingTerms.some(term => qty.includes(term));
+            });
+
+            const justMeasure = ingredients.filter(ing => {
+                const qty = (ing.quantity || '').toLowerCase();
+                return !cuttingTerms.some(term => qty.includes(term));
+            });
+
+            if (needsCutting.length > 0) {
+                const ingList = needsCutting.map(i => `${i.quantity} ${i.name}`).join(', ');
+                miseSteps.push({
+                    type: 'prep',
+                    title: 'Cut & Prep Ingredients',
+                    instruction: `Prepare: ${ingList}`,
+                    timer_needed: false,
+                    isMiseEnPlace: true
+                });
+                needsCutting.forEach(i => usedIngredients.add(i.name));
+            }
+
+            if (justMeasure.length > 0) {
+                const ingList = justMeasure.map(i => `${i.quantity} ${i.name}`).join(', ');
+                miseSteps.push({
+                    type: 'prep',
+                    title: 'Measure Ingredients',
+                    instruction: `Gather and measure: ${ingList}`,
+                    timer_needed: false,
+                    isMiseEnPlace: true
+                });
+            }
+
+            return miseSteps;
+        }
+
+        // Extract timer duration from step text
+        function extractTimerDuration(text) {
+            const patterns = [
+                /(\d+)\s*-\s*(\d+)\s*(minutes?|mins?)/i,
+                /(\d+)\s*(minutes?|mins?)/i,
+                /(\d+)\s*-\s*(\d+)\s*(hours?|hrs?)/i,
+                /(\d+)\s*(hours?|hrs?)/i,
+                /(\d+)\s*-\s*(\d+)\s*(seconds?|secs?)/i,
+                /(\d+)\s*(seconds?|secs?)/i
+            ];
+
+            for (const pattern of patterns) {
+                const match = text.match(pattern);
+                if (match) {
+                    let value = parseInt(match[1]);
+                    if (match[2] && !isNaN(parseInt(match[2]))) {
+                        // Range like "10-15 minutes" - use the higher value
+                        value = parseInt(match[2]);
+                    }
+                    const unit = match[match.length - 1].toLowerCase();
+
+                    if (unit.startsWith('hour') || unit.startsWith('hr')) {
+                        return value * 60 * 60;
+                    } else if (unit.startsWith('min')) {
+                        return value * 60;
+                    } else {
+                        return value;
+                    }
+                }
+            }
+            return null;
+        }
+
+        async function loadRecipe() {
+            try {
+                const response = await fetch(`/api/mealdb/recipe/${mealId}`);
+                const data = await response.json();
+                document.getElementById('recipe-name').textContent = data.recipe.name;
+                recipeImage = data.recipe.image_url;
+
+                // Generate mise en place steps
+                const miseSteps = generateMiseEnPlace(data.ingredients, data.steps);
+
+                // Process cooking steps
+                const cookingSteps = data.steps.map((step, idx) => ({
+                    ...step,
+                    type: detectStepType(step.instruction),
+                    isMiseEnPlace: false,
+                    originalIndex: idx
+                }));
+
+                // Combine: mise en place first, then cooking steps
+                allSteps = [...miseSteps, ...cookingSteps];
+
+                renderSteps();
+                document.getElementById('step-footer').style.display = 'flex';
+                updateNavigation();
+            } catch (error) {
+                console.error('Error loading recipe:', error);
+                document.getElementById('step-deck').innerHTML = '<div class="empty-state"><p>Failed to load recipe</p></div>';
+            }
+        }
+
+        function renderSteps() {
+            const deck = document.getElementById('step-deck');
+            const indicators = document.getElementById('step-indicators');
+
+            deck.innerHTML = `
+                <div class="carousel-container">
+                    <button class="carousel-arrow prev" id="arrow-prev" onclick="prevStep()">
+                        <img src="/static/images/arrow-left.svg" alt="Previous">
+                    </button>
+
+                    <div class="cards-viewport">
+                        ${allSteps.map((step, index) => {
+                            const timerSeconds = step.timer_needed ? extractTimerDuration(step.instruction) : null;
+                            const stepNum = step.isMiseEnPlace ? 'P' + (index + 1) : (index - allSteps.filter((s, i) => i < index && s.isMiseEnPlace).length + 1);
+
+                            return `
+                                <div class="step-card-wrapper ${index === 0 ? 'active' : (index === 1 ? 'next' : 'hidden')}"
+                                     data-index="${index}">
+                                    <div class="step-card">
+                                        <div class="step-image">
+                                            <img src="${recipeImage}" alt="Step ${index + 1}">
+                                            <div class="step-number-badge">${stepNum}</div>
+                                            <span class="step-type-badge ${step.type}">${step.type}</span>
+                                            <div class="step-image-overlay">
+                                                Step ${index + 1} of ${allSteps.length}
+                                            </div>
+                                        </div>
+                                        <div class="step-body">
+                                            <div class="step-title">${step.title || (step.isMiseEnPlace ? 'Preparation' : 'Step ' + stepNum)}</div>
+                                            <p class="step-instruction">${step.instruction}</p>
+                                            ${step.timer_needed || timerSeconds ? `
+                                                <div class="timer-container" data-step="${index}">
+                                                    <div class="timer-preset-btns">
+                                                        <button class="timer-preset" onclick="setTimer(${index}, 60)">1m</button>
+                                                        <button class="timer-preset" onclick="setTimer(${index}, 180)">3m</button>
+                                                        <button class="timer-preset" onclick="setTimer(${index}, 300)">5m</button>
+                                                        <button class="timer-preset" onclick="setTimer(${index}, 600)">10m</button>
+                                                        <button class="timer-preset" onclick="setTimer(${index}, 900)">15m</button>
+                                                    </div>
+                                                    <div class="timer-display" id="timer-display-${index}">${formatTime(timerSeconds || 300)}</div>
+                                                    <div class="timer-controls">
+                                                        <button class="timer-btn start" id="timer-start-${index}" onclick="startTimer(${index}, ${timerSeconds || 300})">Start</button>
+                                                        <button class="timer-btn reset" onclick="resetTimer(${index}, ${timerSeconds || 300})">Reset</button>
+                                                    </div>
+                                                </div>
+                                            ` : ''}
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+
+                    <button class="carousel-arrow next" id="arrow-next" onclick="nextStep()">
+                        <img src="/static/images/arrow-right.svg" alt="Next">
+                    </button>
+                </div>
+            `;
+
+            // Render step indicators
+            indicators.innerHTML = allSteps.map((step, i) => `
+                <div class="step-dot ${i === 0 ? 'active' : ''}"
+                     data-index="${i}"
+                     onclick="goToStep(${i})"
+                     title="Step ${i + 1}"></div>
+            `).join('');
+
+            setupSwipe();
+        }
+
+        // Timer functions
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function setTimer(stepIndex, seconds) {
+            const display = document.getElementById(`timer-display-${stepIndex}`);
+            if (display) {
+                display.textContent = formatTime(seconds);
+                display.classList.remove('running', 'finished');
+            }
+            // Update timer data
+            if (timers[stepIndex]) {
+                clearInterval(timers[stepIndex].interval);
+            }
+            timers[stepIndex] = { seconds, running: false };
+        }
+
+        function startTimer(stepIndex, defaultSeconds) {
+            const display = document.getElementById(`timer-display-${stepIndex}`);
+            const startBtn = document.getElementById(`timer-start-${stepIndex}`);
+
+            if (!timers[stepIndex]) {
+                timers[stepIndex] = { seconds: defaultSeconds, running: false };
+            }
+
+            const timer = timers[stepIndex];
+
+            if (timer.running) {
+                // Pause
+                clearInterval(timer.interval);
+                timer.running = false;
+                startBtn.textContent = 'Resume';
+                startBtn.classList.remove('pause');
+                startBtn.classList.add('start');
+                display.classList.remove('running');
+            } else {
+                // Start/Resume
+                timer.running = true;
+                startBtn.textContent = 'Pause';
+                startBtn.classList.remove('start');
+                startBtn.classList.add('pause');
+                display.classList.add('running');
+                display.classList.remove('finished');
+
+                timer.interval = setInterval(() => {
+                    timer.seconds--;
+                    display.textContent = formatTime(Math.max(0, timer.seconds));
+
+                    if (timer.seconds <= 0) {
+                        clearInterval(timer.interval);
+                        timer.running = false;
+                        display.classList.remove('running');
+                        display.classList.add('finished');
+                        startBtn.textContent = 'Done!';
+                        startBtn.disabled = true;
+
+                        // Play sound or vibrate
+                        if (navigator.vibrate) {
+                            navigator.vibrate([200, 100, 200, 100, 200]);
+                        }
+
+                        // Try to play a sound
+                        try {
+                            const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdH2JkI2GfHJtdH2Ij5GOh3xxZ2p0gIuUk4d6bmVpcX6LlJOGd2pkZ3J+i5SUiXlsZGZxfYqUlYt7bWRlcHyJk5WMe25kZHB8h5KUjX5vZGNve4aRlI5/cGRjbnqEkJOPgHFkYm16g4+SkYFyZWJseYKOkpKCc2VianuBjZGSgnRmYml5gIyRkoN1ZmFoeX+LkJKDdmdhaHh+io+Sg3doYWd4fYmOkoR4aGFneHyIjZGEeGlhZ3d7h4yRhHlqYWZ2eoaMkYR6amFmdnqFi5CEemthZnV5hIqQhHtrYWV0eIOJj4R8bGFkc3eCiI6FfG1hZHN2gYeNhX1tYWRydYCGjIV9bmJjcnV/hYuFfm5iY3J0foSKhX9vYmNxdH2DiYWAb2JicXN8goiFgHBjYnBzfIGHhYBwY2JwcnuAhoSBcWNhcHJ6f4WEgXFkYXBxen6Eg4FyZGFvcXl9g4OCcmRhb3B4fIKCgnNlYW5wd3uBgYJzZWFucHd6gICCdGZhbnB2eX9/gnRmYW5vdXh+foJ1Z2FtcHV4fX2CdWdhbW90d3x8gnZoYW1vc3Z7fIF2aGFsb3N2enqBd2lhbG5ydXl5gHdpYWxucnR4eIB4amJrbXJ0d3d/eGpiamxxc3Z2fnlrYmpscXJ1dX15a2NqbHBydHR8eWxjamtwcXNzent=');
+                            audio.play().catch(() => {});
+                        } catch (e) {}
+                    }
+                }, 1000);
+            }
+        }
+
+        function resetTimer(stepIndex, defaultSeconds) {
+            const display = document.getElementById(`timer-display-${stepIndex}`);
+            const startBtn = document.getElementById(`timer-start-${stepIndex}`);
+
+            if (timers[stepIndex]) {
+                clearInterval(timers[stepIndex].interval);
+            }
+
+            timers[stepIndex] = { seconds: defaultSeconds, running: false };
+            display.textContent = formatTime(defaultSeconds);
+            display.classList.remove('running', 'finished');
+            startBtn.textContent = 'Start';
+            startBtn.classList.remove('pause');
+            startBtn.classList.add('start');
+            startBtn.disabled = false;
+        }
+
+        function setupSwipe() {
+            const viewport = document.querySelector('.cards-viewport');
+            if (!viewport) return;
+
+            let startX = 0;
+            let isDragging = false;
+
+            viewport.addEventListener('touchstart', e => {
+                startX = e.touches[0].clientX;
+                isDragging = true;
+            }, { passive: true });
+
+            viewport.addEventListener('touchend', e => {
+                if (!isDragging) return;
+                isDragging = false;
+                const endX = e.changedTouches[0].clientX;
+                const diff = endX - startX;
+
+                if (Math.abs(diff) > 60) {
+                    if (diff > 0 && currentStep > 0) {
+                        prevStep();
+                    } else if (diff < 0 && currentStep < allSteps.length - 1) {
+                        nextStep();
+                    }
+                }
+            }, { passive: true });
+        }
+
+        function updateNavigation() {
+            const prevArrow = document.getElementById('arrow-prev');
+            const nextArrow = document.getElementById('arrow-next');
+
+            if (prevArrow) {
+                prevArrow.disabled = currentStep === 0;
+            }
+            if (nextArrow) {
+                nextArrow.disabled = false; // Always enabled for "finish"
+            }
+
+            document.getElementById('step-counter').textContent = `${currentStep + 1} / ${allSteps.length}`;
+            document.getElementById('progress-fill').style.width = `${((currentStep + 1) / allSteps.length) * 100}%`;
+
+            // Update dots
+            document.querySelectorAll('.step-dot').forEach((dot, i) => {
+                dot.classList.remove('active');
+                if (i === currentStep) {
+                    dot.classList.add('active');
+                } else if (i < currentStep) {
+                    dot.classList.add('completed');
+                }
+            });
+
+            // Update card positions
+            document.querySelectorAll('.step-card-wrapper').forEach((card, i) => {
+                card.classList.remove('active', 'prev', 'next', 'hidden');
+
+                if (i === currentStep) {
+                    card.classList.add('active');
+                } else if (i === currentStep - 1) {
+                    card.classList.add('prev');
+                } else if (i === currentStep + 1) {
+                    card.classList.add('next');
+                } else {
+                    card.classList.add('hidden');
+                }
+            });
+        }
+
+        function goToStep(index) {
+            if (index >= 0 && index < allSteps.length) {
+                currentStep = index;
+                updateNavigation();
+            }
+        }
+
+        function prevStep() {
+            if (currentStep > 0) {
+                currentStep--;
+                updateNavigation();
+            }
+        }
+
+        function nextStep() {
+            if (currentStep < allSteps.length - 1) {
+                currentStep++;
+                updateNavigation();
+            } else {
+                // Show done overlay
+                document.getElementById('done-overlay').classList.add('active');
+            }
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', e => {
+            if (e.key === 'ArrowLeft') prevStep();
+            if (e.key === 'ArrowRight') nextStep();
+            if (e.key === 'Escape') {
+                window.location.href = `/recipe/mealdb/${mealId}`;
+            }
+        });
+
+        loadRecipe();
+    </script>
+</body>
+</html>

@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Barcode Scanner - Food App</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <script src="https://unpkg.com/@zxing/library@latest"></script>
+    <style>
+        .scanner-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 80px;
+            background: black;
+            display: flex;
+            flex-direction: column;
+        }
+        .scanner-header {
+            background: rgba(0,0,0,0.8);
+            padding: 16px;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+        }
+        .scanner-video-container {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+        }
+        #scanner-video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .scanner-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+        }
+        .scanner-target {
+            width: 280px;
+            height: 150px;
+            border: 3px solid var(--primary);
+            border-radius: 12px;
+            box-shadow: 0 0 0 9999px rgba(0,0,0,0.5);
+            position: relative;
+        }
+        .scanner-target::before,
+        .scanner-target::after {
+            content: '';
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            border: 4px solid var(--primary);
+        }
+        .scanner-target::before {
+            top: -4px;
+            left: -4px;
+            border-right: none;
+            border-bottom: none;
+            border-radius: 8px 0 0 0;
+        }
+        .scanner-target::after {
+            bottom: -4px;
+            right: -4px;
+            border-left: none;
+            border-top: none;
+            border-radius: 0 0 8px 0;
+        }
+        .scanner-line {
+            position: absolute;
+            left: 10%;
+            right: 10%;
+            height: 2px;
+            background: var(--primary);
+            animation: scan-line 2s infinite;
+        }
+        @keyframes scan-line {
+            0%, 100% { top: 20%; }
+            50% { top: 80%; }
+        }
+        .scanner-hint {
+            position: absolute;
+            bottom: 20px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            color: white;
+            font-size: 0.9rem;
+        }
+        .scanner-controls {
+            padding: 16px;
+            background: rgba(0,0,0,0.9);
+            display: flex;
+            gap: 12px;
+        }
+        .manual-entry {
+            display: flex;
+            gap: 8px;
+            flex: 1;
+        }
+        .manual-entry input {
+            flex: 1;
+            padding: 12px;
+            border-radius: var(--radius);
+            border: none;
+            font-size: 1rem;
+        }
+        .result-card {
+            position: fixed;
+            bottom: 80px;
+            left: 16px;
+            right: 16px;
+            background: var(--card-bg);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
+            transform: translateY(200%);
+            transition: transform 0.3s ease;
+            z-index: 100;
+        }
+        .result-card.active {
+            transform: translateY(0);
+        }
+        .result-card-content {
+            padding: 20px;
+        }
+        .result-card-header {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+        .result-card-image {
+            width: 80px;
+            height: 80px;
+            border-radius: var(--radius);
+            background: var(--bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        .result-card-image img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+        .result-card-info {
+            flex: 1;
+        }
+        .result-card-brand {
+            font-size: 0.8rem;
+            color: var(--text-light);
+            text-transform: uppercase;
+        }
+        .result-card-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin: 4px 0;
+        }
+        .result-card-nutrition {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border);
+        }
+        .result-nutrition-item {
+            text-align: center;
+        }
+        .result-nutrition-value {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--primary);
+        }
+        .result-nutrition-label {
+            font-size: 0.7rem;
+            color: var(--text-light);
+        }
+        .result-card-actions {
+            display: flex;
+            gap: 12px;
+            padding: 16px 20px;
+            border-top: 1px solid var(--border);
+            background: var(--bg);
+            border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+        }
+        .torch-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            border-radius: var(--radius);
+            cursor: pointer;
+        }
+        .torch-btn.active {
+            background: var(--warning);
+        }
+    </style>
+</head>
+<body>
+    <div class="scanner-container">
+        <div class="scanner-header">
+            <a href="/pantry" class="back-btn" style="color:white;">
+                <img src="/static/images/arrow-left.svg" alt="Back" style="filter:brightness(0) invert(1);">
+                Cancel
+            </a>
+            <h2>Scan Barcode</h2>
+            <button class="torch-btn" id="torch-btn" onclick="toggleTorch()">
+                <img src="/static/images/timer.svg" alt="Torch" style="width:20px;filter:brightness(0) invert(1);">
+            </button>
+        </div>
+
+        <div class="scanner-video-container">
+            <video id="scanner-video" autoplay playsinline></video>
+            <div class="scanner-overlay">
+                <div class="scanner-target">
+                    <div class="scanner-line"></div>
+                </div>
+            </div>
+            <div class="scanner-hint">Position barcode within the frame</div>
+        </div>
+
+        <div class="scanner-controls">
+            <div class="manual-entry">
+                <input type="text" id="manual-barcode" placeholder="Enter barcode manually...">
+                <button class="btn btn-primary" onclick="lookupManual()">
+                    <img src="/static/images/search.svg" alt="Search" style="width:20px;filter:brightness(0) invert(1);">
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="result-card" id="result-card">
+        <div class="result-card-content">
+            <div class="result-card-header">
+                <div class="result-card-image" id="result-image">
+                    <img src="/static/images/ingredient.svg" alt="Product">
+                </div>
+                <div class="result-card-info">
+                    <div class="result-card-brand" id="result-brand">Brand</div>
+                    <div class="result-card-name" id="result-name">Product Name</div>
+                    <div class="result-card-barcode" id="result-barcode" style="font-size:0.8rem;color:var(--text-light);font-family:monospace;"></div>
+                </div>
+            </div>
+            <div class="result-card-nutrition" id="result-nutrition"></div>
+        </div>
+        <div class="result-card-actions">
+            <button class="btn btn-outline" onclick="closeResult()" style="flex:1;">Scan Another</button>
+            <button class="btn btn-primary" onclick="addToPantry()" style="flex:1;">Add to Pantry</button>
+        </div>
+    </div>
+
+    <nav class="bottom-nav">
+        <a href="/" class="nav-item">
+            <div class="nav-item-icon"><img src="/static/images/recipe.svg" alt="Recipes"></div>
+            Recipes
+        </a>
+        <a href="/shopping" class="nav-item">
+            <div class="nav-item-icon"><img src="/static/images/shopping.svg" alt="Shopping"></div>
+            Shopping
+        </a>
+        <a href="/pantry" class="nav-item active">
+            <div class="nav-item-icon"><img src="/static/images/pantry.svg" alt="Pantry"></div>
+            Pantry
+        </a>
+        <a href="/nutrition" class="nav-item">
+            <div class="nav-item-icon"><img src="/static/images/chart.svg" alt="Nutrition"></div>
+            Nutrition
+        </a>
+    </nav>
+
+    <script>
+        let codeReader = null;
+        let currentResult = null;
+        let torchOn = false;
+        let videoTrack = null;
+
+        async function initScanner() {
+            try {
+                codeReader = new ZXing.BrowserMultiFormatReader();
+                const videoInputDevices = await codeReader.listVideoInputDevices();
+
+                // Prefer back camera
+                let selectedDevice = videoInputDevices[0];
+                for (const device of videoInputDevices) {
+                    if (device.label.toLowerCase().includes('back') || device.label.toLowerCase().includes('rear')) {
+                        selectedDevice = device;
+                        break;
+                    }
+                }
+
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        deviceId: selectedDevice.deviceId,
+                        facingMode: 'environment',
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    }
+                });
+
+                const video = document.getElementById('scanner-video');
+                video.srcObject = stream;
+                videoTrack = stream.getVideoTracks()[0];
+
+                codeReader.decodeFromVideoDevice(selectedDevice.deviceId, 'scanner-video', (result, err) => {
+                    if (result) {
+                        handleScan(result.text);
+                    }
+                });
+            } catch (error) {
+                console.error('Scanner init failed:', error);
+                alert('Camera access denied. Please allow camera access to scan barcodes.');
+            }
+        }
+
+        async function handleScan(barcode) {
+            // Vibrate on scan
+            if (navigator.vibrate) navigator.vibrate(100);
+
+            // Pause scanning
+            if (codeReader) codeReader.reset();
+
+            await lookupBarcode(barcode);
+        }
+
+        async function lookupBarcode(barcode) {
+            try {
+                const response = await fetch(`/api/barcode/${barcode}`);
+                const data = await response.json();
+
+                if (data.found) {
+                    currentResult = data;
+                    showResult(data);
+                } else {
+                    alert(`Product not found for barcode: ${barcode}`);
+                    resumeScanning();
+                }
+            } catch (error) {
+                alert('Failed to lookup barcode');
+                resumeScanning();
+            }
+        }
+
+        function showResult(data) {
+            document.getElementById('result-brand').textContent = data.brand || 'Unknown Brand';
+            document.getElementById('result-name').textContent = data.name;
+            document.getElementById('result-barcode').textContent = data.barcode;
+
+            if (data.image_url) {
+                document.getElementById('result-image').innerHTML = `<img src="${data.image_url}" alt="${data.name}">`;
+            }
+
+            const nutrition = data.nutrition || {};
+            document.getElementById('result-nutrition').innerHTML = `
+                <div class="result-nutrition-item">
+                    <div class="result-nutrition-value">${Math.round(nutrition.calories_per_100g || 0)}</div>
+                    <div class="result-nutrition-label">Calories</div>
+                </div>
+                <div class="result-nutrition-item">
+                    <div class="result-nutrition-value">${Math.round(nutrition.protein_per_100g || 0)}g</div>
+                    <div class="result-nutrition-label">Protein</div>
+                </div>
+                <div class="result-nutrition-item">
+                    <div class="result-nutrition-value">${Math.round(nutrition.carbs_per_100g || 0)}g</div>
+                    <div class="result-nutrition-label">Carbs</div>
+                </div>
+                <div class="result-nutrition-item">
+                    <div class="result-nutrition-value">${Math.round(nutrition.fat_per_100g || 0)}g</div>
+                    <div class="result-nutrition-label">Fat</div>
+                </div>
+            `;
+
+            document.getElementById('result-card').classList.add('active');
+        }
+
+        function closeResult() {
+            document.getElementById('result-card').classList.remove('active');
+            currentResult = null;
+            resumeScanning();
+        }
+
+        function resumeScanning() {
+            if (codeReader) {
+                initScanner();
+            }
+        }
+
+        async function addToPantry() {
+            if (!currentResult) return;
+
+            try {
+                const response = await fetch('/api/ingredients/barcode', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ barcode: currentResult.barcode })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    // Add to pantry
+                    await fetch('/api/pantry/add', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            name: currentResult.name,
+                            quantity: 1,
+                            unit: 'item'
+                        })
+                    });
+                    alert(`${currentResult.name} added to pantry!`);
+                    closeResult();
+                }
+            } catch (error) {
+                alert('Failed to add to pantry');
+            }
+        }
+
+        function lookupManual() {
+            const barcode = document.getElementById('manual-barcode').value.trim();
+            if (barcode) {
+                lookupBarcode(barcode);
+            }
+        }
+
+        async function toggleTorch() {
+            if (!videoTrack) return;
+
+            try {
+                const capabilities = videoTrack.getCapabilities();
+                if (capabilities.torch) {
+                    torchOn = !torchOn;
+                    await videoTrack.applyConstraints({ advanced: [{ torch: torchOn }] });
+                    document.getElementById('torch-btn').classList.toggle('active', torchOn);
+                }
+            } catch (error) {
+                console.error('Torch not supported');
+            }
+        }
+
+        // Handle manual entry on Enter
+        document.getElementById('manual-barcode').addEventListener('keypress', e => {
+            if (e.key === 'Enter') lookupManual();
+        });
+
+        // Initialize
+        initScanner();
+    </script>
+</body>
+</html>

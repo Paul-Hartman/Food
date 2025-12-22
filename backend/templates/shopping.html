@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Shopping - FrischeParadies</title>
+    <link rel="icon" type="image/svg+xml" href="/static/images/shopping.svg">
+    <link rel="stylesheet" href="/static/css/style.css?v=20241218">
+    <style>
+        :root {
+            --fp-green: #1a5c3e;
+            --fp-gold: #c9a962;
+            --fp-cream: #f8f5ed;
+        }
+
+        .store-header {
+            background: linear-gradient(135deg, var(--fp-green) 0%, #2a7d5a 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 16px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .store-header h1 { font-size: 1.5rem; margin-bottom: 4px; }
+        .store-header .tagline { color: var(--fp-gold); font-style: italic; font-size: 0.9rem; }
+
+        .recipe-search {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .recipe-search input {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+
+        .recipe-search input:focus {
+            outline: none;
+            border-color: var(--fp-green);
+        }
+
+        .recipe-search button {
+            padding: 12px 20px;
+            background: var(--fp-green);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .category-chips {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+
+        .category-chip {
+            padding: 6px 14px;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            font-size: 0.85rem;
+            cursor: pointer;
+        }
+
+        .category-chip:hover, .category-chip.active {
+            background: var(--fp-green);
+            color: white;
+            border-color: var(--fp-green);
+        }
+
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin: 20px 0 12px;
+        }
+
+        .recipe-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .recipe-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            overflow: hidden;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .recipe-card:hover { border-color: var(--fp-green); }
+        .recipe-card.selected { border-color: var(--fp-green); background: rgba(26, 92, 62, 0.08); }
+
+        .recipe-card img {
+            width: 100%;
+            height: 100px;
+            object-fit: cover;
+        }
+
+        .recipe-card-body { padding: 10px; }
+        .recipe-card h3 { font-size: 0.9rem; margin-bottom: 4px; line-height: 1.2; }
+        .recipe-card .meta { font-size: 0.75rem; color: var(--text-secondary); }
+        .recipe-card .availability { font-size: 0.75rem; color: var(--fp-green); margin-top: 4px; }
+
+        .generate-btn {
+            background: var(--fp-green);
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            margin: 16px 0;
+        }
+
+        .generate-btn:disabled { background: var(--text-secondary); cursor: not-allowed; }
+
+        .stats-bar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .stat-item {
+            flex: 1;
+            background: var(--card-bg);
+            border-radius: 10px;
+            padding: 12px 8px;
+            text-align: center;
+        }
+
+        .stat-item .number { font-size: 1.5rem; font-weight: 700; color: var(--fp-green); }
+        .stat-item .label { font-size: 0.7rem; color: var(--text-secondary); }
+
+        .shopping-list { background: var(--card-bg); border-radius: 12px; overflow: hidden; }
+
+        .category-header {
+            background: var(--fp-cream);
+            padding: 8px 12px;
+            font-weight: 600;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            color: var(--fp-green);
+        }
+
+        .shopping-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .shopping-item:last-child { border-bottom: none; }
+        .shopping-item .name { font-weight: 500; font-size: 0.9rem; }
+        .shopping-item .needed-for { font-size: 0.7rem; color: var(--text-secondary); }
+        .shopping-item .price { font-weight: 600; color: var(--fp-green); font-size: 0.9rem; }
+        .shopping-item.no-match { background: rgba(255, 193, 7, 0.1); }
+        .shopping-item.no-match .name { color: #f57c00; }
+        .shopping-item.in-pantry { background: rgba(76, 175, 80, 0.1); }
+        .shopping-item.in-pantry .name { text-decoration: line-through; color: #2e7d32; }
+
+        .total-bar {
+            background: var(--fp-green);
+            color: white;
+            padding: 16px;
+            border-radius: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 16px 0;
+            position: sticky;
+            bottom: 80px;
+        }
+
+        .total-bar .label { font-size: 0.9rem; }
+        .total-bar .amount { font-size: 1.5rem; font-weight: 700; }
+
+        .loading { text-align: center; padding: 40px; color: var(--text-secondary); }
+        .loading .spinner {
+            width: 32px; height: 32px;
+            border: 3px solid var(--border);
+            border-top-color: var(--fp-green);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 12px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .empty-state { text-align: center; padding: 40px 20px; color: var(--text-secondary); }
+        .empty-state .icon { font-size: 3rem; margin-bottom: 12px; }
+
+        #resultsSection { display: none; padding-bottom: 100px; }
+    </style>
+</head>
+<body>
+    <div class="container" style="padding-top: 16px;">
+        <div class="store-header">
+            <h1>FrischeParadies Shopping</h1>
+            <p class="tagline">Premium Ingredients for Your Recipes</p>
+        </div>
+
+        <div class="recipe-search">
+            <input type="text" id="searchInput" placeholder="Search by ingredient...">
+            <button onclick="searchRecipes()">Go</button>
+        </div>
+
+        <div class="category-chips">
+            <span class="category-chip" onclick="loadCategory('Beef')">Beef</span>
+            <span class="category-chip" onclick="loadCategory('Chicken')">Chicken</span>
+            <span class="category-chip" onclick="loadCategory('Seafood')">Seafood</span>
+            <span class="category-chip" onclick="loadCategory('Lamb')">Lamb</span>
+            <span class="category-chip" onclick="loadCategory('Pasta')">Pasta</span>
+        </div>
+
+        <h2 class="section-title">Select Recipes</h2>
+        <div class="recipe-grid" id="recipeGrid">
+            <div class="loading"><div class="spinner"></div><p>Loading...</p></div>
+        </div>
+
+        <button class="generate-btn" id="generateBtn" onclick="generateShoppingList()" disabled>
+            Generate Shopping List
+        </button>
+
+        <div id="resultsSection">
+            <div class="stats-bar">
+                <div class="stat-item"><div class="number" id="statToBuy">0</div><div class="label">To Buy</div></div>
+                <div class="stat-item"><div class="number" id="statInPantry">0</div><div class="label">In Pantry</div></div>
+                <div class="stat-item"><div class="number" id="statNoMatch">0</div><div class="label">Not at FP</div></div>
+            </div>
+
+            <h2 class="section-title">Shopping List</h2>
+            <div class="shopping-list" id="shoppingList"></div>
+
+            <h2 class="section-title">Already in Pantry</h2>
+            <div class="shopping-list" id="pantryList"></div>
+
+            <div class="total-bar">
+                <span class="label">Estimated Total</span>
+                <span class="amount" id="totalAmount">0.00 EUR</span>
+            </div>
+        </div>
+    </div>
+
+    <nav class="bottom-nav">
+        <a href="/" class="nav-item"><div class="nav-item-icon"><img src="/static/images/recipe.svg" alt=""></div>Recipes</a>
+        <a href="/discover" class="nav-item"><span class="icon">&#128293;</span>Discover</a>
+        <a href="/shopping" class="nav-item active"><div class="nav-item-icon"><img src="/static/images/shopping.svg" alt=""></div>Shopping</a>
+        <a href="/nutrition" class="nav-item"><div class="nav-item-icon"><img src="/static/images/chart.svg" alt=""></div>Nutrition</a>
+    </nav>
+
+    <script>
+        let selectedRecipes = new Set();
+        let allRecipes = [];
+
+        async function loadCategory(category) {
+            document.querySelectorAll('.category-chip').forEach(c => c.classList.remove('active'));
+            if (event && event.target) event.target.classList.add('active');
+
+            const grid = document.getElementById('recipeGrid');
+            grid.innerHTML = '<div class="loading"><div class="spinner"></div><p>Loading...</p></div>';
+
+            try {
+                const response = await fetch(`/api/recipes/search-by-ingredients?category=${category}&limit=8`);
+                const data = await response.json();
+                allRecipes = data.recipes || [];
+                renderRecipes();
+            } catch (error) {
+                grid.innerHTML = '<div class="empty-state"><div class="icon">!</div><p>Failed to load</p></div>';
+            }
+        }
+
+        async function searchRecipes() {
+            const query = document.getElementById('searchInput').value.trim();
+            if (!query) return;
+
+            const grid = document.getElementById('recipeGrid');
+            grid.innerHTML = '<div class="loading"><div class="spinner"></div><p>Searching...</p></div>';
+
+            try {
+                const response = await fetch(`/api/recipes/search-by-ingredients?ingredient=${encodeURIComponent(query)}&limit=8`);
+                const data = await response.json();
+                allRecipes = data.recipes || [];
+                renderRecipes();
+            } catch (error) {
+                grid.innerHTML = '<div class="empty-state"><div class="icon">!</div><p>Search failed</p></div>';
+            }
+        }
+
+        function renderRecipes() {
+            const grid = document.getElementById('recipeGrid');
+            if (allRecipes.length === 0) {
+                grid.innerHTML = '<div class="empty-state"><div class="icon">?</div><p>No recipes found</p></div>';
+                return;
+            }
+
+            grid.innerHTML = allRecipes.map(r => `
+                <div class="recipe-card ${selectedRecipes.has(r.id) ? 'selected' : ''}" onclick="toggleRecipe('${r.id}')">
+                    <img src="${r.image}" alt="${r.name}">
+                    <div class="recipe-card-body">
+                        <h3>${r.name}</h3>
+                        <div class="meta">${r.cuisine} - ${r.category}</div>
+                        <div class="availability">${r.available_at_fp}/${r.ingredient_count} at FP</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function toggleRecipe(id) {
+            if (selectedRecipes.has(id)) selectedRecipes.delete(id);
+            else selectedRecipes.add(id);
+
+            document.querySelectorAll('.recipe-card').forEach(card => {
+                const cardId = card.getAttribute('onclick').match(/'([^']+)'/)[1];
+                card.classList.toggle('selected', selectedRecipes.has(cardId));
+            });
+
+            document.getElementById('generateBtn').disabled = selectedRecipes.size === 0;
+        }
+
+        async function generateShoppingList() {
+            const btn = document.getElementById('generateBtn');
+            btn.disabled = true;
+            btn.textContent = 'Generating...';
+
+            try {
+                const response = await fetch('/api/shopping-list/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        recipe_ids: Array.from(selectedRecipes),
+                        servings: 2,
+                        store: 'FrischeParadies'
+                    })
+                });
+
+                const data = await response.json();
+                displayResults(data);
+            } catch (error) {
+                alert('Failed to generate shopping list');
+            }
+
+            btn.disabled = false;
+            btn.textContent = 'Generate Shopping List';
+        }
+
+        function displayResults(data) {
+            document.getElementById('resultsSection').style.display = 'block';
+            document.getElementById('statToBuy').textContent = data.items_to_buy;
+            document.getElementById('statInPantry').textContent = data.items_in_pantry;
+            document.getElementById('statNoMatch').textContent = data.items_no_match;
+
+            // Group by category
+            const list = document.getElementById('shoppingList');
+            const byCategory = {};
+            data.shopping_list.forEach(item => {
+                const cat = item.category || 'Other';
+                if (!byCategory[cat]) byCategory[cat] = [];
+                byCategory[cat].push(item);
+            });
+
+            let html = '';
+            for (const [category, items] of Object.entries(byCategory)) {
+                html += `<div class="category-header">${category}</div>`;
+                items.forEach(item => {
+                    const className = item.no_match ? 'no-match' : '';
+                    html += `
+                        <div class="shopping-item ${className}">
+                            <div>
+                                <div class="name">${item.product || item.ingredient}</div>
+                                <div class="needed-for">${item.needed_for.join(', ')}</div>
+                            </div>
+                            <div class="price">${item.price ? item.price.toFixed(2) + ' EUR' : '-'}</div>
+                        </div>
+                    `;
+                });
+            }
+            list.innerHTML = html || '<p style="padding:16px;text-align:center;">No items to buy</p>';
+
+            // Pantry items
+            document.getElementById('pantryList').innerHTML = data.have_in_pantry.length > 0 ?
+                data.have_in_pantry.map(item => `
+                    <div class="shopping-item in-pantry">
+                        <div><div class="name">${item.name}</div><div class="needed-for">${item.in_pantry_g.toFixed(0)}g available</div></div>
+                        <div class="price">HAVE IT</div>
+                    </div>
+                `).join('') : '<p style="padding:16px;text-align:center;">Nothing in pantry</p>';
+
+            document.getElementById('totalAmount').textContent = data.total_estimated_cost.toFixed(2) + ' EUR';
+            document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Initial load
+        loadCategory('Beef');
+        document.getElementById('searchInput').addEventListener('keypress', e => { if (e.key === 'Enter') searchRecipes(); });
+    </script>
+</body>
+</html>

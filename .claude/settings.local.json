@@ -1,0 +1,33 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir:*)",
+      "Bash(findstr:*)",
+      "Bash(python -c:*)",
+      "Bash(curl:*)",
+      "Bash(where:*)",
+      "Bash(\"C:\\Users\\paulh\\AppData\\Local\\Android\\Sdk\\emulator\\emulator.exe\" -list-avds)",
+      "Bash(\"C:\\Users\\paulh\\AppData\\Local\\Android\\Sdk\\platform-tools\\adb.exe\" devices)",
+      "Bash(npx tsc --noEmit)",
+      "Bash(node test-recipe-nav.js:*)",
+      "Bash(tasklist:*)",
+      "Bash(node test-recipe-detail.js:*)",
+      "Bash(node test-pinch-scaling.js:*)",
+      "Bash(netstat:*)",
+      "Bash(taskkill /PID 37552 /F)",
+      "Bash(taskkill:*)",
+      "Bash(node test-mealdb.js:*)",
+      "Bash(node:*)",
+      "Bash(find:*)",
+      "Bash(for file in pantry.html shopping.html nutrition.html discover.html cook.html swipe.html cook_mealdb.html)",
+      "Bash(do sed -i 's|href=\"\"/static/css/style.css\"\"|href=\"\"/static/css/style.css?v=20241218\"\"|g' \"$file\")",
+      "Bash(echo:*)",
+      "Bash(done)",
+      "Bash(cat:*)",
+      "Bash(npm ls:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)"
+    ]
+  }
+}

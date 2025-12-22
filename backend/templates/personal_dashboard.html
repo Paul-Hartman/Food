@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>My Kitchen - Personal Dashboard</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        .dashboard-container {
+            padding: 16px;
+            max-width: 800px;
+            margin: 0 auto;
+            padding-bottom: 100px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+        .header h1 {
+            font-size: 1.8rem;
+            margin-bottom: 4px;
+        }
+        .header .subtitle {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        /* Level & XP Card */
+        .level-card {
+            background: linear-gradient(135deg, var(--primary) 0%, #8b5cf6 100%);
+            border-radius: 16px;
+            padding: 20px;
+            color: white;
+            margin-bottom: 16px;
+        }
+        .level-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .level-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+        }
+        .level-badge {
+            background: rgba(255,255,255,0.2);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+        }
+        .xp-bar-container {
+            background: rgba(255,255,255,0.2);
+            border-radius: 10px;
+            height: 12px;
+            margin-bottom: 8px;
+            overflow: hidden;
+        }
+        .xp-bar {
+            background: white;
+            height: 100%;
+            border-radius: 10px;
+            transition: width 0.5s ease;
+        }
+        .xp-text {
+            font-size: 0.85rem;
+            opacity: 0.9;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+        }
+        .stat-icon {
+            font-size: 1.8rem;
+            margin-bottom: 8px;
+        }
+        .stat-value {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        /* Streak Section */
+        .streak-section {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+        .streak-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .streak-fire {
+            font-size: 2rem;
+        }
+        .streak-info h3 {
+            font-size: 1.2rem;
+            margin-bottom: 4px;
+        }
+        .streak-multiplier {
+            background: #f59e0b;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        .streak-days {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        .streak-day {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+        }
+        .streak-day.active {
+            background: var(--primary);
+            color: white;
+        }
+        .streak-day.today {
+            border: 2px solid var(--primary);
+        }
+
+        /* Insights Section */
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .insights-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .insight-card {
+            background: var(--card-bg);
+            border-radius: 10px;
+            padding: 14px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+        .insight-icon {
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+        .insight-content h4 {
+            font-size: 0.95rem;
+            margin-bottom: 4px;
+        }
+        .insight-content p {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin: 0;
+        }
+
+        /* Recent Achievements */
+        .achievements-row {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            padding: 4px 0;
+            margin-bottom: 20px;
+        }
+        .achievement-badge {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 12px;
+            min-width: 100px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+        .achievement-icon {
+            font-size: 2rem;
+            margin-bottom: 6px;
+        }
+        .achievement-name {
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        /* Targets Progress */
+        .targets-section {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+        .target-item {
+            margin-bottom: 14px;
+        }
+        .target-item:last-child {
+            margin-bottom: 0;
+        }
+        .target-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 6px;
+            font-size: 0.9rem;
+        }
+        .target-progress {
+            height: 8px;
+            background: var(--bg);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .target-bar {
+            height: 100%;
+            background: var(--primary);
+            border-radius: 4px;
+        }
+
+        /* Analytics Preview */
+        .analytics-preview {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+        .analytics-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-top: 12px;
+        }
+        .analytics-item {
+            text-align: center;
+        }
+        .analytics-value {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        .analytics-label {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+        }
+
+        /* Quick Actions */
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .action-btn {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            color: inherit;
+        }
+        .action-btn:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        .action-icon {
+            font-size: 1.5rem;
+            margin-bottom: 6px;
+        }
+        .action-text {
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        /* Today Card */
+        .today-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--primary);
+        }
+        .today-header {
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .today-stats {
+            display: flex;
+            gap: 20px;
+        }
+        .today-stat {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="header">
+            <h1>My Kitchen</h1>
+            <p class="subtitle">Personal cooking journey</p>
+        </div>
+
+        <!-- Level & XP -->
+        <div class="level-card">
+            <div class="level-header">
+                <span class="level-title" id="level-title">Level 1</span>
+                <span class="level-badge" id="level-badge">Kitchen Novice</span>
+            </div>
+            <div class="xp-bar-container">
+                <div class="xp-bar" id="xp-bar" style="width: 0%"></div>
+            </div>
+            <div class="xp-text">
+                <span id="current-xp">0</span> XP / <span id="next-xp">100</span> XP to next level
+            </div>
+        </div>
+
+        <!-- Today's Overview -->
+        <div class="today-card">
+            <div class="today-header">Today</div>
+            <div class="today-stats">
+                <div class="today-stat">
+                    <span>Meals:</span>
+                    <strong id="today-meals">0</strong>
+                </div>
+                <div class="today-stat">
+                    <span>Calories:</span>
+                    <strong id="today-calories">0</strong>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">&#x1F373;</div>
+                <div class="stat-value" id="week-sessions">0</div>
+                <div class="stat-label">This Week's Cooks</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">&#x2B50;</div>
+                <div class="stat-value" id="week-xp">0</div>
+                <div class="stat-label">XP This Week</div>
+            </div>
+        </div>
+
+        <!-- Streak Section -->
+        <div class="streak-section">
+            <div class="streak-header">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <span class="streak-fire">&#x1F525;</span>
+                    <div class="streak-info">
+                        <h3><span id="streak-count">0</span> Day Streak</h3>
+                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Longest: <span id="longest-streak">0</span> days</span>
+                    </div>
+                </div>
+                <span class="streak-multiplier" id="streak-multiplier">1.0x XP</span>
+            </div>
+            <div class="streak-days" id="streak-days">
+                <!-- Filled by JS -->
+            </div>
+        </div>
+
+        <!-- Insights -->
+        <div class="section-title">&#x1F4A1; Insights</div>
+        <div class="insights-list" id="insights-list">
+            <div class="insight-card">
+                <span class="insight-icon">&#x1F4CA;</span>
+                <div class="insight-content">
+                    <h4>Loading insights...</h4>
+                    <p>Analyzing your cooking patterns</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Achievements -->
+        <div class="section-title">&#x1F3C6; Recent Achievements</div>
+        <div class="achievements-row" id="achievements-row">
+            <div class="achievement-badge">
+                <div class="achievement-icon">&#x1F512;</div>
+                <div class="achievement-name">Locked</div>
+            </div>
+        </div>
+
+        <!-- Analytics Preview -->
+        <div class="analytics-preview">
+            <div class="section-title" style="margin-bottom: 0;">&#x1F4CA; 30-Day Stats</div>
+            <div class="analytics-grid">
+                <div class="analytics-item">
+                    <div class="analytics-value" id="total-sessions">0</div>
+                    <div class="analytics-label">Sessions</div>
+                </div>
+                <div class="analytics-item">
+                    <div class="analytics-value" id="unique-recipes">0</div>
+                    <div class="analytics-label">Recipes</div>
+                </div>
+                <div class="analytics-item">
+                    <div class="analytics-value" id="unique-cuisines">0</div>
+                    <div class="analytics-label">Cuisines</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="section-title">&#x26A1; Quick Actions</div>
+        <div class="quick-actions">
+            <a href="/" class="action-btn">
+                <div class="action-icon">&#x1F373;</div>
+                <div class="action-text">Find Recipe</div>
+            </a>
+            <a href="/calendar" class="action-btn">
+                <div class="action-icon">&#x1F4C5;</div>
+                <div class="action-text">Meal Plan</div>
+            </a>
+            <a href="/shopping" class="action-btn">
+                <div class="action-icon">&#x1F6D2;</div>
+                <div class="action-text">Shopping List</div>
+            </a>
+            <a href="/game" class="action-btn">
+                <div class="action-icon">&#x1F3AE;</div>
+                <div class="action-text">Game Stats</div>
+            </a>
+        </div>
+    </div>
+
+    <nav class="bottom-nav">
+        <a href="/" class="nav-item">
+            <div class="nav-item-icon"><img src="/static/images/recipe.svg" alt="Recipes"></div>
+            Recipes
+        </a>
+        <a href="/calendar" class="nav-item">
+            <span class="icon">&#x1F4C5;</span>
+            Calendar
+        </a>
+        <a href="/me" class="nav-item active">
+            <span class="icon">&#x1F464;</span>
+            Me
+        </a>
+        <a href="/shopping" class="nav-item">
+            <div class="nav-item-icon"><img src="/static/images/shopping.svg" alt="Shopping"></div>
+            Shopping
+        </a>
+    </nav>
+
+    <script>
+        async function loadDashboard() {
+            try {
+                const response = await fetch('/api/personal/dashboard');
+                const data = await response.json();
+
+                // Update level card
+                document.getElementById('level-title').textContent = `Level ${data.level.current}`;
+                document.getElementById('level-badge').textContent = data.level.title;
+                document.getElementById('current-xp').textContent = data.level.total_xp;
+
+                // Calculate XP progress
+                const xpThresholds = [0, 100, 300, 600, 1000, 1500, 2200, 3000, 4000, 5500, 10000];
+                const currentLevel = data.level.current;
+                const prevThreshold = xpThresholds[currentLevel - 1] || 0;
+                const nextThreshold = xpThresholds[currentLevel] || 10000;
+                const xpInLevel = data.level.total_xp - prevThreshold;
+                const xpNeeded = nextThreshold - prevThreshold;
+                const progress = Math.min(100, (xpInLevel / xpNeeded) * 100);
+
+                document.getElementById('xp-bar').style.width = progress + '%';
+                document.getElementById('next-xp').textContent = nextThreshold;
+
+                // Today stats
+                document.getElementById('today-meals').textContent = data.today.meals_logged;
+                document.getElementById('today-calories').textContent = data.today.calories;
+
+                // Week stats
+                document.getElementById('week-sessions').textContent = data.this_week.cooking_sessions;
+                document.getElementById('week-xp').textContent = data.this_week.xp_earned;
+
+                // Streak
+                document.getElementById('streak-count').textContent = data.streak.current;
+                document.getElementById('longest-streak').textContent = data.streak.longest;
+                document.getElementById('streak-multiplier').textContent = data.streak.multiplier + 'x XP';
+
+                // Render streak days
+                renderStreakDays(data.streak.current);
+
+                // Achievements
+                if (data.recent_achievements && data.recent_achievements.length > 0) {
+                    document.getElementById('achievements-row').innerHTML = data.recent_achievements.map(a => `
+                        <div class="achievement-badge">
+                            <div class="achievement-icon">${a.icon || '&#x1F3C6;'}</div>
+                            <div class="achievement-name">${escapeHtml(a.name)}</div>
+                        </div>
+                    `).join('');
+                }
+
+            } catch (error) {
+                console.error('Failed to load dashboard:', error);
+            }
+        }
+
+        async function loadAnalytics() {
+            try {
+                const response = await fetch('/api/personal/analytics?days=30');
+                const data = await response.json();
+
+                document.getElementById('total-sessions').textContent = data.summary.total_sessions;
+                document.getElementById('unique-recipes').textContent = data.summary.unique_recipes;
+                document.getElementById('unique-cuisines').textContent = data.summary.unique_cuisines;
+            } catch (error) {
+                console.error('Failed to load analytics:', error);
+            }
+        }
+
+        async function loadInsights() {
+            try {
+                const response = await fetch('/api/personal/insights');
+                const data = await response.json();
+
+                if (data.insights && data.insights.length > 0) {
+                    document.getElementById('insights-list').innerHTML = data.insights.map(i => `
+                        <div class="insight-card">
+                            <span class="insight-icon">${i.icon}</span>
+                            <div class="insight-content">
+                                <h4>${escapeHtml(i.title)}</h4>
+                                <p>${escapeHtml(i.text)}</p>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+            } catch (error) {
+                console.error('Failed to load insights:', error);
+            }
+        }
+
+        function renderStreakDays(currentStreak) {
+            const container = document.getElementById('streak-days');
+            const days = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+            const today = new Date().getDay();
+
+            let html = '';
+            for (let i = 0; i < 7; i++) {
+                const dayIndex = (today - 6 + i + 7) % 7;
+                const isActive = i >= (7 - currentStreak);
+                const isToday = i === 6;
+
+                html += `<div class="streak-day ${isActive ? 'active' : ''} ${isToday ? 'today' : ''}">${days[dayIndex]}</div>`;
+            }
+            container.innerHTML = html;
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Initialize
+        loadDashboard();
+        loadAnalytics();
+        loadInsights();
+    </script>
+</body>
+</html>

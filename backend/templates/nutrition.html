@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Nutrition - Food App</title>
+    <link rel="icon" type="image/svg+xml" href="/static/images/chart.svg">
+    <link rel="stylesheet" href="/static/css/style.css?v=20241218">
+</head>
+<body>
+    <header class="header">
+        <h1>Today's Nutrition</h1>
+        <p class="header-subtitle" id="date-display">Loading...</p>
+    </header>
+
+    <div class="container">
+        <!-- Nutrition Sliders -->
+        <div class="nutrition-slider-container">
+            <h2 style="margin-bottom: 20px;">Daily Progress</h2>
+
+            <div class="nutrition-slider">
+                <div class="nutrition-slider-header">
+                    <span class="nutrition-slider-label">
+                        <img src="/static/images/calories.svg" alt="Calories">
+                        Calories
+                    </span>
+                    <span class="nutrition-slider-values"><span class="current" id="cal-current">0</span> / <span id="cal-goal">2000</span></span>
+                </div>
+                <div class="nutrition-slider-track">
+                    <div class="nutrition-slider-fill calories" id="cal-bar" style="width: 0%"></div>
+                </div>
+                <div class="nutrition-slider-markers">
+                    <span>0</span>
+                    <span id="cal-goal-marker">2000</span>
+                </div>
+            </div>
+
+            <div class="nutrition-slider">
+                <div class="nutrition-slider-header">
+                    <span class="nutrition-slider-label">
+                        <img src="/static/images/protein.svg" alt="Protein">
+                        Protein
+                    </span>
+                    <span class="nutrition-slider-values"><span class="current" id="protein-current">0</span>g / <span id="protein-goal">50</span>g</span>
+                </div>
+                <div class="nutrition-slider-track">
+                    <div class="nutrition-slider-fill protein" id="protein-bar" style="width: 0%"></div>
+                </div>
+                <div class="nutrition-slider-markers">
+                    <span>0g</span>
+                    <span id="protein-goal-marker">50g</span>
+                </div>
+            </div>
+
+            <div class="nutrition-slider">
+                <div class="nutrition-slider-header">
+                    <span class="nutrition-slider-label">
+                        <img src="/static/images/carbs.svg" alt="Carbs">
+                        Carbs
+                    </span>
+                    <span class="nutrition-slider-values"><span class="current" id="carbs-current">0</span>g / <span id="carbs-goal">250</span>g</span>
+                </div>
+                <div class="nutrition-slider-track">
+                    <div class="nutrition-slider-fill carbs" id="carbs-bar" style="width: 0%"></div>
+                </div>
+                <div class="nutrition-slider-markers">
+                    <span>0g</span>
+                    <span id="carbs-goal-marker">250g</span>
+                </div>
+            </div>
+
+            <div class="nutrition-slider">
+                <div class="nutrition-slider-header">
+                    <span class="nutrition-slider-label">
+                        <img src="/static/images/fat.svg" alt="Fat">
+                        Fat
+                    </span>
+                    <span class="nutrition-slider-values"><span class="current" id="fat-current">0</span>g / <span id="fat-goal">65</span>g</span>
+                </div>
+                <div class="nutrition-slider-track">
+                    <div class="nutrition-slider-fill fat" id="fat-bar" style="width: 0%"></div>
+                </div>
+                <div class="nutrition-slider-markers">
+                    <span>0g</span>
+                    <span id="fat-goal-marker">65g</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Selector -->
+        <div class="nutrition-tabs" style="display: flex; gap: 8px; margin-bottom: 20px;">
+            <button class="tab-btn active" onclick="showTab('macros')" id="tab-macros">Macros</button>
+            <button class="tab-btn" onclick="showTab('vitamins')" id="tab-vitamins">Vitamins</button>
+            <button class="tab-btn" onclick="showTab('minerals')" id="tab-minerals">Minerals</button>
+            <button class="tab-btn" onclick="showTab('meals')" id="tab-meals">Meals</button>
+        </div>
+
+        <!-- Vitamins Section -->
+        <div class="tab-content hidden" id="vitamins-section">
+            <h2 style="margin-bottom: 16px;">Vitamins</h2>
+            <div id="vitamins-container" class="micronutrient-grid">
+                <div class="loading">Loading...</div>
+            </div>
+        </div>
+
+        <!-- Minerals Section -->
+        <div class="tab-content hidden" id="minerals-section">
+            <h2 style="margin-bottom: 16px;">Minerals</h2>
+            <div id="minerals-container" class="micronutrient-grid">
+                <div class="loading">Loading...</div>
+            </div>
+        </div>
+
+        <!-- Today's Meals -->
+        <div class="tab-content hidden" id="meals-section">
+            <h2 class="section-title">
+                <img src="/static/images/meal-dinner.svg" alt="Meals">
+                Today's Meals
+            </h2>
+            <div id="meal-log">
+                <div class="loading">Loading...</div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+            <a href="/" class="quick-action">
+                <div class="quick-action-icon">
+                    <img src="/static/images/plus.svg" alt="Log">
+                </div>
+                <span>Log a Meal</span>
+            </a>
+            <div class="quick-action" onclick="showGoalsModal()">
+                <div class="quick-action-icon">
+                    <img src="/static/images/goal.svg" alt="Goals">
+                </div>
+                <span>Edit Goals</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Goals Modal -->
+    <div class="modal-overlay hidden" id="goals-modal">
+        <div class="modal">
+            <h2>Daily Goals</h2>
+            <div style="margin: 16px 0;">
+                <label style="display: block; margin-bottom: 4px; font-size: 0.875rem;">Calories</label>
+                <input type="number" id="goal-calories" style="width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid var(--border); border-radius: 8px;">
+
+                <label style="display: block; margin-bottom: 4px; font-size: 0.875rem;">Protein (g)</label>
+                <input type="number" id="goal-protein" style="width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid var(--border); border-radius: 8px;">
+
+                <label style="display: block; margin-bottom: 4px; font-size: 0.875rem;">Carbs (g)</label>
+                <input type="number" id="goal-carbs" style="width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid var(--border); border-radius: 8px;">
+
+                <label style="display: block; margin-bottom: 4px; font-size: 0.875rem;">Fat (g)</label>
+                <input type="number" id="goal-fat" style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px;">
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-outline" onclick="hideGoalsModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="saveGoals()">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Log Meal Modal -->
+    <div class="modal-overlay hidden" id="log-modal">
+        <div class="modal">
+            <h2>Log Meal</h2>
+            <div style="margin: 16px 0;">
+                <label style="display: block; margin-bottom: 4px; font-size: 0.875rem;">Recipe</label>
+                <select id="log-recipe" style="width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid var(--border); border-radius: 8px;">
+                    <option value="">Select a recipe...</option>
+                </select>
+
+                <label style="display: block; margin-bottom: 4px; font-size: 0.875rem;">Meal Type</label>
+                <select id="log-type" style="width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid var(--border); border-radius: 8px;">
+                    <option value="breakfast">Breakfast</option>
+                    <option value="lunch">Lunch</option>
+                    <option value="dinner" selected>Dinner</option>
+                    <option value="snack">Snack</option>
+                </select>
+
+                <label style="display: block; margin-bottom: 4px; font-size: 0.875rem;">Servings Eaten</label>
+                <input type="number" id="log-servings" value="1" step="0.5" min="0.5" style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px;">
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-outline" onclick="hideLogModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="logMeal()">Log Meal</button>
+            </div>
+        </div>
+    </div>
+
+    <nav class="bottom-nav">
+        <a href="/" class="nav-item">
+            <div class="nav-item-icon"><img src="/static/images/recipe.svg" alt="Recipes"></div>
+            Recipes
+        </a>
+        <a href="/discover" class="nav-item">
+            <span class="icon">&#128293;</span>
+            Discover
+        </a>
+        <a href="/shopping" class="nav-item">
+            <div class="nav-item-icon"><img src="/static/images/shopping.svg" alt="Shopping"></div>
+            Shopping
+        </a>
+        <a href="/nutrition" class="nav-item active">
+            <div class="nav-item-icon"><img src="/static/images/chart.svg" alt="Nutrition"></div>
+            Nutrition
+        </a>
+    </nav>
+
+    <style>
+        .tab-btn {
+            flex: 1;
+            padding: 10px 16px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .tab-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        .tab-content { display: block; }
+        .tab-content.hidden { display: none; }
+        .micronutrient-grid {
+            display: grid;
+            gap: 12px;
+        }
+        .micronutrient-card {
+            background: var(--card);
+            border-radius: 12px;
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .micronutrient-info {
+            flex: 1;
+        }
+        .micronutrient-name {
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 4px;
+        }
+        .micronutrient-value {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+        .micronutrient-bar-container {
+            width: 100px;
+            height: 8px;
+            background: var(--border);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-right: 12px;
+        }
+        .micronutrient-bar {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+        .micronutrient-bar.low { background: linear-gradient(90deg, #ef4444, #f87171); }
+        .micronutrient-bar.moderate { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+        .micronutrient-bar.good { background: linear-gradient(90deg, #22c55e, #4ade80); }
+        .micronutrient-percent {
+            font-weight: 700;
+            font-size: 0.9rem;
+            min-width: 50px;
+            text-align: right;
+        }
+        .micronutrient-percent.low { color: #ef4444; }
+        .micronutrient-percent.moderate { color: #f59e0b; }
+        .micronutrient-percent.good { color: #22c55e; }
+        .summary-card {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark, #2563eb));
+            color: white;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+            display: flex;
+            justify-content: space-around;
+            text-align: center;
+        }
+        .summary-stat h3 { font-size: 2rem; margin: 0; }
+        .summary-stat p { font-size: 0.75rem; opacity: 0.9; margin: 0; }
+    </style>
+
+    <script>
+        let nutritionData = null;
+        let micronutrientData = null;
+        let allRecipes = [];
+        let currentTab = 'macros';
+
+        async function loadNutrition() {
+            try {
+                const response = await fetch('/api/nutrition/today');
+                nutritionData = await response.json();
+                renderNutrition();
+            } catch (error) {
+                console.error('Error loading nutrition:', error);
+            }
+        }
+
+        function renderNutrition() {
+            const { totals, goals, meals, date } = nutritionData;
+
+            const dateObj = new Date(date);
+            document.getElementById('date-display').textContent =
+                dateObj.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+
+            updateSlider('cal', totals.calories, goals.calories);
+            updateSlider('protein', totals.protein, goals.protein_g);
+            updateSlider('carbs', totals.carbs, goals.carbs_g);
+            updateSlider('fat', totals.fat, goals.fat_g);
+
+            const mealLog = document.getElementById('meal-log');
+            if (meals.length === 0) {
+                mealLog.innerHTML = `
+                    <div class="empty-state" style="padding: 20px;">
+                        <p>No meals logged yet today</p>
+                        <button class="btn btn-primary" onclick="showLogModal()" style="margin-top: 12px;">Log a Meal</button>
+                    </div>`;
+            } else {
+                mealLog.innerHTML = meals.map(meal => `
+                    <div class="meal-card" style="margin-bottom: 12px;">
+                        <div class="meal-card-header" style="padding: 12px;">
+                            <h3 style="font-size: 1rem; margin: 0;">${meal.recipe_name}</h3>
+                            <span class="meal-card-type">${meal.meal_type} - ${meal.servings_eaten} serving(s)</span>
+                        </div>
+                        <div class="meal-card-nutrition">
+                            <div class="meal-nutrition-item">
+                                <div class="meal-nutrition-value">${Math.round(meal.nutrition.calories)}</div>
+                                <div class="meal-nutrition-label">Cal</div>
+                            </div>
+                            <div class="meal-nutrition-item">
+                                <div class="meal-nutrition-value">${Math.round(meal.nutrition.protein)}g</div>
+                                <div class="meal-nutrition-label">Protein</div>
+                            </div>
+                            <div class="meal-nutrition-item">
+                                <div class="meal-nutrition-value">${Math.round(meal.nutrition.carbs)}g</div>
+                                <div class="meal-nutrition-label">Carbs</div>
+                            </div>
+                            <div class="meal-nutrition-item">
+                                <div class="meal-nutrition-value">${Math.round(meal.nutrition.fat)}g</div>
+                                <div class="meal-nutrition-label">Fat</div>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+                mealLog.innerHTML += `<button class="btn btn-outline btn-full" onclick="showLogModal()" style="margin-top: 12px;">+ Log Another Meal</button>`;
+            }
+        }
+
+        function updateSlider(id, current, goal) {
+            const pct = Math.min((current / goal) * 100, 100);
+            document.getElementById(`${id}-bar`).style.width = `${pct}%`;
+            document.getElementById(`${id}-current`).textContent = Math.round(current);
+            document.getElementById(`${id}-goal`).textContent = goal;
+            const marker = document.getElementById(`${id}-goal-marker`);
+            if (marker) marker.textContent = id === 'cal' ? goal : goal + 'g';
+        }
+
+        function showGoalsModal() {
+            document.getElementById('goal-calories').value = nutritionData.goals.calories;
+            document.getElementById('goal-protein').value = nutritionData.goals.protein_g;
+            document.getElementById('goal-carbs').value = nutritionData.goals.carbs_g;
+            document.getElementById('goal-fat').value = nutritionData.goals.fat_g;
+            document.getElementById('goals-modal').classList.remove('hidden');
+        }
+
+        function hideGoalsModal() { document.getElementById('goals-modal').classList.add('hidden'); }
+
+        async function saveGoals() {
+            try {
+                await fetch('/api/nutrition/goals', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        calories: parseInt(document.getElementById('goal-calories').value),
+                        protein_g: parseFloat(document.getElementById('goal-protein').value),
+                        carbs_g: parseFloat(document.getElementById('goal-carbs').value),
+                        fat_g: parseFloat(document.getElementById('goal-fat').value),
+                        fiber_g: 25
+                    })
+                });
+                hideGoalsModal();
+                loadNutrition();
+            } catch (error) {
+                alert('Failed to save goals');
+            }
+        }
+
+        async function showLogModal() {
+            document.getElementById('log-modal').classList.remove('hidden');
+            if (allRecipes.length === 0) {
+                try {
+                    const response = await fetch('/api/recipes');
+                    allRecipes = await response.json();
+                    const select = document.getElementById('log-recipe');
+                    select.innerHTML = '<option value="">Select a recipe...</option>' +
+                        allRecipes.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
+                } catch (error) {
+                    console.error('Error loading recipes:', error);
+                }
+            }
+        }
+
+        function hideLogModal() { document.getElementById('log-modal').classList.add('hidden'); }
+
+        async function logMeal() {
+            const recipeId = document.getElementById('log-recipe').value;
+            const mealType = document.getElementById('log-type').value;
+            const servings = parseFloat(document.getElementById('log-servings').value);
+
+            if (!recipeId) { alert('Please select a recipe'); return; }
+
+            try {
+                await fetch('/api/nutrition/log', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ recipe_id: parseInt(recipeId), meal_type: mealType, servings_eaten: servings })
+                });
+                hideLogModal();
+                loadNutrition();
+            } catch (error) {
+                alert('Failed to log meal');
+            }
+        }
+
+        // Tab switching
+        function showTab(tabName) {
+            currentTab = tabName;
+
+            // Update tab buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('tab-' + tabName).classList.add('active');
+
+            // Show/hide sections
+            document.querySelector('.nutrition-slider-container').classList.toggle('hidden', tabName !== 'macros');
+            document.getElementById('vitamins-section').classList.toggle('hidden', tabName !== 'vitamins');
+            document.getElementById('minerals-section').classList.toggle('hidden', tabName !== 'minerals');
+            document.getElementById('meals-section').classList.toggle('hidden', tabName !== 'meals');
+
+            // Load micronutrients if switching to vitamins or minerals
+            if ((tabName === 'vitamins' || tabName === 'minerals') && !micronutrientData) {
+                loadMicronutrients();
+            }
+        }
+
+        async function loadMicronutrients() {
+            try {
+                const response = await fetch('/api/nutrition/micronutrients/today');
+                micronutrientData = await response.json();
+                renderMicronutrients();
+            } catch (error) {
+                console.error('Error loading micronutrients:', error);
+                document.getElementById('vitamins-container').innerHTML = '<p class="error">Failed to load vitamins</p>';
+                document.getElementById('minerals-container').innerHTML = '<p class="error">Failed to load minerals</p>';
+            }
+        }
+
+        function renderMicronutrients() {
+            if (!micronutrientData) return;
+
+            const { vitamins, minerals, summary } = micronutrientData;
+
+            // Vitamin display names
+            const vitaminNames = {
+                'vitamin_a_mcg': { name: 'Vitamin A', unit: 'mcg' },
+                'vitamin_c_mg': { name: 'Vitamin C', unit: 'mg' },
+                'vitamin_d_mcg': { name: 'Vitamin D', unit: 'mcg' },
+                'vitamin_e_mg': { name: 'Vitamin E', unit: 'mg' },
+                'vitamin_k_mcg': { name: 'Vitamin K', unit: 'mcg' },
+                'thiamin_mg': { name: 'Thiamin (B1)', unit: 'mg' },
+                'riboflavin_mg': { name: 'Riboflavin (B2)', unit: 'mg' },
+                'niacin_mg': { name: 'Niacin (B3)', unit: 'mg' },
+                'vitamin_b6_mg': { name: 'Vitamin B6', unit: 'mg' },
+                'folate_mcg': { name: 'Folate', unit: 'mcg' },
+                'vitamin_b12_mcg': { name: 'Vitamin B12', unit: 'mcg' },
+                'biotin_mcg': { name: 'Biotin', unit: 'mcg' },
+                'pantothenic_acid_mg': { name: 'Pantothenic Acid', unit: 'mg' },
+                'choline_mg': { name: 'Choline', unit: 'mg' }
+            };
+
+            const mineralNames = {
+                'calcium_mg': { name: 'Calcium', unit: 'mg' },
+                'iron_mg': { name: 'Iron', unit: 'mg' },
+                'magnesium_mg': { name: 'Magnesium', unit: 'mg' },
+                'phosphorus_mg': { name: 'Phosphorus', unit: 'mg' },
+                'potassium_mg': { name: 'Potassium', unit: 'mg' },
+                'zinc_mg': { name: 'Zinc', unit: 'mg' },
+                'copper_mg': { name: 'Copper', unit: 'mg' },
+                'manganese_mg': { name: 'Manganese', unit: 'mg' },
+                'selenium_mcg': { name: 'Selenium', unit: 'mcg' },
+                'chromium_mcg': { name: 'Chromium', unit: 'mcg' },
+                'molybdenum_mcg': { name: 'Molybdenum', unit: 'mcg' },
+                'iodine_mcg': { name: 'Iodine', unit: 'mcg' }
+            };
+
+            // Add summary card for vitamins
+            const vitaminSummary = `
+                <div class="summary-card">
+                    <div class="summary-stat">
+                        <h3>${summary.vitamins_met}/${summary.vitamins_total}</h3>
+                        <p>Daily Targets Met</p>
+                    </div>
+                </div>
+            `;
+
+            const mineralSummary = `
+                <div class="summary-card">
+                    <div class="summary-stat">
+                        <h3>${summary.minerals_met}/${summary.minerals_total}</h3>
+                        <p>Daily Targets Met</p>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('vitamins-container').innerHTML = vitaminSummary + renderNutrientCards(vitamins, vitaminNames);
+            document.getElementById('minerals-container').innerHTML = mineralSummary + renderNutrientCards(minerals, mineralNames);
+        }
+
+        function renderNutrientCards(nutrients, displayNames) {
+            return Object.entries(nutrients).map(([key, data]) => {
+                const display = displayNames[key] || { name: key, unit: '' };
+                const pctCapped = Math.min(data.percent, 100);
+
+                return `
+                    <div class="micronutrient-card">
+                        <div class="micronutrient-info">
+                            <div class="micronutrient-name">${display.name}</div>
+                            <div class="micronutrient-value">${data.consumed} / ${data.daily_value} ${display.unit}</div>
+                        </div>
+                        <div class="micronutrient-bar-container">
+                            <div class="micronutrient-bar ${data.status}" style="width: ${pctCapped}%"></div>
+                        </div>
+                        <div class="micronutrient-percent ${data.status}">${Math.round(data.percent)}%</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        loadNutrition();
+    </script>
+</body>
+</html>

@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Food App - Tonight's Cooking Deck</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="header">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+            <a href="/discover" class="back-btn">&larr; Back</a>
+            <h1>Tonight's Deck</h1>
+            <button class="btn btn-sm btn-outline" id="clear-all-btn" style="display:none;" onclick="clearAll()">Clear</button>
+        </div>
+    </div>
+
+    <div class="container" id="meals-container">
+        <div class="loading">
+            <div class="loading-spinner"></div>
+            Loading cooking deck...
+        </div>
+    </div>
+
+    <div class="empty-state" id="empty-state" style="display:none;padding:60px 24px;">
+        <div class="empty-state-icon" style="font-size:4rem;">&#127869;</div>
+        <h2>No Meals Planned</h2>
+        <p style="color:var(--text-secondary);margin:8px 0 24px;">Swipe up on recipes to add them to tonight's cooking deck!</p>
+        <a href="/discover" class="btn btn-primary">Discover Recipes</a>
+    </div>
+
+    <nav class="bottom-nav">
+        <a href="/" class="nav-item">
+            <div class="nav-item-icon"><img src="/static/images/recipe.svg" alt="Recipes"></div>
+            Recipes
+        </a>
+        <a href="/discover" class="nav-item active">
+            <span class="icon">&#128293;</span>
+            Discover
+        </a>
+        <a href="/shopping" class="nav-item">
+            <div class="nav-item-icon"><img src="/static/images/shopping.svg" alt="Shopping"></div>
+            Shopping
+        </a>
+        <a href="/nutrition" class="nav-item">
+            <div class="nav-item-icon"><img src="/static/images/chart.svg" alt="Nutrition"></div>
+            Nutrition
+        </a>
+    </nav>
+
+    <script>
+        const mealTypeIcons = {
+            'breakfast': '&#9728;',
+            'lunch': '&#127774;',
+            'dinner': '&#127769;',
+            'snack': '&#127871;'
+        };
+
+        const mealTypeOrder = ['breakfast', 'lunch', 'dinner', 'snack'];
+
+        function getRecipeUrl(meal) {
+            // Custom recipes go to the cooking steps page
+            if (meal.recipe_source === 'custom') {
+                return `/cook/${meal.recipe_id}`;
+            }
+            // MealDB recipes go to the mealdb recipe page
+            return `/recipe/mealdb/${meal.recipe_id}`;
+        }
+
+        async function loadCookingDeck() {
+            try {
+                const response = await fetch('/api/cooking-deck');
+                const data = await response.json();
+
+                let totalMeals = 0;
+                Object.values(data.meals).forEach(meals => {
+                    totalMeals += meals.length;
+                });
+
+                if (totalMeals === 0) {
+                    document.getElementById('meals-container').style.display = 'none';
+                    document.getElementById('empty-state').style.display = 'block';
+                    return;
+                }
+
+                document.getElementById('clear-all-btn').style.display = 'block';
+                renderMeals(data.meals);
+            } catch (error) {
+                console.error('Failed to load cooking deck:', error);
+                document.getElementById('meals-container').innerHTML =
+                    '<div class="empty-state"><p>Failed to load cooking deck</p></div>';
+            }
+        }
+
+        function renderMeals(meals) {
+            const container = document.getElementById('meals-container');
+            container.innerHTML = '';
+
+            mealTypeOrder.forEach(mealType => {
+                const mealList = meals[mealType];
+                if (!mealList || mealList.length === 0) return;
+
+                const section = document.createElement('div');
+                section.className = 'section';
+                section.innerHTML = `
+                    <h2 class="section-title" style="display:flex;align-items:center;gap:8px;">
+                        <span style="font-size:1.5rem;">${mealTypeIcons[mealType]}</span>
+                        ${capitalize(mealType)}
+                        <span class="card-badge" style="margin-left:auto;">${mealList.length}</span>
+                    </h2>
+                    <div class="recipe-grid" data-meal-type="${mealType}">
+                        ${mealList.map((meal, index) => `
+                            <div class="recipe-card interactive-card bounce-in"
+                                 data-id="${meal.id}"
+                                 style="animation-delay: ${index * 0.05}s; position:relative;"
+                                 onmousemove="handleTilt3D(event, this)"
+                                 onmouseleave="resetTilt3D(this)">
+                                <a href="${getRecipeUrl(meal)}" style="text-decoration:none;color:inherit;">
+                                    <div class="card-inner">
+                                        <div class="recipe-card-image">
+                                            <img src="${meal.image_url}" alt="${escapeHtml(meal.name)}"
+                                                 onerror="this.style.display='none'">
+                                        </div>
+                                        <div class="card-glare"></div>
+                                        <div class="card-glow"></div>
+                                        <div class="recipe-card-body">
+                                            <div class="recipe-card-title">${escapeHtml(meal.name)}</div>
+                                            <div class="card-tags">
+                                                <span class="card-tag primary">${capitalize(mealType)}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </a>
+                                <button class="card-remove-btn" onclick="event.stopPropagation(); removeMeal(${meal.id})" title="Remove">
+                                    &times;
+                                </button>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+                container.appendChild(section);
+            });
+        }
+
+        function capitalize(str) {
+            return str.charAt(0).toUpperCase() + str.slice(1);
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        async function removeMeal(id) {
+            try {
+                await fetch(`/api/cooking-deck/${id}`, {
+                    method: 'DELETE'
+                });
+
+                const card = document.querySelector(`[data-id="${id}"]`);
+                if (card) {
+                    card.style.animation = 'slideOut 0.3s ease forwards';
+                    setTimeout(() => {
+                        card.remove();
+                        checkEmpty();
+                    }, 300);
+                }
+            } catch (error) {
+                console.error('Failed to remove meal:', error);
+                showToast('Failed to remove meal', 'error');
+            }
+        }
+
+        async function clearAll() {
+            if (!confirm('Clear all meals from tonight\'s deck?')) return;
+
+            try {
+                const cards = document.querySelectorAll('.recipe-card[data-id]');
+                for (const card of cards) {
+                    const id = card.dataset.id;
+                    await fetch(`/api/cooking-deck/${id}`, {
+                        method: 'DELETE'
+                    });
+                }
+
+                document.getElementById('meals-container').style.display = 'none';
+                document.getElementById('clear-all-btn').style.display = 'none';
+                document.getElementById('empty-state').style.display = 'block';
+            } catch (error) {
+                console.error('Failed to clear deck:', error);
+                showToast('Failed to clear deck', 'error');
+            }
+        }
+
+        function checkEmpty() {
+            const cards = document.querySelectorAll('.recipe-card[data-id]');
+            if (cards.length === 0) {
+                document.getElementById('meals-container').style.display = 'none';
+                document.getElementById('clear-all-btn').style.display = 'none';
+                document.getElementById('empty-state').style.display = 'block';
+            }
+
+            // Also check if any sections are now empty
+            document.querySelectorAll('.section').forEach(section => {
+                const sectionCards = section.querySelectorAll('.recipe-card[data-id]');
+                if (sectionCards.length === 0) {
+                    section.remove();
+                }
+            });
+        }
+
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.style.cssText = `
+                position: fixed;
+                bottom: 100px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: ${type === 'success' ? 'var(--success)' : type === 'error' ? 'var(--danger)' : 'var(--secondary)'};
+                color: white;
+                padding: 12px 24px;
+                border-radius: 24px;
+                font-weight: 500;
+                z-index: 1000;
+                animation: fadeInUp 0.3s ease;
+            `;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.animation = 'fadeOut 0.3s ease forwards';
+                setTimeout(() => toast.remove(), 300);
+            }, 2000);
+        }
+
+        // 3D Tilt effect
+        function handleTilt3D(e, card) {
+            const rect = card.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            const centerX = rect.width / 2;
+            const centerY = rect.height / 2;
+
+            const rotateX = (centerY - y) / 8;
+            const rotateY = (x - centerX) / 8;
+
+            const distFromCenter = Math.sqrt(Math.pow(x - centerX, 2) + Math.pow(y - centerY, 2));
+            const maxDist = Math.sqrt(Math.pow(centerX, 2) + Math.pow(centerY, 2));
+            const depthFactor = distFromCenter / maxDist;
+            const translateZ = -20 * depthFactor;
+
+            const inner = card.querySelector('.card-inner');
+            if (inner) {
+                inner.style.transform = `
+                    perspective(1000px)
+                    rotateX(${rotateX}deg)
+                    rotateY(${rotateY}deg)
+                    translateZ(${translateZ}px)
+                    scale3d(1.02, 1.02, 1.02)
+                `;
+                inner.style.transition = 'transform 0.1s ease-out';
+            }
+
+            const glare = card.querySelector('.card-glare');
+            if (glare) {
+                const glareX = (x / rect.width) * 100;
+                const glareY = (y / rect.height) * 100;
+                glare.style.background = `radial-gradient(circle at ${glareX}% ${glareY}%, rgba(255,255,255,0.5) 0%, transparent 50%)`;
+                glare.style.opacity = '1';
+            }
+
+            const glow = card.querySelector('.card-glow');
+            if (glow) {
+                glow.style.opacity = 0.3 + (depthFactor * 0.4);
+            }
+        }
+
+        function resetTilt3D(card) {
+            const inner = card.querySelector('.card-inner');
+            if (inner) {
+                inner.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) translateZ(0) scale3d(1, 1, 1)';
+                inner.style.transition = 'transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)';
+            }
+            const glare = card.querySelector('.card-glare');
+            if (glare) glare.style.opacity = '0';
+            const glow = card.querySelector('.card-glow');
+            if (glow) glow.style.opacity = '0';
+        }
+
+        // Add CSS
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fadeInUp {
+                from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+                to { opacity: 1; transform: translateX(-50%) translateY(0); }
+            }
+            @keyframes fadeOut {
+                to { opacity: 0; }
+            }
+            @keyframes slideOut {
+                to { opacity: 0; transform: translateX(-100%); }
+            }
+            .card-remove-btn {
+                position: absolute;
+                top: 8px;
+                right: 8px;
+                width: 28px;
+                height: 28px;
+                border-radius: 50%;
+                background: rgba(0,0,0,0.6);
+                color: white;
+                border: none;
+                font-size: 1.2rem;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 10;
+                opacity: 0;
+                transition: opacity 0.2s ease;
+            }
+            .recipe-card:hover .card-remove-btn {
+                opacity: 1;
+            }
+            @media (hover: none) {
+                .card-remove-btn {
+                    opacity: 1;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+
+        loadCookingDeck();
+    </script>
+</body>
+</html>

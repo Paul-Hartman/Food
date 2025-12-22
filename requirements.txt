@@ -1,0 +1,26 @@
+Django==5.2.7
+psycopg2-binary==2.9.11
+requests==2.32.5
+Pillow==12.0.0
+pandas==2.3.3
+django-crispy-forms==2.4
+crispy-bootstrap5==2025.6
+djangorestframework==3.16.1
+pint==0.25.1
+python-dotenv==1.2.1
+
+# Redis & Caching
+redis==5.0.1
+django-redis==5.4.0
+
+# Celery for async tasks
+celery==5.4.0
+flower==2.0.1
+
+# Background scheduler for pantry depletion
+APScheduler==3.11.0
+
+# API integrations for knowledge system
+pubchempy==1.0.4
+openfoodfacts==0.1.8
+biopython==1.84

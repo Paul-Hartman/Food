@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Monthly Calendar - Food App</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        .calendar-container {
+            padding: 16px;
+            max-width: 900px;
+            margin: 0 auto;
+            padding-bottom: 100px;
+        }
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .calendar-nav {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .nav-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--card-bg);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+        .date-display {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+        .view-toggle {
+            display: flex;
+            gap: 4px;
+            background: var(--card-bg);
+            padding: 4px;
+            border-radius: 8px;
+        }
+        .view-btn {
+            padding: 8px 16px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+        }
+        .view-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+        .add-event-btn {
+            padding: 8px 16px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .month-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 12px;
+        }
+        .weekday-header {
+            text-align: center;
+            padding: 10px 4px;
+            font-weight: 600;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+        .day-cell {
+            min-height: 100px;
+            background: var(--bg);
+            border-radius: 8px;
+            padding: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+        .day-cell:hover {
+            background: rgba(99, 102, 241, 0.1);
+        }
+        .day-cell.other-month {
+            opacity: 0.4;
+        }
+        .day-cell.today {
+            border: 2px solid var(--primary);
+        }
+        .day-number {
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .day-number .today-badge {
+            background: var(--primary);
+            color: white;
+            font-size: 0.6rem;
+            padding: 2px 6px;
+            border-radius: 8px;
+        }
+        .busy-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        .busy-dot.high { background: #ef4444; }
+        .busy-dot.medium { background: #f59e0b; }
+        .busy-dot.low { background: #10b981; }
+        .meal-indicators {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin-bottom: 6px;
+        }
+        .meal-dot {
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            background: var(--card-bg);
+        }
+        .meal-dot.filled {
+            background: rgba(99, 102, 241, 0.3);
+        }
+        .meal-dot.filled.breakfast { background: rgba(245, 158, 11, 0.3); }
+        .meal-dot.filled.lunch { background: rgba(16, 185, 129, 0.3); }
+        .meal-dot.filled.dinner { background: rgba(139, 92, 246, 0.3); }
+        .event-preview {
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            background: var(--card-bg);
+            border-radius: 4px;
+            margin-top: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            border-left: 3px solid var(--primary);
+        }
+        .more-indicator {
+            font-size: 0.65rem;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        .legend {
+            display: flex;
+            gap: 16px;
+            margin-top: 16px;
+            padding: 12px;
+            background: var(--card-bg);
+            border-radius: 8px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-top: 20px;
+        }
+        .stat-card {
+            background: var(--card-bg);
+            border-radius: 10px;
+            padding: 16px;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        /* Mobile adjustments */
+        @media (max-width: 600px) {
+            .day-cell {
+                min-height: 70px;
+                padding: 6px;
+            }
+            .day-number {
+                font-size: 0.8rem;
+            }
+            .meal-dot {
+                width: 18px;
+                height: 18px;
+                font-size: 0.6rem;
+            }
+            .event-preview {
+                display: none;
+            }
+            .stats-row {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="calendar-container">
+        <div class="calendar-header">
+            <div class="calendar-nav">
+                <button class="nav-btn" onclick="changeMonth(-1)">&larr;</button>
+                <span class="date-display" id="date-display">December 2025</span>
+                <button class="nav-btn" onclick="changeMonth(1)">&rarr;</button>
+            </div>
+            <div class="view-toggle">
+                <a href="/calendar/week" class="view-btn">Week</a>
+                <a href="/calendar/month" class="view-btn active">Month</a>
+            </div>
+            <button class="add-event-btn" onclick="window.location.href='/calendar/week'">+ Add</button>
+        </div>
+
+        <div class="month-grid" id="month-grid">
+            <div class="weekday-header">Sun</div>
+            <div class="weekday-header">Mon</div>
+            <div class="weekday-header">Tue</div>
+            <div class="weekday-header">Wed</div>
+            <div class="weekday-header">Thu</div>
+            <div class="weekday-header">Fri</div>
+            <div class="weekday-header">Sat</div>
+            <!-- Days will be rendered here -->
+        </div>
+
+        <div class="legend">
+            <div class="legend-item">
+                <span class="meal-dot filled breakfast">&#x2600;</span>
+                Breakfast
+            </div>
+            <div class="legend-item">
+                <span class="meal-dot filled lunch">&#x1F324;</span>
+                Lunch
+            </div>
+            <div class="legend-item">
+                <span class="meal-dot filled dinner">&#x1F319;</span>
+                Dinner
+            </div>
+            <div class="legend-item">
+                <span class="busy-dot high"></span>
+                Busy Day
+            </div>
+        </div>
+
+        <div class="stats-row" id="stats-row">
+            <div class="stat-card">
+                <div class="stat-value" id="meals-planned">0</div>
+                <div class="stat-label">Meals Planned</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="busy-days">0</div>
+                <div class="stat-label">Busy Days</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="events-count">0</div>
+                <div class="stat-label">Events</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="completion-rate">0%</div>
+                <div class="stat-label">Planned</div>
+            </div>
+        </div>
+    </div>
+
+    <nav class="bottom-nav">
+        <a href="/" class="nav-item">
+            <div class="nav-item-icon"><img src="/static/images/recipe.svg" alt="Recipes"></div>
+            Recipes
+        </a>
+        <a href="/calendar" class="nav-item active">
+            <span class="icon">&#x1F4C5;</span>
+            Calendar
+        </a>
+        <a href="/family" class="nav-item">
+            <span class="icon">&#x1F46A;</span>
+            Family
+        </a>
+        <a href="/shopping" class="nav-item">
+            <div class="nav-item-icon"><img src="/static/images/shopping.svg" alt="Shopping"></div>
+            Shopping
+        </a>
+    </nav>
+
+    <script>
+        let currentYear = new Date().getFullYear();
+        let currentMonth = new Date().getMonth();
+
+        const months = ['January', 'February', 'March', 'April', 'May', 'June',
+                       'July', 'August', 'September', 'October', 'November', 'December'];
+
+        function updateDateDisplay() {
+            document.getElementById('date-display').textContent = `${months[currentMonth]} ${currentYear}`;
+        }
+
+        function changeMonth(direction) {
+            currentMonth += direction;
+            if (currentMonth < 0) {
+                currentMonth = 11;
+                currentYear--;
+            } else if (currentMonth > 11) {
+                currentMonth = 0;
+                currentYear++;
+            }
+            updateDateDisplay();
+            loadMonthData();
+        }
+
+        async function loadMonthData() {
+            try {
+                const response = await fetch(`/api/calendar/month?year=${currentYear}&month=${currentMonth + 1}`);
+                const data = await response.json();
+                renderMonth(data);
+                updateStats(data);
+            } catch (error) {
+                console.error('Failed to load month data:', error);
+            }
+        }
+
+        function renderMonth(data) {
+            const container = document.getElementById('month-grid');
+            const today = new Date().toISOString().split('T')[0];
+
+            // Keep weekday headers
+            let html = `
+                <div class="weekday-header">Sun</div>
+                <div class="weekday-header">Mon</div>
+                <div class="weekday-header">Tue</div>
+                <div class="weekday-header">Wed</div>
+                <div class="weekday-header">Thu</div>
+                <div class="weekday-header">Fri</div>
+                <div class="weekday-header">Sat</div>
+            `;
+
+            // Create a map for easy lookup
+            const dayMap = {};
+            data.days.forEach(day => {
+                dayMap[day.date] = day;
+            });
+
+            // Calculate first day of month and days in month
+            const firstDay = new Date(currentYear, currentMonth, 1);
+            const lastDay = new Date(currentYear, currentMonth + 1, 0);
+            const daysInMonth = lastDay.getDate();
+            const startDayOfWeek = firstDay.getDay();
+
+            // Previous month padding
+            const prevMonth = new Date(currentYear, currentMonth, 0);
+            const prevMonthDays = prevMonth.getDate();
+            for (let i = startDayOfWeek - 1; i >= 0; i--) {
+                const dayNum = prevMonthDays - i;
+                html += `<div class="day-cell other-month"><div class="day-number">${dayNum}</div></div>`;
+            }
+
+            // Current month days
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const dayData = dayMap[dateStr];
+                const isToday = dateStr === today;
+
+                let busyClass = '';
+                if (dayData?.busyness?.busyness_score > 6) busyClass = 'high';
+                else if (dayData?.busyness?.busyness_score > 3) busyClass = 'medium';
+                else if (dayData?.busyness?.busyness_score > 0) busyClass = 'low';
+
+                const meals = dayData?.meals || {};
+                const events = dayData?.events || [];
+
+                html += `
+                    <div class="day-cell ${isToday ? 'today' : ''}" onclick="goToDay('${dateStr}')">
+                        <div class="day-number">
+                            ${day}
+                            ${isToday ? '<span class="today-badge">Today</span>' : ''}
+                            ${busyClass ? `<span class="busy-dot ${busyClass}"></span>` : ''}
+                        </div>
+                        <div class="meal-indicators">
+                            <div class="meal-dot ${meals.breakfast ? 'filled breakfast' : ''}">&#x2600;</div>
+                            <div class="meal-dot ${meals.lunch ? 'filled lunch' : ''}">&#x1F324;</div>
+                            <div class="meal-dot ${meals.dinner ? 'filled dinner' : ''}">&#x1F319;</div>
+                        </div>
+                        ${events.length > 0 ? `
+                            <div class="event-preview" style="border-color: ${events[0].color || '#6366f1'}">
+                                ${escapeHtml(events[0].title)}
+                            </div>
+                            ${events.length > 1 ? `<div class="more-indicator">+${events.length - 1} more</div>` : ''}
+                        ` : ''}
+                    </div>
+                `;
+            }
+
+            // Next month padding
+            const totalCells = startDayOfWeek + daysInMonth;
+            const remainingCells = (7 - (totalCells % 7)) % 7;
+            for (let i = 1; i <= remainingCells; i++) {
+                html += `<div class="day-cell other-month"><div class="day-number">${i}</div></div>`;
+            }
+
+            container.innerHTML = html;
+        }
+
+        function updateStats(data) {
+            let mealsPlanned = 0;
+            let busyDays = 0;
+            let eventsCount = 0;
+            let totalDays = data.days.length;
+
+            data.days.forEach(day => {
+                const meals = day.meals || {};
+                if (meals.breakfast) mealsPlanned++;
+                if (meals.lunch) mealsPlanned++;
+                if (meals.dinner) mealsPlanned++;
+
+                if (day.busyness?.busyness_score >= 6) busyDays++;
+
+                eventsCount += (day.events?.length || 0);
+            });
+
+            const maxMeals = totalDays * 3; // 3 meals per day
+            const completionRate = maxMeals > 0 ? Math.round((mealsPlanned / maxMeals) * 100) : 0;
+
+            document.getElementById('meals-planned').textContent = mealsPlanned;
+            document.getElementById('busy-days').textContent = busyDays;
+            document.getElementById('events-count').textContent = eventsCount;
+            document.getElementById('completion-rate').textContent = completionRate + '%';
+        }
+
+        function goToDay(dateStr) {
+            // Navigate to week view centered on that day
+            window.location.href = `/calendar/week?date=${dateStr}`;
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Initialize
+        updateDateDisplay();
+        loadMonthData();
+    </script>
+</body>
+</html>

@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Meal Planning - Food App</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        .plan-container {
+            padding: 20px;
+            max-width: 600px;
+            margin: 0 auto;
+            padding-bottom: 100px;
+        }
+        .plan-header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+        .plan-header h1 {
+            font-size: 1.5rem;
+            margin-bottom: 8px;
+        }
+        .plan-header p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        .duration-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+        .duration-card {
+            background: var(--card-bg);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 20px 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .duration-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+        .duration-card.selected {
+            border-color: var(--primary);
+            background: var(--primary-light);
+        }
+        .duration-card .icon {
+            font-size: 2rem;
+            display: block;
+            margin-bottom: 8px;
+        }
+        .duration-card .label {
+            font-weight: 600;
+            display: block;
+            margin-bottom: 4px;
+        }
+        .duration-card .meals {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+        .budget-section {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 24px;
+        }
+        .budget-section h3 {
+            font-size: 0.9rem;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .budget-input {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .budget-input input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 1.1rem;
+            background: var(--bg);
+        }
+        .budget-input span {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+        .budget-presets {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+        .budget-preset {
+            padding: 6px 12px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+        .budget-preset:hover {
+            border-color: var(--primary);
+        }
+        .options-section {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 24px;
+        }
+        .option-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+        }
+        .option-row label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .toggle {
+            width: 48px;
+            height: 28px;
+            background: var(--border);
+            border-radius: 14px;
+            position: relative;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .toggle.active {
+            background: var(--primary);
+        }
+        .toggle::after {
+            content: '';
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            background: white;
+            border-radius: 50%;
+            top: 2px;
+            left: 2px;
+            transition: transform 0.2s;
+        }
+        .toggle.active::after {
+            transform: translateX(20px);
+        }
+        .start-button {
+            width: 100%;
+            padding: 16px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .start-button:hover {
+            opacity: 0.9;
+        }
+        .start-button:disabled {
+            background: var(--border);
+            cursor: not-allowed;
+        }
+        .active-plans {
+            margin-top: 32px;
+        }
+        .active-plans h3 {
+            font-size: 1rem;
+            margin-bottom: 12px;
+            color: var(--text-secondary);
+        }
+        .plan-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            border: 1px solid var(--border);
+        }
+        .plan-card:hover {
+            border-color: var(--primary);
+        }
+        .plan-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .plan-card-title {
+            font-weight: 600;
+        }
+        .plan-card-status {
+            font-size: 0.75rem;
+            padding: 4px 8px;
+            border-radius: 12px;
+            background: var(--success-light);
+            color: var(--success);
+        }
+        .plan-card-status.planning {
+            background: var(--warning-light);
+            color: var(--warning);
+        }
+        .plan-card-progress {
+            display: flex;
+            gap: 16px;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+        .plan-card-budget {
+            margin-top: 8px;
+            font-size: 0.85rem;
+        }
+        .progress-bar {
+            height: 4px;
+            background: var(--border);
+            border-radius: 2px;
+            margin-top: 8px;
+            overflow: hidden;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            background: var(--primary);
+            transition: width 0.3s;
+        }
+    </style>
+</head>
+<body>
+    <div class="plan-container">
+        <div class="plan-header">
+            <h1>Plan Your Meals</h1>
+            <p>Choose a duration and budget, then swipe to pick recipes</p>
+        </div>
+
+        <div class="duration-grid">
+            <div class="duration-card" data-type="day" onclick="selectDuration('day')">
+                <span class="icon">&#x1F4C6;</span>
+                <span class="label">Today</span>
+                <span class="meals">3 meals</span>
+            </div>
+            <div class="duration-card selected" data-type="week" onclick="selectDuration('week')">
+                <span class="icon">&#x1F5D3;</span>
+                <span class="label">Week</span>
+                <span class="meals">21 meals</span>
+            </div>
+            <div class="duration-card" data-type="month" onclick="selectDuration('month')">
+                <span class="icon">&#x1F4C5;</span>
+                <span class="label">Month</span>
+                <span class="meals">90 meals</span>
+            </div>
+        </div>
+
+        <div class="budget-section">
+            <h3>&#x1F4B0; Budget (optional)</h3>
+            <div class="budget-input">
+                <span>EUR</span>
+                <input type="number" id="budget" placeholder="No limit" step="10">
+            </div>
+            <div class="budget-presets">
+                <span class="budget-preset" onclick="setBudget(50)">50 EUR</span>
+                <span class="budget-preset" onclick="setBudget(100)">100 EUR</span>
+                <span class="budget-preset" onclick="setBudget(150)">150 EUR</span>
+                <span class="budget-preset" onclick="setBudget(200)">200 EUR</span>
+                <span class="budget-preset" onclick="setBudget(300)">300 EUR</span>
+            </div>
+        </div>
+
+        <div class="options-section">
+            <div class="option-row">
+                <label>
+                    <span>&#x1F36A;</span>
+                    Include snacks
+                </label>
+                <div class="toggle" id="snacks-toggle" onclick="toggleSnacks()"></div>
+            </div>
+            <div class="option-row">
+                <label>
+                    <span>&#x1F959;</span>
+                    Optimize for meal prep
+                </label>
+                <div class="toggle active" id="prep-toggle" onclick="togglePrep()"></div>
+            </div>
+        </div>
+
+        <button class="start-button" onclick="startPlanning()">
+            <span>&#x1F680;</span>
+            Start Swiping Recipes
+        </button>
+
+        <div class="active-plans" id="active-plans" style="display: none;">
+            <h3>Your Meal Plans</h3>
+            <div id="plans-list"></div>
+        </div>
+    </div>
+
+    <nav class="bottom-nav">
+        <a href="/" class="nav-item">
+            <div class="nav-item-icon"><img src="/static/images/recipe.svg" alt="Recipes"></div>
+            Recipes
+        </a>
+        <a href="/discover" class="nav-item">
+            <span class="icon">&#128293;</span>
+            Discover
+        </a>
+        <a href="/plan" class="nav-item active">
+            <span class="icon">&#x1F4C5;</span>
+            Plan
+        </a>
+        <a href="/shopping" class="nav-item">
+            <div class="nav-item-icon"><img src="/static/images/shopping.svg" alt="Shopping"></div>
+            Shopping
+        </a>
+    </nav>
+
+    <script>
+        let selectedDuration = 'week';
+        let includeSnacks = false;
+        let optimizeForPrep = true;
+
+        function selectDuration(type) {
+            selectedDuration = type;
+            document.querySelectorAll('.duration-card').forEach(card => {
+                card.classList.toggle('selected', card.dataset.type === type);
+            });
+
+            // Update budget presets based on duration
+            const presets = {
+                day: [20, 30, 40, 50],
+                week: [50, 100, 150, 200, 300],
+                month: [200, 300, 400, 500, 600]
+            };
+            const container = document.querySelector('.budget-presets');
+            container.innerHTML = presets[type].map(v =>
+                `<span class="budget-preset" onclick="setBudget(${v})">${v} EUR</span>`
+            ).join('');
+        }
+
+        function setBudget(value) {
+            document.getElementById('budget').value = value;
+        }
+
+        function toggleSnacks() {
+            includeSnacks = !includeSnacks;
+            document.getElementById('snacks-toggle').classList.toggle('active', includeSnacks);
+        }
+
+        function togglePrep() {
+            optimizeForPrep = !optimizeForPrep;
+            document.getElementById('prep-toggle').classList.toggle('active', optimizeForPrep);
+        }
+
+        async function startPlanning() {
+            const budget = document.getElementById('budget').value;
+
+            try {
+                const response = await fetch('/api/meal-plans', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        plan_type: selectedDuration,
+                        budget: budget ? parseFloat(budget) : null,
+                        include_snacks: includeSnacks
+                    })
+                });
+
+                const plan = await response.json();
+                console.log('Created plan:', plan);
+
+                // Navigate to swipe interface for breakfast first
+                window.location.href = `/plan/${plan.plan_id}/swipe/breakfast`;
+            } catch (error) {
+                console.error('Failed to create plan:', error);
+                alert('Failed to create plan. Please try again.');
+            }
+        }
+
+        async function loadExistingPlans() {
+            try {
+                const response = await fetch('/api/meal-plans');
+                const plans = await response.json();
+
+                if (plans.length > 0) {
+                    document.getElementById('active-plans').style.display = 'block';
+                    const container = document.getElementById('plans-list');
+
+                    container.innerHTML = plans.map(plan => {
+                        const totalNeeded = plan.breakfasts_needed + plan.lunches_needed +
+                                          plan.dinners_needed + plan.snacks_needed;
+                        const totalSelected = plan.breakfasts_selected + plan.lunches_selected +
+                                            plan.dinners_selected + plan.snacks_selected;
+                        const progress = (totalSelected / totalNeeded * 100).toFixed(0);
+
+                        const isComplete = totalSelected >= totalNeeded;
+                        return `
+                            <div class="plan-card">
+                                <div onclick="window.location.href='/plan/${plan.id}/swipe/breakfast'" style="cursor:pointer;">
+                                    <div class="plan-card-header">
+                                        <span class="plan-card-title">${plan.name}</span>
+                                        <span class="plan-card-status ${plan.status}">${plan.status}</span>
+                                    </div>
+                                    <div class="plan-card-progress">
+                                        <span>B: ${plan.breakfasts_selected}/${plan.breakfasts_needed}</span>
+                                        <span>L: ${plan.lunches_selected}/${plan.lunches_needed}</span>
+                                        <span>D: ${plan.dinners_selected}/${plan.dinners_needed}</span>
+                                        ${plan.snacks_needed > 0 ? `<span>S: ${plan.snacks_selected}/${plan.snacks_needed}</span>` : ''}
+                                    </div>
+                                    ${plan.budget_total ? `
+                                        <div class="plan-card-budget">
+                                            Budget: EUR ${plan.total_estimated_cost?.toFixed(2) || '0.00'} / ${plan.budget_total?.toFixed(2)}
+                                        </div>
+                                    ` : ''}
+                                    <div class="progress-bar">
+                                        <div class="progress-bar-fill" style="width: ${progress}%"></div>
+                                    </div>
+                                </div>
+                                ${totalSelected > 0 ? `
+                                    <div class="plan-card-actions" style="display:flex;gap:8px;margin-top:12px;">
+                                        <button onclick="event.stopPropagation();window.location.href='/plan/${plan.id}/prep'"
+                                                style="flex:1;padding:10px;background:linear-gradient(135deg,#e94560,#9333ea);border:none;border-radius:8px;color:white;font-weight:600;cursor:pointer;">
+                                            &#x1F959; Start Meal Prep
+                                        </button>
+                                        <button onclick="event.stopPropagation();window.location.href='/api/meal-plans/${plan.id}/shopping-list'"
+                                                style="flex:1;padding:10px;background:#16213e;border:1px solid #e94560;border-radius:8px;color:#e94560;font-weight:600;cursor:pointer;">
+                                            &#x1F6D2; Shopping List
+                                        </button>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        `;
+                    }).join('');
+                }
+            } catch (error) {
+                console.error('Failed to load plans:', error);
+            }
+        }
+
+        loadExistingPlans();
+    </script>
+</body>
+</html>

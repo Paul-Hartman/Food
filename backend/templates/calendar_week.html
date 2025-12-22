@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Weekly Calendar - Food App</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        .calendar-container {
+            padding: 16px;
+            max-width: 900px;
+            margin: 0 auto;
+            padding-bottom: 100px;
+        }
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .calendar-nav {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .nav-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--card-bg);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+        .date-display {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+        .view-toggle {
+            display: flex;
+            gap: 4px;
+            background: var(--card-bg);
+            padding: 4px;
+            border-radius: 8px;
+        }
+        .view-btn {
+            padding: 8px 16px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+        .view-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+        .add-event-btn {
+            padding: 8px 16px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .week-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .day-column {
+            background: var(--card-bg);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+        .day-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: var(--bg);
+            border-bottom: 1px solid var(--border);
+        }
+        .day-name {
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .day-date {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+        .day-today {
+            background: var(--primary);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+        }
+        .busy-indicator {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.8rem;
+        }
+        .busy-badge {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-weight: 500;
+        }
+        .busy-badge.low { background: rgba(16, 185, 129, 0.2); color: #10b981; }
+        .busy-badge.medium { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+        .busy-badge.high { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+        .day-content {
+            padding: 12px;
+        }
+        .meals-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .meal-slot {
+            background: var(--bg);
+            border-radius: 8px;
+            padding: 10px;
+            min-height: 80px;
+            cursor: pointer;
+            border: 2px dashed var(--border);
+            transition: all 0.2s;
+        }
+        .meal-slot:hover {
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.1);
+        }
+        .meal-slot.filled {
+            border-style: solid;
+            border-color: transparent;
+        }
+        .meal-type-icon {
+            font-size: 1.2rem;
+            margin-bottom: 4px;
+        }
+        .meal-type-label {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .meal-name {
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-top: 6px;
+            line-height: 1.3;
+        }
+        .meal-meta {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 6px;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+        .chef-avatar {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.6rem;
+        }
+        .events-list {
+            border-top: 1px solid var(--border);
+            padding-top: 10px;
+        }
+        .event-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 10px;
+            background: var(--bg);
+            border-radius: 6px;
+            margin-bottom: 6px;
+            font-size: 0.85rem;
+        }
+        .event-color {
+            width: 4px;
+            height: 24px;
+            border-radius: 2px;
+        }
+        .event-time {
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+        }
+        .suggestion-banner {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(233, 69, 96, 0.15));
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.85rem;
+        }
+        .suggestion-icon {
+            font-size: 1.2rem;
+        }
+        .quick-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 20px;
+        }
+        .quick-action-btn {
+            flex: 1;
+            padding: 12px;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: center;
+            font-size: 0.85rem;
+        }
+        .quick-action-btn:hover {
+            border-color: var(--primary);
+        }
+        .quick-action-btn .icon {
+            font-size: 1.3rem;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        /* Schedule Meal Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+        .modal {
+            background: var(--card-bg);
+            border-radius: 16px;
+            width: 100%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modal-header h2 {
+            font-size: 1.2rem;
+        }
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-secondary);
+        }
+        .modal-body {
+            padding: 20px;
+        }
+        .recipe-search {
+            position: relative;
+            margin-bottom: 16px;
+        }
+        .recipe-search input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--bg);
+            font-size: 1rem;
+        }
+        .recipe-results {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .recipe-option {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            margin-bottom: 8px;
+            background: var(--bg);
+        }
+        .recipe-option:hover {
+            border-color: var(--primary);
+        }
+        .recipe-option.selected {
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.1);
+        }
+        .recipe-thumb {
+            width: 50px;
+            height: 50px;
+            border-radius: 8px;
+            object-fit: cover;
+        }
+        .recipe-info h4 {
+            font-size: 0.95rem;
+            margin-bottom: 4px;
+        }
+        .recipe-info p {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+        .meal-type-selector {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+        .meal-type-btn {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--bg);
+            cursor: pointer;
+            text-align: center;
+        }
+        .meal-type-btn.selected {
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.1);
+        }
+        .modal-footer {
+            padding: 20px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 12px;
+        }
+        .modal-footer button {
+            flex: 1;
+            padding: 14px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        .btn-cancel {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            color: inherit;
+        }
+        .btn-save {
+            background: var(--primary);
+            border: none;
+            color: white;
+        }
+
+        @media (min-width: 768px) {
+            .week-grid {
+                display: grid;
+                grid-template-columns: repeat(7, 1fr);
+                gap: 12px;
+            }
+            .day-column {
+                min-width: 0;
+            }
+            .meals-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="calendar-container">
+        <div class="calendar-header">
+            <div class="calendar-nav">
+                <button class="nav-btn" onclick="changeWeek(-1)">&larr;</button>
+                <span class="date-display" id="date-display">Dec 15 - 21, 2025</span>
+                <button class="nav-btn" onclick="changeWeek(1)">&rarr;</button>
+            </div>
+            <div class="view-toggle">
+                <a href="/calendar/week" class="view-btn active">Week</a>
+                <a href="/calendar/month" class="view-btn">Month</a>
+            </div>
+            <button class="add-event-btn" onclick="openEventModal()">+ Add</button>
+        </div>
+
+        <div class="week-grid" id="week-grid">
+            <div class="loading">
+                <div class="loading-spinner"></div>
+                Loading calendar...
+            </div>
+        </div>
+
+        <div class="quick-actions">
+            <button class="quick-action-btn" onclick="window.location.href='/discover'">
+                <span class="icon">&#x1F50D;</span>
+                Discover Recipes
+            </button>
+            <button class="quick-action-btn" onclick="window.location.href='/cooking-deck'">
+                <span class="icon">&#x1F373;</span>
+                Today's Deck
+            </button>
+            <button class="quick-action-btn" onclick="window.location.href='/shopping'">
+                <span class="icon">&#x1F6D2;</span>
+                Shopping List
+            </button>
+        </div>
+    </div>
+
+    <!-- Schedule Meal Modal -->
+    <div class="modal-overlay" id="schedule-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Schedule Meal</h2>
+                <button class="modal-close" onclick="closeScheduleModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="schedule-date">
+
+                <div class="meal-type-selector">
+                    <button class="meal-type-btn selected" data-type="breakfast" onclick="selectMealType('breakfast')">
+                        &#x2600; Breakfast
+                    </button>
+                    <button class="meal-type-btn" data-type="lunch" onclick="selectMealType('lunch')">
+                        &#x1F324; Lunch
+                    </button>
+                    <button class="meal-type-btn" data-type="dinner" onclick="selectMealType('dinner')">
+                        &#x1F319; Dinner
+                    </button>
+                </div>
+
+                <div class="recipe-search">
+                    <input type="text" id="recipe-search" placeholder="Search recipes..." oninput="searchRecipes(this.value)">
+                </div>
+
+                <div class="recipe-results" id="recipe-results">
+                    <p style="text-align:center;color:var(--text-secondary);padding:20px;">
+                        Type to search your recipes...
+                    </p>
+                </div>
+
+                <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border);">
+                    <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 12px;">Quick options:</p>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        <button class="quick-action-btn" onclick="scheduleQuickOption('Eating Out')" style="flex: 0 1 auto; padding: 10px 16px;">
+                            &#x1F37D; Eating Out
+                        </button>
+                        <button class="quick-action-btn" onclick="scheduleQuickOption('Leftovers')" style="flex: 0 1 auto; padding: 10px 16px;">
+                            &#x1F372; Leftovers
+                        </button>
+                        <button class="quick-action-btn" onclick="scheduleQuickOption('Meal Prep')" style="flex: 0 1 auto; padding: 10px 16px;">
+                            &#x1F959; Meal Prep
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" onclick="closeScheduleModal()">Cancel</button>
+                <button class="btn-save" id="schedule-btn" onclick="confirmSchedule()" disabled>Schedule Meal</button>
+            </div>
+        </div>
+    </div>
+
+    <nav class="bottom-nav">
+        <a href="/" class="nav-item">
+            <div class="nav-item-icon"><img src="/static/images/recipe.svg" alt="Recipes"></div>
+            Recipes
+        </a>
+        <a href="/calendar" class="nav-item active">
+            <span class="icon">&#x1F4C5;</span>
+            Calendar
+        </a>
+        <a href="/family" class="nav-item">
+            <span class="icon">&#x1F46A;</span>
+            Family
+        </a>
+        <a href="/shopping" class="nav-item">
+            <div class="nav-item-icon"><img src="/static/images/shopping.svg" alt="Shopping"></div>
+            Shopping
+        </a>
+    </nav>
+
+    <script>
+        const mealIcons = {
+            breakfast: '&#x2600;',
+            lunch: '&#x1F324;',
+            dinner: '&#x1F319;',
+            snack: '&#x1F36A;'
+        };
+
+        let currentWeekStart = getWeekStart(new Date());
+        let selectedRecipe = null;
+        let selectedMealType = 'breakfast';
+        let familyMembers = [];
+
+        function getWeekStart(date) {
+            const d = new Date(date);
+            const day = d.getDay();
+            const diff = d.getDate() - day;
+            return new Date(d.setDate(diff));
+        }
+
+        function formatDate(date) {
+            return date.toISOString().split('T')[0];
+        }
+
+        function changeWeek(direction) {
+            currentWeekStart.setDate(currentWeekStart.getDate() + (direction * 7));
+            updateDateDisplay();
+            loadWeekData();
+        }
+
+        function updateDateDisplay() {
+            const start = new Date(currentWeekStart);
+            const end = new Date(start);
+            end.setDate(end.getDate() + 6);
+
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            const startMonth = months[start.getMonth()];
+            const endMonth = months[end.getMonth()];
+
+            if (startMonth === endMonth) {
+                document.getElementById('date-display').textContent = `${startMonth} ${start.getDate()} - ${end.getDate()}, ${start.getFullYear()}`;
+            } else {
+                document.getElementById('date-display').textContent = `${startMonth} ${start.getDate()} - ${endMonth} ${end.getDate()}, ${start.getFullYear()}`;
+            }
+        }
+
+        async function loadWeekData() {
+            const startDate = formatDate(currentWeekStart);
+            const container = document.getElementById('week-grid');
+
+            try {
+                const [calendarResponse, familyResponse] = await Promise.all([
+                    fetch(`/api/calendar/week?date=${startDate}`),
+                    fetch('/api/family/members')
+                ]);
+
+                const calendarData = await calendarResponse.json();
+                familyMembers = await familyResponse.json();
+
+                renderWeek(calendarData);
+            } catch (error) {
+                console.error('Failed to load calendar:', error);
+                container.innerHTML = `<div class="empty-state"><p>Failed to load calendar</p></div>`;
+            }
+        }
+
+        function renderWeek(data) {
+            const container = document.getElementById('week-grid');
+            const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            const today = formatDate(new Date());
+
+            container.innerHTML = data.days.map(day => {
+                const dateObj = new Date(day.date);
+                const dayName = days[dateObj.getDay()];
+                const dayNum = dateObj.getDate();
+                const isToday = day.date === today;
+
+                const busynessClass = day.busyness.busyness_score <= 3 ? 'low' :
+                                     day.busyness.busyness_score <= 6 ? 'medium' : 'high';
+
+                return `
+                    <div class="day-column">
+                        <div class="day-header">
+                            <div class="day-name">
+                                ${dayName} ${dayNum}
+                                ${isToday ? '<span class="day-today">Today</span>' : ''}
+                            </div>
+                            <div class="busy-indicator">
+                                ${day.busyness.event_count > 0 ? `
+                                    <span class="busy-badge ${busynessClass}">
+                                        ${day.busyness.event_count} event${day.busyness.event_count > 1 ? 's' : ''}
+                                    </span>
+                                ` : ''}
+                            </div>
+                        </div>
+                        <div class="day-content">
+                            <div class="meals-row">
+                                ${renderMealSlot(day, 'breakfast')}
+                                ${renderMealSlot(day, 'lunch')}
+                                ${renderMealSlot(day, 'dinner')}
+                            </div>
+
+                            ${day.events.length > 0 ? `
+                                <div class="events-list">
+                                    ${day.events.slice(0, 3).map(event => `
+                                        <div class="event-item">
+                                            <div class="event-color" style="background: ${event.color || '#6366f1'}"></div>
+                                            <div>
+                                                <div>${escapeHtml(event.title)}</div>
+                                                ${event.start_datetime ? `<div class="event-time">${formatTime(event.start_datetime)}</div>` : ''}
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                    ${day.events.length > 3 ? `<p style="font-size:0.8rem;color:var(--text-secondary);">+${day.events.length - 3} more</p>` : ''}
+                                </div>
+                            ` : ''}
+
+                            ${day.busyness.busyness_score >= 6 && !day.meals.dinner ? `
+                                <div class="suggestion-banner">
+                                    <span class="suggestion-icon">&#x26A1;</span>
+                                    <span>Busy day! Try a quick 20-min meal</span>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderMealSlot(day, mealType) {
+            const meal = day.meals[mealType];
+
+            if (meal) {
+                const chef = familyMembers.find(m => m.id === meal.chef_member_id);
+                return `
+                    <div class="meal-slot filled" style="background: ${chef?.color || '#6366f1'}22;" onclick="openScheduleModal('${day.date}', '${mealType}')">
+                        <div class="meal-type-icon">${mealIcons[mealType]}</div>
+                        <div class="meal-name">${escapeHtml(meal.recipe_name)}</div>
+                        ${chef ? `
+                            <div class="meal-meta">
+                                <span class="chef-avatar" style="background:${chef.color}">${chef.avatar_emoji}</span>
+                                ${escapeHtml(chef.name)}
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            }
+
+            return `
+                <div class="meal-slot" onclick="openScheduleModal('${day.date}', '${mealType}')">
+                    <div class="meal-type-icon">${mealIcons[mealType]}</div>
+                    <div class="meal-type-label">${mealType}</div>
+                </div>
+            `;
+        }
+
+        function formatTime(datetime) {
+            const date = new Date(datetime);
+            return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Schedule Modal Functions
+        function openScheduleModal(date, mealType = 'breakfast') {
+            document.getElementById('schedule-date').value = date;
+            selectMealType(mealType);
+            selectedRecipe = null;
+            document.getElementById('recipe-search').value = '';
+            document.getElementById('recipe-results').innerHTML = `
+                <p style="text-align:center;color:var(--text-secondary);padding:20px;">
+                    Type to search your recipes...
+                </p>
+            `;
+            document.getElementById('schedule-btn').disabled = true;
+            document.getElementById('schedule-modal').classList.add('active');
+        }
+
+        function closeScheduleModal() {
+            document.getElementById('schedule-modal').classList.remove('active');
+        }
+
+        function selectMealType(type) {
+            selectedMealType = type;
+            document.querySelectorAll('.meal-type-btn').forEach(btn => {
+                btn.classList.toggle('selected', btn.dataset.type === type);
+            });
+        }
+
+        async function searchRecipes(query) {
+            if (query.length < 2) {
+                document.getElementById('recipe-results').innerHTML = `
+                    <p style="text-align:center;color:var(--text-secondary);padding:20px;">
+                        Type at least 2 characters to search...
+                    </p>
+                `;
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/recipes/search?q=${encodeURIComponent(query)}`);
+                const recipes = await response.json();
+
+                if (recipes.length === 0) {
+                    document.getElementById('recipe-results').innerHTML = `
+                        <p style="text-align:center;color:var(--text-secondary);padding:20px;">
+                            No recipes found. Try a different search term.
+                        </p>
+                    `;
+                    return;
+                }
+
+                document.getElementById('recipe-results').innerHTML = recipes.map(recipe => `
+                    <div class="recipe-option" data-id="${recipe.id}" data-source="${recipe.source || 'local'}" data-name="${escapeHtml(recipe.name)}" onclick="selectRecipe(this)">
+                        <img class="recipe-thumb" src="${recipe.image_url || '/static/images/placeholder.jpg'}" alt="" onerror="this.style.display='none'">
+                        <div class="recipe-info">
+                            <h4>${escapeHtml(recipe.name)}</h4>
+                            <p>${recipe.prep_time ? recipe.prep_time + ' min prep' : ''} ${recipe.cuisine ? '• ' + recipe.cuisine : ''}</p>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Failed to search recipes:', error);
+            }
+        }
+
+        function selectRecipe(element) {
+            document.querySelectorAll('.recipe-option').forEach(el => el.classList.remove('selected'));
+            element.classList.add('selected');
+            selectedRecipe = {
+                id: element.dataset.id,
+                source: element.dataset.source,
+                name: element.dataset.name
+            };
+            document.getElementById('schedule-btn').disabled = false;
+        }
+
+        async function scheduleQuickOption(optionName) {
+            selectedRecipe = {
+                id: 'quick_' + optionName.toLowerCase().replace(' ', '_'),
+                source: 'quick_entry',
+                name: optionName
+            };
+            await confirmSchedule();
+        }
+
+        async function confirmSchedule() {
+            if (!selectedRecipe) return;
+
+            const date = document.getElementById('schedule-date').value;
+
+            try {
+                const response = await fetch('/api/meals/schedule', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        recipe_id: selectedRecipe.id,
+                        recipe_source: selectedRecipe.source,
+                        recipe_name: selectedRecipe.name,
+                        meal_type: selectedMealType,
+                        scheduled_date: date
+                    })
+                });
+
+                if (response.ok) {
+                    closeScheduleModal();
+                    loadWeekData();
+                } else {
+                    const error = await response.json();
+                    alert(error.error || 'Failed to schedule meal');
+                }
+            } catch (error) {
+                console.error('Failed to schedule meal:', error);
+                alert('Failed to schedule meal');
+            }
+        }
+
+        function openEventModal() {
+            // For now, redirect to schedule a meal
+            openScheduleModal(formatDate(new Date()));
+        }
+
+        // Close modal on outside click
+        document.getElementById('schedule-modal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('schedule-modal')) {
+                closeScheduleModal();
+            }
+        });
+
+        // Initialize
+        updateDateDisplay();
+        loadWeekData();
+    </script>
+</body>
+</html>

@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kitchen Quest - Family Dashboard</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        :root {
+            --need-green: #22c55e;
+            --need-yellow: #eab308;
+            --need-orange: #f97316;
+            --need-red: #ef4444;
+            --rarity-common: #9ca3af;
+            --rarity-uncommon: #22c55e;
+            --rarity-rare: #3b82f6;
+            --rarity-epic: #a855f7;
+            --rarity-legendary: #f59e0b;
+        }
+
+        .game-header {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            padding: 24px 16px;
+            text-align: center;
+            color: white;
+        }
+
+        .game-header h1 {
+            font-size: 28px;
+            margin: 0 0 8px 0;
+        }
+
+        .game-header p {
+            opacity: 0.9;
+            margin: 0;
+        }
+
+        .family-selector {
+            display: flex;
+            gap: 12px;
+            padding: 16px;
+            overflow-x: auto;
+            background: #f1f5f9;
+        }
+
+        .member-avatar {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            padding: 12px;
+            border-radius: 12px;
+            background: white;
+            min-width: 80px;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+        }
+
+        .member-avatar.selected {
+            border-color: var(--accent);
+            transform: scale(1.05);
+        }
+
+        .member-avatar:hover {
+            background: #e2e8f0;
+        }
+
+        .avatar-circle {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .member-name {
+            font-size: 12px;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .member-level {
+            font-size: 10px;
+            color: #64748b;
+        }
+
+        /* Sims-style Needs Panel */
+        .needs-panel {
+            background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+            padding: 16px;
+            border-radius: 16px;
+            margin: 16px;
+        }
+
+        .needs-panel h2 {
+            color: white;
+            font-size: 16px;
+            margin: 0 0 12px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .needs-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .need-item {
+            background: rgba(255,255,255,0.1);
+            border-radius: 8px;
+            padding: 10px;
+        }
+
+        .need-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+
+        .need-icon {
+            font-size: 18px;
+        }
+
+        .need-label {
+            color: #94a3b8;
+            font-size: 12px;
+            flex: 1;
+        }
+
+        .need-value {
+            color: white;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .need-bar {
+            height: 8px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .need-bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.5s ease, background 0.3s;
+        }
+
+        .need-bar-fill.green { background: var(--need-green); }
+        .need-bar-fill.yellow { background: var(--need-yellow); }
+        .need-bar-fill.orange { background: var(--need-orange); }
+        .need-bar-fill.red { background: var(--need-red); }
+
+        /* Level & XP Section */
+        .level-section {
+            background: white;
+            margin: 16px;
+            padding: 16px;
+            border-radius: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .level-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .level-badge {
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: 700;
+            color: white;
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+        }
+
+        .level-info h3 {
+            margin: 0;
+            font-size: 18px;
+        }
+
+        .level-info p {
+            margin: 4px 0 0 0;
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        .xp-bar-container {
+            background: #e2e8f0;
+            border-radius: 8px;
+            height: 12px;
+            overflow: hidden;
+        }
+
+        .xp-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%);
+            border-radius: 8px;
+            transition: width 0.5s ease;
+        }
+
+        .xp-text {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 6px;
+            font-size: 12px;
+            color: #64748b;
+        }
+
+        /* Streak Banner */
+        .streak-banner {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            margin: 0 16px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: white;
+        }
+
+        .streak-icon {
+            font-size: 32px;
+        }
+
+        .streak-info h4 {
+            margin: 0;
+            font-size: 16px;
+        }
+
+        .streak-info p {
+            margin: 2px 0 0 0;
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        .streak-multiplier {
+            margin-left: auto;
+            background: rgba(255,255,255,0.2);
+            padding: 6px 10px;
+            border-radius: 8px;
+            font-weight: 700;
+        }
+
+        /* Quick Actions */
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            padding: 16px;
+        }
+
+        .action-card {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+            text-decoration: none;
+            color: inherit;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            transition: transform 0.2s;
+        }
+
+        .action-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .action-icon {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+
+        .action-title {
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
+        .action-desc {
+            font-size: 12px;
+            color: #64748b;
+        }
+
+        /* Achievements Preview */
+        .achievements-preview {
+            padding: 16px;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .section-header h3 {
+            margin: 0;
+            font-size: 16px;
+        }
+
+        .section-header a {
+            font-size: 14px;
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        .achievement-row {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 8px;
+        }
+
+        .achievement-badge {
+            min-width: 64px;
+            text-align: center;
+            padding: 8px;
+            border-radius: 12px;
+            background: #f1f5f9;
+        }
+
+        .achievement-badge.earned {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+        }
+
+        .achievement-badge.locked {
+            opacity: 0.5;
+            filter: grayscale(1);
+        }
+
+        .achievement-icon {
+            font-size: 28px;
+        }
+
+        .achievement-name {
+            font-size: 10px;
+            margin-top: 4px;
+            color: #64748b;
+        }
+
+        /* Leaderboard */
+        .leaderboard-section {
+            padding: 16px;
+            background: #f8fafc;
+        }
+
+        .leaderboard-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: white;
+            border-radius: 12px;
+            margin-bottom: 8px;
+        }
+
+        .leaderboard-rank {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        .leaderboard-rank.gold { background: #fef3c7; color: #d97706; }
+        .leaderboard-rank.silver { background: #f1f5f9; color: #64748b; }
+        .leaderboard-rank.bronze { background: #fed7aa; color: #c2410c; }
+
+        .leaderboard-member {
+            flex: 1;
+        }
+
+        .leaderboard-name {
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .leaderboard-stats {
+            font-size: 12px;
+            color: #64748b;
+        }
+
+        .leaderboard-xp {
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        /* Goals Section */
+        .goals-section {
+            padding: 16px;
+        }
+
+        .goal-card {
+            background: white;
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 8px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+        }
+
+        .goal-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .goal-icon {
+            font-size: 20px;
+        }
+
+        .goal-title {
+            flex: 1;
+            font-size: 14px;
+        }
+
+        .goal-reward {
+            font-size: 12px;
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        .goal-progress-bar {
+            height: 6px;
+            background: #e2e8f0;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .goal-progress-fill {
+            height: 100%;
+            background: var(--accent);
+            border-radius: 3px;
+        }
+
+        .goal-progress-text {
+            font-size: 11px;
+            color: #64748b;
+            margin-top: 4px;
+        }
+
+        /* Loading state */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #64748b;
+        }
+
+        .loading::after {
+            content: '';
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #e2e8f0;
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 8px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-header">
+        <h1>Kitchen Quest</h1>
+        <p>Level up your cooking skills!</p>
+    </div>
+
+    <div class="family-selector" id="familySelector">
+        <div class="loading">Loading family...</div>
+    </div>
+
+    <div id="dashboardContent" style="display: none;">
+        <!-- Needs Panel (Sims-style) -->
+        <div class="needs-panel">
+            <h2><span>&#x1F3AE;</span> Needs</h2>
+            <div class="needs-grid" id="needsGrid">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+
+        <!-- Streak Banner -->
+        <div class="streak-banner" id="streakBanner" style="display: none;">
+            <span class="streak-icon">&#x1F525;</span>
+            <div class="streak-info">
+                <h4><span id="streakCount">0</span> Day Streak!</h4>
+                <p>Keep cooking daily to maintain your streak</p>
+            </div>
+            <div class="streak-multiplier"><span id="streakMultiplier">1.0</span>x XP</div>
+        </div>
+
+        <!-- Level Section -->
+        <div class="level-section">
+            <div class="level-header">
+                <div class="level-badge" id="levelBadge">1</div>
+                <div class="level-info">
+                    <h3 id="levelTitle">Kitchen Novice</h3>
+                    <p><span id="totalXP">0</span> Total XP</p>
+                </div>
+            </div>
+            <div class="xp-bar-container">
+                <div class="xp-bar-fill" id="xpBarFill" style="width: 0%"></div>
+            </div>
+            <div class="xp-text">
+                <span id="xpProgress">0 / 100 XP</span>
+                <span>Level <span id="nextLevel">2</span></span>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+            <a href="/swipe/dinner" class="action-card">
+                <div class="action-icon">&#x1F373;</div>
+                <div class="action-title">Cook Now</div>
+                <div class="action-desc">Find a recipe</div>
+            </a>
+            <a href="#" class="action-card" onclick="showSkillTree()">
+                <div class="action-icon">&#x1F333;</div>
+                <div class="action-title">Skill Tree</div>
+                <div class="action-desc">View progress</div>
+            </a>
+            <a href="#" class="action-card" onclick="showCollection()">
+                <div class="action-icon">&#x1F0CF;</div>
+                <div class="action-title">Collection</div>
+                <div class="action-desc">Recipe cards</div>
+            </a>
+            <a href="/calendar" class="action-card">
+                <div class="action-icon">&#x1F4C5;</div>
+                <div class="action-title">Meal Plan</div>
+                <div class="action-desc">Schedule meals</div>
+            </a>
+        </div>
+
+        <!-- Weekly Goals -->
+        <div class="goals-section">
+            <div class="section-header">
+                <h3>&#x1F3AF; Weekly Goals</h3>
+                <a href="#" onclick="generateGoals()">+ Add</a>
+            </div>
+            <div id="goalsContainer">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+
+        <!-- Achievements Preview -->
+        <div class="achievements-preview">
+            <div class="section-header">
+                <h3>&#x1F3C6; Achievements</h3>
+                <a href="/game/achievements">View All</a>
+            </div>
+            <div class="achievement-row" id="achievementRow">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+
+        <!-- Leaderboard -->
+        <div class="leaderboard-section">
+            <div class="section-header">
+                <h3>&#x1F451; Family Leaderboard</h3>
+            </div>
+            <div id="leaderboardContainer">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentMemberId = null;
+        let familyMembers = [];
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', async () => {
+            // First, initialize gamification data
+            await fetch('/api/game/init', { method: 'POST' });
+
+            // Load family members
+            await loadFamilyMembers();
+
+            // Load leaderboard
+            await loadLeaderboard();
+        });
+
+        async function loadFamilyMembers() {
+            try {
+                const response = await fetch('/api/family/members');
+                familyMembers = await response.json();
+
+                const selector = document.getElementById('familySelector');
+
+                if (familyMembers.length === 0) {
+                    selector.innerHTML = `
+                        <div style="text-align: center; padding: 20px; width: 100%;">
+                            <p>No family members yet!</p>
+                            <a href="/family" class="btn btn-primary" style="display: inline-block; padding: 8px 16px; background: var(--accent); color: white; border-radius: 8px; text-decoration: none; margin-top: 8px;">Add Family Member</a>
+                        </div>
+                    `;
+                    return;
+                }
+
+                selector.innerHTML = familyMembers.map(member => `
+                    <div class="member-avatar ${member.is_primary ? 'selected' : ''}"
+                         onclick="selectMember(${member.id})"
+                         data-member-id="${member.id}">
+                        <div class="avatar-circle" style="background: ${member.color}20; color: ${member.color};">
+                            ${member.avatar_emoji || '&#x1F464;'}
+                        </div>
+                        <div class="member-name">${member.name}</div>
+                        <div class="member-level">Level ?</div>
+                    </div>
+                `).join('');
+
+                // Select primary member or first member
+                const primaryMember = familyMembers.find(m => m.is_primary) || familyMembers[0];
+                if (primaryMember) {
+                    selectMember(primaryMember.id);
+                }
+            } catch (error) {
+                console.error('Error loading family:', error);
+                document.getElementById('familySelector').innerHTML = '<div class="loading">Error loading family</div>';
+            }
+        }
+
+        async function selectMember(memberId) {
+            currentMemberId = memberId;
+
+            // Update selection UI
+            document.querySelectorAll('.member-avatar').forEach(el => {
+                el.classList.toggle('selected', el.dataset.memberId == memberId);
+            });
+
+            // Show dashboard content
+            document.getElementById('dashboardContent').style.display = 'block';
+
+            // Load member dashboard data
+            await loadMemberDashboard(memberId);
+        }
+
+        async function loadMemberDashboard(memberId) {
+            try {
+                const response = await fetch(`/api/game/member/${memberId}/dashboard`);
+                const data = await response.json();
+
+                // Update needs panel
+                renderNeeds(data.needs);
+
+                // Update level section
+                document.getElementById('levelBadge').textContent = data.level.current;
+                document.getElementById('levelTitle').textContent = data.level.title;
+                document.getElementById('totalXP').textContent = data.level.total_xp.toLocaleString();
+                document.getElementById('xpBarFill').style.width = `${data.level.progress_percent}%`;
+                document.getElementById('xpProgress').textContent = `${data.level.total_xp % data.level.xp_to_next} / ${data.level.xp_to_next} XP`;
+                document.getElementById('nextLevel').textContent = data.level.current + 1;
+
+                // Update streak banner
+                const streak = data.streaks?.daily_cook;
+                if (streak && streak.current > 0) {
+                    document.getElementById('streakBanner').style.display = 'flex';
+                    document.getElementById('streakCount').textContent = streak.current;
+                    document.getElementById('streakMultiplier').textContent = streak.multiplier.toFixed(2);
+                } else {
+                    document.getElementById('streakBanner').style.display = 'none';
+                }
+
+                // Update achievements preview
+                renderAchievements(data.recent_achievements);
+
+                // Update goals
+                renderGoals(data.active_goals);
+
+                // Update member level display in selector
+                const memberEl = document.querySelector(`[data-member-id="${memberId}"] .member-level`);
+                if (memberEl) {
+                    memberEl.textContent = `Level ${data.level.current}`;
+                }
+
+            } catch (error) {
+                console.error('Error loading dashboard:', error);
+            }
+        }
+
+        function renderNeeds(needs) {
+            const grid = document.getElementById('needsGrid');
+            const needsConfig = [
+                { key: 'hunger', label: 'Hunger', icon: '&#x1F37D;' },
+                { key: 'energy', label: 'Energy', icon: '&#x26A1;' },
+                { key: 'nutrition', label: 'Nutrition', icon: '&#x1F957;' },
+                { key: 'social', label: 'Social', icon: '&#x1F465;' },
+                { key: 'fun', label: 'Fun', icon: '&#x1F3AE;' },
+                { key: 'budget', label: 'Budget', icon: '&#x1F4B0;' }
+            ];
+
+            grid.innerHTML = needsConfig.map(need => {
+                const data = needs[need.key] || { value: 50, status: 'yellow' };
+                const statusClass = data.value >= 70 ? 'green' : data.value >= 40 ? 'yellow' : data.value >= 20 ? 'orange' : 'red';
+
+                return `
+                    <div class="need-item">
+                        <div class="need-header">
+                            <span class="need-icon">${need.icon}</span>
+                            <span class="need-label">${need.label}</span>
+                            <span class="need-value">${data.value}%</span>
+                        </div>
+                        <div class="need-bar">
+                            <div class="need-bar-fill ${statusClass}" style="width: ${data.value}%"></div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderAchievements(achievements) {
+            const row = document.getElementById('achievementRow');
+
+            if (!achievements || achievements.length === 0) {
+                row.innerHTML = '<div style="color: #64748b; padding: 8px;">No achievements yet. Start cooking to earn badges!</div>';
+                return;
+            }
+
+            row.innerHTML = achievements.map(ach => `
+                <div class="achievement-badge earned">
+                    <div class="achievement-icon">${ach.icon}</div>
+                    <div class="achievement-name">${ach.name}</div>
+                </div>
+            `).join('');
+        }
+
+        function renderGoals(goals) {
+            const container = document.getElementById('goalsContainer');
+
+            if (!goals || goals.length === 0) {
+                container.innerHTML = `
+                    <div class="goal-card">
+                        <p style="text-align: center; color: #64748b; margin: 0;">No active goals. <a href="#" onclick="generateGoals()">Generate weekly goals</a></p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = goals.map(goal => {
+                const progress = Math.min(100, (goal.current_value / goal.target_value) * 100);
+                return `
+                    <div class="goal-card">
+                        <div class="goal-header">
+                            <span class="goal-icon">&#x1F3AF;</span>
+                            <span class="goal-title">${goal.description}</span>
+                            <span class="goal-reward">+${goal.xp_reward} XP</span>
+                        </div>
+                        <div class="goal-progress-bar">
+                            <div class="goal-progress-fill" style="width: ${progress}%"></div>
+                        </div>
+                        <div class="goal-progress-text">${goal.current_value} / ${goal.target_value} completed</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function loadLeaderboard() {
+            try {
+                const response = await fetch('/api/game/leaderboard');
+                const leaderboard = await response.json();
+
+                const container = document.getElementById('leaderboardContainer');
+
+                if (leaderboard.length === 0) {
+                    container.innerHTML = '<div style="text-align: center; color: #64748b; padding: 16px;">No rankings yet</div>';
+                    return;
+                }
+
+                container.innerHTML = leaderboard.map((member, i) => {
+                    const rankClass = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
+                    return `
+                        <div class="leaderboard-item">
+                            <div class="leaderboard-rank ${rankClass}">${member.rank}</div>
+                            <div style="font-size: 24px;">${member.avatar || '&#x1F464;'}</div>
+                            <div class="leaderboard-member">
+                                <div class="leaderboard-name">${member.name}</div>
+                                <div class="leaderboard-stats">Level ${member.level} ${member.title}</div>
+                            </div>
+                            <div class="leaderboard-xp">${member.total_xp.toLocaleString()} XP</div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (error) {
+                console.error('Error loading leaderboard:', error);
+            }
+        }
+
+        async function generateGoals() {
+            if (!currentMemberId) return;
+
+            try {
+                await fetch(`/api/game/member/${currentMemberId}/auto-goals`, { method: 'POST' });
+                await loadMemberDashboard(currentMemberId);
+            } catch (error) {
+                console.error('Error generating goals:', error);
+            }
+        }
+
+        function showSkillTree() {
+            if (currentMemberId) {
+                window.location.href = `/game/skills/${currentMemberId}`;
+            }
+        }
+
+        function showCollection() {
+            if (currentMemberId) {
+                window.location.href = `/game/collection/${currentMemberId}`;
+            }
+        }
+    </script>
+</body>
+</html>

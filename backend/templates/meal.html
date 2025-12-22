@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Meal Planner - Food App</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        .meal-section {
+            margin-bottom: 24px;
+        }
+        .meal-section-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .meal-section-title .badge {
+            background: var(--primary);
+            color: white;
+            font-size: 0.75rem;
+            padding: 2px 8px;
+            border-radius: 12px;
+        }
+        .recipe-select-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 12px;
+        }
+        .recipe-select-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 2px solid transparent;
+            position: relative;
+        }
+        .recipe-select-card.selected {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+        }
+        .recipe-select-card.selected::after {
+            content: '';
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 24px;
+            height: 24px;
+            background: var(--primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .recipe-select-card.selected::before {
+            content: '✓';
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 24px;
+            height: 24px;
+            color: white;
+            font-size: 14px;
+            font-weight: bold;
+            z-index: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .recipe-select-card img {
+            width: 100%;
+            height: 80px;
+            object-fit: cover;
+        }
+        .recipe-select-card .placeholder-img {
+            width: 100%;
+            height: 80px;
+            background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .recipe-select-card .placeholder-img img {
+            width: 32px;
+            height: 32px;
+            filter: brightness(0) invert(1);
+        }
+        .recipe-select-info {
+            padding: 8px;
+        }
+        .recipe-select-name {
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-bottom: 4px;
+            line-height: 1.2;
+        }
+        .recipe-select-time {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        /* Timeline Preview */
+        .timeline-preview {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 24px;
+        }
+        .timeline-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        .timeline-title {
+            font-weight: 600;
+            font-size: 1rem;
+        }
+        .timeline-total {
+            background: var(--primary);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+        }
+        .timeline-bars {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .timeline-bar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .timeline-bar-label {
+            width: 100px;
+            font-size: 0.8rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .timeline-bar-track {
+            flex: 1;
+            height: 24px;
+            background: var(--bg-secondary);
+            border-radius: 4px;
+            position: relative;
+        }
+        .timeline-bar-fill {
+            position: absolute;
+            height: 100%;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            color: white;
+            font-weight: 500;
+        }
+        .timeline-bar-fill.main { background: var(--primary); }
+        .timeline-bar-fill.side1 { background: #10b981; }
+        .timeline-bar-fill.side2 { background: #f59e0b; }
+
+        /* Actions */
+        .meal-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 24px;
+            padding-bottom: 100px;
+        }
+        .meal-actions .btn {
+            width: 100%;
+            padding: 16px;
+            font-size: 1rem;
+        }
+
+        /* Recipe color legend */
+        .color-legend {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.8rem;
+        }
+        .legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+        .legend-dot.main { background: var(--primary); }
+        .legend-dot.side1 { background: #10b981; }
+        .legend-dot.side2 { background: #f59e0b; }
+
+        .empty-selection {
+            text-align: center;
+            padding: 32px;
+            color: var(--text-secondary);
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1>Plan a Meal</h1>
+        <p class="header-subtitle">Select a main dish and sides</p>
+    </header>
+
+    <div class="container">
+        <!-- Main Dish Section -->
+        <div class="meal-section">
+            <div class="meal-section-title">
+                <span>Main Dish</span>
+                <span class="badge">Pick 1</span>
+            </div>
+            <div class="recipe-select-grid" id="mains-grid">
+                <div class="loading">
+                    <div class="loading-spinner"></div>
+                    Loading...
+                </div>
+            </div>
+        </div>
+
+        <!-- Sides Section -->
+        <div class="meal-section">
+            <div class="meal-section-title">
+                <span>Side Dishes</span>
+                <span class="badge">Pick up to 2</span>
+            </div>
+            <div class="recipe-select-grid" id="sides-grid">
+                <div class="loading">
+                    <div class="loading-spinner"></div>
+                    Loading...
+                </div>
+            </div>
+        </div>
+
+        <!-- Timeline Preview -->
+        <div class="timeline-preview" id="timeline-preview" style="display: none;">
+            <div class="timeline-header">
+                <span class="timeline-title">Cooking Timeline</span>
+                <span class="timeline-total" id="total-time">0 min</span>
+            </div>
+            <div class="color-legend">
+                <div class="legend-item"><div class="legend-dot main"></div> Main</div>
+                <div class="legend-item"><div class="legend-dot side1"></div> Side 1</div>
+                <div class="legend-item"><div class="legend-dot side2"></div> Side 2</div>
+            </div>
+            <div class="timeline-bars" id="timeline-bars">
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="meal-actions">
+            <button class="btn btn-primary" id="start-cooking-btn" onclick="startCooking()" disabled>
+                Start Cooking
+            </button>
+            <button class="btn btn-outline" id="shopping-btn" onclick="generateShopping()" disabled>
+                Generate Shopping List
+            </button>
+        </div>
+    </div>
+
+    <nav class="bottom-nav">
+        <a href="/" class="nav-item">
+            <div class="nav-item-icon"><img src="/static/images/recipe.svg" alt="Recipes"></div>
+            Recipes
+        </a>
+        <a href="/meal" class="nav-item active">
+            <div class="nav-item-icon"><img src="/static/images/recipe.svg" alt="Meal"></div>
+            Meal
+        </a>
+        <a href="/shopping" class="nav-item">
+            <div class="nav-item-icon"><img src="/static/images/shopping.svg" alt="Shopping"></div>
+            Shopping
+        </a>
+        <a href="/nutrition" class="nav-item">
+            <div class="nav-item-icon"><img src="/static/images/chart.svg" alt="Nutrition"></div>
+            Nutrition
+        </a>
+    </nav>
+
+    <script>
+        let mains = [];
+        let sides = [];
+        let selectedMain = null;
+        let selectedSides = [];
+        let scheduleData = null;
+
+        async function loadRecipes() {
+            try {
+                const response = await fetch('/api/meal/recipes');
+                const data = await response.json();
+                mains = data.mains || [];
+                sides = data.sides || [];
+                renderMains();
+                renderSides();
+            } catch (error) {
+                console.error('Failed to load recipes:', error);
+            }
+        }
+
+        function renderMains() {
+            const grid = document.getElementById('mains-grid');
+            if (mains.length === 0) {
+                grid.innerHTML = '<div class="empty-selection">No main dishes available</div>';
+                return;
+            }
+            grid.innerHTML = mains.map(recipe => `
+                <div class="recipe-select-card ${selectedMain === recipe.id ? 'selected' : ''}"
+                     onclick="selectMain(${recipe.id})">
+                    ${recipe.image_url
+                        ? `<img src="${recipe.image_url}" alt="${recipe.name}">`
+                        : `<div class="placeholder-img"><img src="/static/images/recipe.svg" alt="Recipe"></div>`}
+                    <div class="recipe-select-info">
+                        <div class="recipe-select-name">${recipe.name}</div>
+                        <div class="recipe-select-time">${recipe.prep_time_min + recipe.cook_time_min} min</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderSides() {
+            const grid = document.getElementById('sides-grid');
+            if (sides.length === 0) {
+                grid.innerHTML = '<div class="empty-selection">No side dishes available</div>';
+                return;
+            }
+            grid.innerHTML = sides.map(recipe => `
+                <div class="recipe-select-card ${selectedSides.includes(recipe.id) ? 'selected' : ''}"
+                     onclick="selectSide(${recipe.id})">
+                    ${recipe.image_url
+                        ? `<img src="${recipe.image_url}" alt="${recipe.name}">`
+                        : `<div class="placeholder-img"><img src="/static/images/recipe.svg" alt="Recipe"></div>`}
+                    <div class="recipe-select-info">
+                        <div class="recipe-select-name">${recipe.name}</div>
+                        <div class="recipe-select-time">${recipe.prep_time_min + recipe.cook_time_min} min</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function selectMain(id) {
+            selectedMain = selectedMain === id ? null : id;
+            renderMains();
+            updateSchedule();
+        }
+
+        function selectSide(id) {
+            if (selectedSides.includes(id)) {
+                selectedSides = selectedSides.filter(s => s !== id);
+            } else if (selectedSides.length < 2) {
+                selectedSides.push(id);
+            }
+            renderSides();
+            updateSchedule();
+        }
+
+        async function updateSchedule() {
+            const startBtn = document.getElementById('start-cooking-btn');
+            const shopBtn = document.getElementById('shopping-btn');
+            const preview = document.getElementById('timeline-preview');
+
+            if (!selectedMain) {
+                startBtn.disabled = true;
+                shopBtn.disabled = true;
+                preview.style.display = 'none';
+                return;
+            }
+
+            startBtn.disabled = false;
+            shopBtn.disabled = false;
+
+            // Get schedule from API
+            const recipeIds = [selectedMain, ...selectedSides];
+            try {
+                const response = await fetch('/api/meal/schedule', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ recipe_ids: recipeIds })
+                });
+                scheduleData = await response.json();
+                renderTimeline();
+            } catch (error) {
+                console.error('Failed to get schedule:', error);
+            }
+        }
+
+        function renderTimeline() {
+            if (!scheduleData) return;
+
+            const preview = document.getElementById('timeline-preview');
+            const bars = document.getElementById('timeline-bars');
+            const totalEl = document.getElementById('total-time');
+
+            preview.style.display = 'block';
+            totalEl.textContent = `${scheduleData.total_time} min`;
+
+            const maxTime = scheduleData.total_time;
+            const colors = ['main', 'side1', 'side2'];
+
+            bars.innerHTML = scheduleData.recipes.map((recipe, i) => {
+                const startPercent = (recipe.start_offset / maxTime) * 100;
+                const widthPercent = (recipe.total_time / maxTime) * 100;
+                return `
+                    <div class="timeline-bar">
+                        <div class="timeline-bar-label">${recipe.name}</div>
+                        <div class="timeline-bar-track">
+                            <div class="timeline-bar-fill ${colors[i]}"
+                                 style="left: ${startPercent}%; width: ${widthPercent}%">
+                                ${recipe.total_time}m
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function startCooking() {
+            if (!selectedMain) return;
+            const recipeIds = [selectedMain, ...selectedSides].join(',');
+            window.location.href = `/cook/meal?recipes=${recipeIds}`;
+        }
+
+        async function generateShopping() {
+            if (!selectedMain) return;
+            const recipeIds = [selectedMain, ...selectedSides];
+            try {
+                await fetch('/api/shopping/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        recipe_ids: recipeIds,
+                        clear_existing: true,
+                        subtract_pantry: true
+                    })
+                });
+                window.location.href = '/shopping';
+            } catch (error) {
+                alert('Failed to generate shopping list');
+            }
+        }
+
+        loadRecipes();
+    </script>
+</body>
+</html>

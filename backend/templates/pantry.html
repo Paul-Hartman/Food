@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Pantry - Food App</title>
+    <link rel="icon" type="image/svg+xml" href="/static/images/recipe.svg">
+    <link rel="stylesheet" href="/static/css/style.css?v=20241218">
+</head>
+<body>
+    <header class="header">
+        <h1>My Pantry</h1>
+        <p class="header-subtitle" id="pantry-count">Loading...</p>
+    </header>
+
+    <div class="container">
+        <div class="search-bar">
+            <img src="/static/images/search.svg" alt="Search">
+            <input type="text" id="search-input" placeholder="Search pantry...">
+        </div>
+
+        <div id="pantry-list">
+            <div class="loading">
+                <div class="loading-spinner"></div>
+                Loading...
+            </div>
+        </div>
+
+        <div class="quick-actions" style="margin-top: 24px;">
+            <div class="quick-action" onclick="showAddModal()">
+                <div class="quick-action-icon">
+                    <img src="/static/images/plus.svg" alt="Add">
+                </div>
+                <span>Add Item</span>
+            </div>
+            <div class="quick-action" onclick="movePurchased()">
+                <div class="quick-action-icon">
+                    <img src="/static/images/shopping.svg" alt="Move">
+                </div>
+                <span>From Shopping</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Item Modal -->
+    <div class="modal-overlay hidden" id="add-modal">
+        <div class="modal">
+            <h2>Add to Pantry</h2>
+            <div style="margin: 16px 0;">
+                <label style="display: block; margin-bottom: 4px; font-size: 0.875rem;">Ingredient</label>
+                <select id="add-ingredient" style="width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid var(--border); border-radius: 8px;">
+                    <option value="">Select ingredient...</option>
+                </select>
+
+                <label style="display: block; margin-bottom: 4px; font-size: 0.875rem;">Quantity</label>
+                <input type="number" id="add-quantity" value="1" style="width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid var(--border); border-radius: 8px;">
+
+                <label style="display: block; margin-bottom: 4px; font-size: 0.875rem;">Unit</label>
+                <input type="text" id="add-unit" value="pieces" style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px;">
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-outline" onclick="hideAddModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="addToPantry()">Add</button>
+            </div>
+        </div>
+    </div>
+
+    <nav class="bottom-nav">
+        <a href="/" class="nav-item">
+            <div class="nav-item-icon"><img src="/static/images/recipe.svg" alt="Recipes"></div>
+            Recipes
+        </a>
+        <a href="/shopping" class="nav-item">
+            <div class="nav-item-icon"><img src="/static/images/shopping.svg" alt="Shopping"></div>
+            Shopping
+        </a>
+        <a href="/pantry" class="nav-item active">
+            <div class="nav-item-icon"><img src="/static/images/pantry.svg" alt="Pantry"></div>
+            Pantry
+        </a>
+        <a href="/nutrition" class="nav-item">
+            <div class="nav-item-icon"><img src="/static/images/chart.svg" alt="Nutrition"></div>
+            Nutrition
+        </a>
+    </nav>
+
+    <script>
+        let pantryItems = [];
+        let allIngredients = [];
+        let searchQuery = '';
+
+        async function loadPantry() {
+            try {
+                const response = await fetch('/api/pantry');
+                pantryItems = await response.json();
+                renderPantry();
+            } catch (error) {
+                document.getElementById('pantry-list').innerHTML =
+                    '<div class="empty-state"><p>Failed to load pantry</p></div>';
+            }
+        }
+
+        function renderPantry() {
+            const container = document.getElementById('pantry-list');
+            let filtered = pantryItems;
+
+            if (searchQuery) {
+                const q = searchQuery.toLowerCase();
+                filtered = filtered.filter(i => i.ingredient_name.toLowerCase().includes(q));
+            }
+
+            document.getElementById('pantry-count').textContent = `${filtered.length} items`;
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon"><img src="/static/images/pantry.svg" alt="Empty"></div>
+                        <p>${searchQuery ? 'No items found' : 'Your pantry is empty'}</p>
+                    </div>`;
+                return;
+            }
+
+            container.innerHTML = filtered.map(item => `
+                <div class="pantry-item">
+                    <div class="pantry-item-image">
+                        <img src="/static/images/ingredient.svg" alt="${item.ingredient_name}">
+                    </div>
+                    <span class="pantry-item-name">${item.ingredient_name}</span>
+                    <span class="pantry-item-amount">${item.quantity} ${item.unit}</span>
+                    <button class="pantry-item-delete" onclick="deleteItem(${item.id})">
+                        <img src="/static/images/delete.svg" alt="Delete" style="width: 20px;">
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        async function deleteItem(id) {
+            try {
+                await fetch(`/api/pantry/${id}`, { method: 'DELETE' });
+                loadPantry();
+            } catch (error) {
+                alert('Failed to delete item');
+            }
+        }
+
+        async function showAddModal() {
+            if (allIngredients.length === 0) {
+                try {
+                    const response = await fetch('/api/ingredients');
+                    allIngredients = await response.json();
+                    const select = document.getElementById('add-ingredient');
+                    select.innerHTML = '<option value="">Select ingredient...</option>' +
+                        allIngredients.map(i => `<option value="${i.id}">${i.name}</option>`).join('');
+                } catch (error) {
+                    console.error('Error loading ingredients:', error);
+                }
+            }
+            document.getElementById('add-modal').classList.remove('hidden');
+        }
+
+        function hideAddModal() {
+            document.getElementById('add-modal').classList.add('hidden');
+        }
+
+        async function addToPantry() {
+            const ingredientId = document.getElementById('add-ingredient').value;
+            const quantity = parseFloat(document.getElementById('add-quantity').value);
+            const unit = document.getElementById('add-unit').value;
+
+            if (!ingredientId) { alert('Please select an ingredient'); return; }
+
+            try {
+                await fetch('/api/pantry', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ingredient_id: parseInt(ingredientId), quantity, unit })
+                });
+                hideAddModal();
+                loadPantry();
+            } catch (error) {
+                alert('Failed to add item');
+            }
+        }
+
+        async function movePurchased() {
+            try {
+                await fetch('/api/pantry/from-shopping', { method: 'POST' });
+                loadPantry();
+                alert('Moved purchased items to pantry!');
+            } catch (error) {
+                alert('Failed to move items');
+            }
+        }
+
+        document.getElementById('search-input').addEventListener('input', e => {
+            searchQuery = e.target.value;
+            renderPantry();
+        });
+
+        loadPantry();
+    </script>
+</body>
+</html>

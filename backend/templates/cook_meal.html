@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Cooking - Food App</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        body { padding-bottom: 0; overflow: hidden; }
+        .cooking-container { height: 100vh; display: flex; flex-direction: column; }
+
+        .cooking-header {
+            padding: 16px;
+            background: var(--bg-primary);
+            border-bottom: 1px solid var(--border);
+        }
+        .cooking-header h1 {
+            font-size: 1.1rem;
+            margin-bottom: 8px;
+        }
+        .progress-bar {
+            height: 6px;
+            background: var(--bg-secondary);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), #10b981);
+            transition: width 0.3s ease;
+        }
+
+        /* Recipe color badges */
+        .recipe-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: white;
+        }
+        .recipe-badge.main { background: var(--primary); }
+        .recipe-badge.side1 { background: #10b981; }
+        .recipe-badge.side2 { background: #f59e0b; }
+
+        /* Step type badges */
+        .step-type-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .step-type-badge.prep { background: #e0e7ff; color: #4338ca; }
+        .step-type-badge.cook { background: #fee2e2; color: #dc2626; }
+        .step-type-badge.wait { background: #fef3c7; color: #d97706; }
+        .step-type-badge.season { background: #d1fae5; color: #059669; }
+        .step-type-badge.stir { background: #dbeafe; color: #2563eb; }
+
+        /* Cards wrapper */
+        .cards-wrapper {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Cooking cards */
+        .cooking-card {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-primary);
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease;
+        }
+        .cooking-card.active { transform: translateX(0); opacity: 1; }
+        .cooking-card.prev { transform: translateX(-100%); opacity: 0; }
+        .cooking-card.next { transform: translateX(100%); opacity: 0; }
+
+        /* Card with recipe color border */
+        .cooking-card.main-recipe { border-top: 4px solid var(--primary); }
+        .cooking-card.side1-recipe { border-top: 4px solid #10b981; }
+        .cooking-card.side2-recipe { border-top: 4px solid #f59e0b; }
+
+        .step-header {
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .step-header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .step-number {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+        .step-badges {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .step-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .step-body {
+            flex: 1;
+            padding: 0 16px;
+            overflow-y: auto;
+        }
+        .step-instruction {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            color: var(--text-primary);
+            margin-bottom: 16px;
+        }
+        .step-tip {
+            background: var(--bg-secondary);
+            border-left: 3px solid var(--primary);
+            padding: 12px;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            border-radius: 0 8px 8px 0;
+            margin-bottom: 16px;
+        }
+        .timer-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 20px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            cursor: pointer;
+            width: fit-content;
+        }
+        .timer-btn img {
+            width: 20px;
+            height: 20px;
+        }
+
+        .step-nav {
+            padding: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid var(--border);
+            background: var(--bg-primary);
+        }
+        .nav-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .nav-btn.prev {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+        .nav-btn.next {
+            background: var(--primary);
+            color: white;
+        }
+        .nav-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .nav-btn img {
+            width: 16px;
+            height: 16px;
+        }
+        .step-counter {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        /* Mise en place card */
+        .mise-en-place {
+            padding: 16px;
+        }
+        .mise-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+        .ingredient-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .ingredient-group {
+            margin-bottom: 16px;
+        }
+        .ingredient-group-title {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            padding-bottom: 4px;
+            border-bottom: 1px solid var(--border);
+        }
+        .ingredient-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+        }
+        .ingredient-name { color: var(--text-primary); }
+        .ingredient-amount { color: var(--text-secondary); font-size: 0.9rem; }
+
+        /* Timer Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .modal-overlay.hidden { display: none; }
+        .modal {
+            background: var(--bg-primary);
+            border-radius: 20px;
+            padding: 24px;
+            width: 90%;
+            max-width: 320px;
+            text-align: center;
+        }
+        .timer-display {
+            font-size: 4rem;
+            font-weight: 700;
+            font-family: monospace;
+            margin: 24px 0;
+            color: var(--primary);
+        }
+        .timer-controls {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        /* Done screen */
+        .done-container {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 24px;
+        }
+        .done-icon {
+            font-size: 4rem;
+            margin-bottom: 16px;
+        }
+        .done-container h1 {
+            font-size: 2rem;
+            margin-bottom: 8px;
+        }
+        .done-container p {
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+        }
+
+        /* Active timers bar */
+        .active-timers {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--bg-secondary);
+            padding: 8px 16px;
+            display: flex;
+            gap: 12px;
+            overflow-x: auto;
+            z-index: 100;
+        }
+        .active-timers.hidden { display: none; }
+        .active-timer {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background: var(--bg-primary);
+            border-radius: 8px;
+            flex-shrink: 0;
+        }
+        .active-timer .time {
+            font-family: monospace;
+            font-weight: 600;
+        }
+        .active-timer .name {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+    </style>
+</head>
+<body>
+    <div class="cooking-container">
+        <header class="cooking-header">
+            <h1 id="current-step-title">Loading meal...</h1>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+            </div>
+        </header>
+
+        <div class="cards-wrapper" id="cards-wrapper">
+            <div class="loading">
+                <div class="loading-spinner"></div>
+                Loading steps...
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Timers Bar -->
+    <div class="active-timers hidden" id="active-timers"></div>
+
+    <!-- Timer Modal -->
+    <div class="modal-overlay hidden" id="timer-modal">
+        <div class="modal">
+            <h2 id="timer-name">Timer</h2>
+            <div class="timer-display" id="timer-display">00:00</div>
+            <div class="timer-controls">
+                <button class="btn btn-outline" onclick="stopTimer()">Stop</button>
+                <button class="btn btn-primary" id="timer-start-btn" onclick="toggleTimer()">Start</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const recipeIds = '{{ recipe_ids }}'.split(',').map(id => parseInt(id)).filter(id => !isNaN(id));
+        let scheduleData = null;
+        let steps = [];
+        let currentStep = 0;
+        let totalSteps = 0;
+
+        // Timer state
+        let activeTimers = {};
+        let timerIntervals = {};
+        let currentTimerDuration = 0;
+        let currentTimerName = '';
+
+        // Recipe color mapping
+        const recipeColors = {};
+
+        async function loadSchedule() {
+            if (recipeIds.length === 0) {
+                document.getElementById('cards-wrapper').innerHTML =
+                    '<div class="empty-state"><p>No recipes selected</p><a href="/meal" class="btn btn-primary">Go to Meal Planner</a></div>';
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/meal/schedule', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ recipe_ids: recipeIds })
+                });
+                scheduleData = await response.json();
+
+                // Map recipe IDs to colors
+                scheduleData.recipes.forEach((recipe, i) => {
+                    recipeColors[recipe.id] = ['main', 'side1', 'side2'][i];
+                });
+
+                // Build steps array with mise en place first
+                steps = [
+                    {
+                        type: 'mise',
+                        title: 'Mise en Place',
+                        instruction: 'Gather all your ingredients before you start cooking.',
+                        ingredients: scheduleData.all_ingredients,
+                        recipes: scheduleData.recipes
+                    },
+                    ...scheduleData.timeline
+                ];
+
+                totalSteps = steps.length;
+                renderSteps();
+                updateProgress();
+
+            } catch (error) {
+                console.error('Failed to load schedule:', error);
+                document.getElementById('cards-wrapper').innerHTML =
+                    '<div class="empty-state"><p>Failed to load cooking steps</p></div>';
+            }
+        }
+
+        function renderSteps() {
+            const wrapper = document.getElementById('cards-wrapper');
+
+            wrapper.innerHTML = steps.map((step, index) => {
+                if (step.type === 'mise') {
+                    return renderMiseCard(step, index);
+                }
+                return renderCookingCard(step, index);
+            }).join('');
+
+            initSwipe();
+        }
+
+        function renderMiseCard(step, index) {
+            const recipeGroups = {};
+            step.ingredients.forEach(ing => {
+                if (!recipeGroups[ing.recipe_name]) recipeGroups[ing.recipe_name] = [];
+                recipeGroups[ing.recipe_name].push(ing);
+            });
+
+            return `
+                <div class="cooking-card ${index === 0 ? 'active' : 'next'}" data-step="${index}">
+                    <div class="step-header">
+                        <div class="step-header-top">
+                            <div class="step-number">0</div>
+                            <span class="step-type-badge prep">PREP</span>
+                        </div>
+                        <h2 class="step-title">${step.title}</h2>
+                    </div>
+                    <div class="step-body mise-en-place">
+                        <p class="step-instruction">${step.instruction}</p>
+                        ${Object.entries(recipeGroups).map(([recipeName, ingredients]) => `
+                            <div class="ingredient-group">
+                                <div class="ingredient-group-title">${recipeName}</div>
+                                ${ingredients.map(ing => `
+                                    <div class="ingredient-item">
+                                        <span class="ingredient-name">${ing.name}${ing.notes ? ` (${ing.notes})` : ''}</span>
+                                        <span class="ingredient-amount">${ing.quantity} ${ing.unit}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div class="step-nav">
+                        <button class="nav-btn prev" disabled>
+                            Back
+                        </button>
+                        <span class="step-counter">${index + 1} / ${totalSteps}</span>
+                        <button class="nav-btn next" onclick="nextStep()">
+                            Start Cooking
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderCookingCard(step, index) {
+            const colorClass = recipeColors[step.recipe_id] || 'main';
+            const stepType = step.step_type || 'cook';
+
+            return `
+                <div class="cooking-card ${index === 0 ? 'active' : 'next'} ${colorClass}-recipe" data-step="${index}">
+                    <div class="step-header">
+                        <div class="step-header-top">
+                            <div class="step-number">${step.index || index}</div>
+                            <div class="step-badges">
+                                <span class="recipe-badge ${colorClass}">${step.recipe_name}</span>
+                                <span class="step-type-badge ${stepType}">${stepType}</span>
+                            </div>
+                        </div>
+                        <h2 class="step-title">${step.title}</h2>
+                    </div>
+                    <div class="step-body">
+                        <p class="step-instruction">${step.instruction}</p>
+                        ${step.tips ? `<div class="step-tip">Tip: ${step.tips}</div>` : ''}
+                        ${step.timer_needed && step.duration ? `
+                            <button class="timer-btn" onclick="showTimer(${step.duration}, '${step.title}')">
+                                Set Timer: ${step.duration} min
+                            </button>
+                        ` : ''}
+                    </div>
+                    <div class="step-nav">
+                        <button class="nav-btn prev" onclick="prevStep()" ${index === 0 ? 'disabled' : ''}>
+                            Back
+                        </button>
+                        <span class="step-counter">${index + 1} / ${totalSteps}</span>
+                        ${index === totalSteps - 1 ? `
+                            <button class="nav-btn next" onclick="finishCooking()">
+                                Done!
+                            </button>
+                        ` : `
+                            <button class="nav-btn next" onclick="nextStep()">
+                                Next
+                            </button>
+                        `}
+                    </div>
+                </div>
+            `;
+        }
+
+        function initSwipe() {
+            const cards = document.querySelectorAll('.cooking-card');
+            cards.forEach(card => {
+                let startX = 0, currentX = 0, isDragging = false;
+                card.addEventListener('touchstart', e => { startX = e.touches[0].clientX; isDragging = true; });
+                card.addEventListener('touchmove', e => {
+                    if (!isDragging) return;
+                    currentX = e.touches[0].clientX;
+                    const diff = currentX - startX;
+                    const cardIndex = parseInt(card.dataset.step);
+                    if (cardIndex !== currentStep) return;
+                    if (Math.abs(diff) < 150) card.style.transform = `translateX(${diff}px)`;
+                });
+                card.addEventListener('touchend', () => {
+                    if (!isDragging) return;
+                    isDragging = false;
+                    const diff = currentX - startX;
+                    const cardIndex = parseInt(card.dataset.step);
+                    if (cardIndex !== currentStep) return;
+                    card.style.transform = '';
+                    if (diff < -80 && currentStep < totalSteps - 1) nextStep();
+                    else if (diff > 80 && currentStep > 0) prevStep();
+                });
+            });
+        }
+
+        function nextStep() {
+            if (currentStep >= totalSteps - 1) return;
+            const cards = document.querySelectorAll('.cooking-card');
+            cards[currentStep].classList.remove('active');
+            cards[currentStep].classList.add('prev');
+            currentStep++;
+            cards[currentStep].classList.remove('next');
+            cards[currentStep].classList.add('active');
+            updateProgress();
+        }
+
+        function prevStep() {
+            if (currentStep <= 0) return;
+            const cards = document.querySelectorAll('.cooking-card');
+            cards[currentStep].classList.remove('active');
+            cards[currentStep].classList.add('next');
+            currentStep--;
+            cards[currentStep].classList.remove('prev');
+            cards[currentStep].classList.add('active');
+            updateProgress();
+        }
+
+        function updateProgress() {
+            const progress = ((currentStep + 1) / totalSteps) * 100;
+            document.getElementById('progress-fill').style.width = `${progress}%`;
+
+            const step = steps[currentStep];
+            const title = step.type === 'mise' ? 'Mise en Place' : `${step.recipe_name}: ${step.title}`;
+            document.getElementById('current-step-title').textContent = title;
+        }
+
+        // Timer functions
+        function showTimer(minutes, name) {
+            currentTimerDuration = minutes * 60;
+            currentTimerName = name;
+            document.getElementById('timer-name').textContent = name;
+            updateTimerDisplay(currentTimerDuration);
+            document.getElementById('timer-modal').classList.remove('hidden');
+            document.getElementById('timer-start-btn').textContent = 'Start';
+        }
+
+        function updateTimerDisplay(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            document.getElementById('timer-display').textContent =
+                `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function toggleTimer() {
+            const btn = document.getElementById('timer-start-btn');
+            const timerId = currentTimerName;
+
+            if (timerIntervals[timerId]) {
+                // Pause
+                clearInterval(timerIntervals[timerId]);
+                delete timerIntervals[timerId];
+                btn.textContent = 'Resume';
+            } else {
+                // Start
+                btn.textContent = 'Pause';
+                activeTimers[timerId] = currentTimerDuration;
+
+                timerIntervals[timerId] = setInterval(() => {
+                    activeTimers[timerId]--;
+                    updateTimerDisplay(activeTimers[timerId]);
+                    renderActiveTimers();
+
+                    if (activeTimers[timerId] <= 0) {
+                        clearInterval(timerIntervals[timerId]);
+                        delete timerIntervals[timerId];
+                        delete activeTimers[timerId];
+                        if ('vibrate' in navigator) navigator.vibrate([200, 100, 200, 100, 200]);
+                        alert(`Timer done: ${timerId}`);
+                        document.getElementById('timer-modal').classList.add('hidden');
+                        renderActiveTimers();
+                    }
+                }, 1000);
+
+                renderActiveTimers();
+            }
+        }
+
+        function stopTimer() {
+            const timerId = currentTimerName;
+            if (timerIntervals[timerId]) {
+                clearInterval(timerIntervals[timerId]);
+                delete timerIntervals[timerId];
+            }
+            delete activeTimers[timerId];
+            document.getElementById('timer-modal').classList.add('hidden');
+            renderActiveTimers();
+        }
+
+        function renderActiveTimers() {
+            const container = document.getElementById('active-timers');
+            const timerKeys = Object.keys(activeTimers);
+
+            if (timerKeys.length === 0) {
+                container.classList.add('hidden');
+                return;
+            }
+
+            container.classList.remove('hidden');
+            container.innerHTML = timerKeys.map(name => {
+                const secs = activeTimers[name];
+                const mins = Math.floor(secs / 60);
+                const s = secs % 60;
+                return `
+                    <div class="active-timer" onclick="showTimer(${Math.ceil(secs/60)}, '${name}')">
+                        <span class="time">${mins}:${s.toString().padStart(2, '0')}</span>
+                        <span class="name">${name}</span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function finishCooking() {
+            // Log all recipes to nutrition
+            for (const recipeId of recipeIds) {
+                try {
+                    await fetch('/api/nutrition/log', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ recipe_id: recipeId, meal_type: 'dinner', servings_eaten: 1 })
+                    });
+                } catch (error) {
+                    console.error('Error logging meal:', error);
+                }
+            }
+
+            document.querySelector('.cooking-container').innerHTML = `
+                <div class="done-container">
+                    <div class="done-icon">🎉</div>
+                    <h1>Bon Appetit!</h1>
+                    <p>Your meal has been logged. Enjoy your ${scheduleData.recipes.map(r => r.name).join(', ')}!</p>
+                    <a href="/" class="btn btn-primary" style="margin-top: 20px;">Back to Recipes</a>
+                    <a href="/nutrition" class="btn btn-outline" style="margin-top: 12px;">View Nutrition</a>
+                </div>
+            `;
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', e => {
+            if (e.key === 'ArrowRight') nextStep();
+            if (e.key === 'ArrowLeft') prevStep();
+        });
+
+        loadSchedule();
+    </script>
+</body>
+</html>
