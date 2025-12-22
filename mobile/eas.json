@@ -20,5 +20,13 @@
         "simulator": false
       }
     }
+  },
+  "submit": {
+    "production": {
+      "ios": {
+        "appleId": "paul.hartman222@gmail.com",
+        "appleTeamId": "FQY22K9BK3"
+      }
+    }
   }
 }
