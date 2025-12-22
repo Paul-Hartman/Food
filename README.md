@@ -23,28 +23,33 @@ Food/
 
 ## Quick Start
 
-### Backend
+### Deploy to TestFlight (iPhone)
+
+```bash
+cd Food/mobile
+npm run deploy
+# Wait 30 min → Check email → Update in TestFlight
+```
+
+**📱 Current Version:** 1.0.1 on TestFlight
+
+### Backend Server
 
 ```bash
 cd Food/backend
-pip install -r requirements.txt
 python app.py
 # Runs at http://localhost:5025
 ```
 
-### Mobile App
+**Or double-click:** `backend/start_server.bat` (Windows)
+
+### Development (Local Testing)
 
 ```bash
 cd Food/mobile
 npm install
 npx expo start
 # Scan QR with Expo Go app
-```
-
-### With PM2
-
-```bash
-pm2 start food-app  # Uses ecosystem.config.js
 ```
 
 ## Access URLs
@@ -176,8 +181,19 @@ await profile.logMeal({ recipeName: 'Pasta', calories: 500 });
 await profile.addToPantry({ name: 'Eggs', quantity: 12 });
 ```
 
+## Documentation
+
+| Document | Description |
+|----------|-------------|
+| [DEPLOYMENT.md](./DEPLOYMENT.md) | TestFlight deployment guide |
+| [AUTOMATION_PLAN.md](./AUTOMATION_PLAN.md) | Offline mode, auto-start, CI/CD |
+| [OFFLINE_ARCHITECTURE.md](./OFFLINE_ARCHITECTURE.md) | SQLite offline-first design |
+| [TESTFLIGHT_SETUP.md](./mobile/TESTFLIGHT_SETUP.md) | Apple Developer setup |
+
 ## Status
 
 **Priority:** HIGH (Primary daily-use app)
+**Latest Deploy:** Version 1.0.1 (2025-12-23)
+**Deployment:** GitHub + TestFlight (90-day builds)
 
 See `FEATURES.json` for detailed feature checklist.

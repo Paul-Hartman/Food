@@ -4319,6 +4319,7 @@ def api_set_preferences():
 
 
 @app.route("/health")
+@app.route("/api/health")
 def health():
     """Health check endpoint."""
     return jsonify({"status": "healthy", "app": "food-app", "version": "2.0"})
