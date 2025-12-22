@@ -6,7 +6,9 @@
     "start": "expo start",
     "android": "expo run:android",
     "ios": "expo run:ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "build:altstore": "eas build --profile altstore --platform ios --local",
+    "build:altstore:cloud": "eas build --profile altstore --platform ios"
   },
   "dependencies": {
     "@react-navigation/bottom-tabs": "^7.8.12",
@@ -30,7 +32,8 @@
   },
   "devDependencies": {
     "@types/react": "~19.1.0",
-    "typescript": "~5.9.2"
+    "typescript": "~5.9.2",
+    "eas-cli": "^16.28.0"
   },
   "private": true
 }
