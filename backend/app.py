@@ -1478,6 +1478,72 @@ def cook_meal():
     return render_template("cook_meal.html", recipe_ids=recipe_ids)
 
 
+@app.route("/meal_plan")
+def meal_plan_view():
+    """Weekly meal planning page."""
+    return render_template("meal_plan.html")
+
+
+@app.route("/calendar_month")
+def calendar_month_view():
+    """Monthly calendar view."""
+    return render_template("calendar_month.html")
+
+
+@app.route("/calendar_week")
+def calendar_week_view():
+    """Weekly calendar view."""
+    return render_template("calendar_week.html")
+
+
+@app.route("/cook")
+def cook_view():
+    """Cooking mode default page."""
+    return render_template("cook.html")
+
+
+@app.route("/swipe")
+def swipe_view():
+    """Recipe swipe/review page."""
+    return render_template("swipe.html")
+
+
+@app.route("/discover_deck")
+def discover_deck_view():
+    """Recipe collections/decks page."""
+    return render_template("discover_deck.html")
+
+
+@app.route("/meal_prep")
+def meal_prep_view():
+    """Meal prep planning page."""
+    return render_template("meal_prep.html")
+
+
+@app.route("/family")
+def family_view():
+    """Family meal planning page."""
+    return render_template("family.html")
+
+
+@app.route("/game_dashboard")
+def game_dashboard_view():
+    """Gamification dashboard."""
+    return render_template("game_dashboard.html")
+
+
+@app.route("/alchemy")
+def alchemy_view():
+    """Recipe creation lab."""
+    return render_template("alchemy.html")
+
+
+@app.route("/personal_dashboard")
+def personal_dashboard_view():
+    """Personal analytics dashboard."""
+    return render_template("personal_dashboard.html")
+
+
 # ============================================================================
 # API ROUTES - THEMEALDB (Real Recipe API)
 # ============================================================================
@@ -17721,250 +17787,282 @@ def get_budget_forecast():
 # ============================================================================
 
 
-@app.route('/testing')
+@app.route("/testing")
 def testing_dashboard():
     """Render testing dashboard page."""
-    return render_template('testing.html')
+    return render_template("testing.html")
 
 
-@app.route('/api/testing/builds', methods=['GET'])
+@app.route("/api/testing/builds", methods=["GET"])
 def get_test_builds():
     """Get all build versions with stats."""
     db = get_db()
-    builds = db.execute("""
+    builds = db.execute(
+        """
         SELECT id, version, build_date, notes,
                total_tests, passed, failed, needs_improvement, not_tested
         FROM test_builds
         ORDER BY build_date DESC
-    """).fetchall()
+    """
+    ).fetchall()
 
     result = []
     for build in builds:
-        total = build['total_tests'] or 0
-        tested = (build['passed'] or 0) + (build['failed'] or 0) + (build['needs_improvement'] or 0)
+        total = build["total_tests"] or 0
+        tested = (build["passed"] or 0) + (build["failed"] or 0) + (build["needs_improvement"] or 0)
         completion = round((tested / total * 100) if total > 0 else 0, 1)
 
-        result.append({
-            'id': build['id'],
-            'version': build['version'],
-            'build_date': build['build_date'],
-            'notes': build['notes'],
-            'total_tests': total,
-            'passed': build['passed'] or 0,
-            'failed': build['failed'] or 0,
-            'needs_improvement': build['needs_improvement'] or 0,
-            'not_tested': build['not_tested'] or 0,
-            'completion_percent': completion
-        })
+        result.append(
+            {
+                "id": build["id"],
+                "version": build["version"],
+                "build_date": build["build_date"],
+                "notes": build["notes"],
+                "total_tests": total,
+                "passed": build["passed"] or 0,
+                "failed": build["failed"] or 0,
+                "needs_improvement": build["needs_improvement"] or 0,
+                "not_tested": build["not_tested"] or 0,
+                "completion_percent": completion,
+            }
+        )
 
     return jsonify(result)
 
 
-@app.route('/api/testing/builds/<version>', methods=['GET'])
+@app.route("/api/testing/builds/<version>", methods=["GET"])
 def get_build_details(version):
     """Get detailed test results for a specific build."""
     db = get_db()
 
     # Get build info
-    build = db.execute("""
+    build = db.execute(
+        """
         SELECT id, version, build_date, notes,
                total_tests, passed, failed, needs_improvement, not_tested
         FROM test_builds
         WHERE version = ?
-    """, (version,)).fetchone()
+    """,
+        (version,),
+    ).fetchone()
 
     if not build:
-        return jsonify({'error': 'Build not found'}), 404
+        return jsonify({"error": "Build not found"}), 404
 
     # Get all test suites with their cases and results
-    suites = db.execute("""
+    suites = db.execute(
+        """
         SELECT id, suite_name, description
         FROM test_suites
         ORDER BY display_order
-    """).fetchall()
+    """
+    ).fetchall()
 
     result_suites = []
     for suite in suites:
-        test_cases = db.execute("""
+        test_cases = db.execute(
+            """
             SELECT tc.id, tc.test_name, tc.test_description, tc.category,
                    tr.status, tr.notes, tr.github_issue_url, tr.tested_at
             FROM test_cases tc
             LEFT JOIN test_results tr ON tc.id = tr.test_case_id AND tr.build_id = ?
             WHERE tc.suite_id = ?
             ORDER BY tc.display_order
-        """, (build['id'], suite['id'])).fetchall()
+        """,
+            (build["id"], suite["id"]),
+        ).fetchall()
 
         cases = []
         for case in test_cases:
-            cases.append({
-                'id': case['id'],
-                'test_name': case['test_name'],
-                'test_description': case['test_description'],
-                'category': case['category'],
-                'result': {
-                    'status': case['status'] or 'not_tested',
-                    'notes': case['notes'],
-                    'github_issue_url': case['github_issue_url'],
-                    'tested_at': case['tested_at']
+            cases.append(
+                {
+                    "id": case["id"],
+                    "test_name": case["test_name"],
+                    "test_description": case["test_description"],
+                    "category": case["category"],
+                    "result": {
+                        "status": case["status"] or "not_tested",
+                        "notes": case["notes"],
+                        "github_issue_url": case["github_issue_url"],
+                        "tested_at": case["tested_at"],
+                    },
                 }
-            })
+            )
 
-        result_suites.append({
-            'id': suite['id'],
-            'suite_name': suite['suite_name'],
-            'description': suite['description'],
-            'test_cases': cases
-        })
-
-    return jsonify({
-        'build': {
-            'id': build['id'],
-            'version': build['version'],
-            'build_date': build['build_date'],
-            'notes': build['notes'],
-            'stats': {
-                'total': build['total_tests'] or 0,
-                'passed': build['passed'] or 0,
-                'failed': build['failed'] or 0,
-                'needs_improvement': build['needs_improvement'] or 0,
-                'not_tested': build['not_tested'] or 0
+        result_suites.append(
+            {
+                "id": suite["id"],
+                "suite_name": suite["suite_name"],
+                "description": suite["description"],
+                "test_cases": cases,
             }
-        },
-        'suites': result_suites
-    })
+        )
+
+    return jsonify(
+        {
+            "build": {
+                "id": build["id"],
+                "version": build["version"],
+                "build_date": build["build_date"],
+                "notes": build["notes"],
+                "stats": {
+                    "total": build["total_tests"] or 0,
+                    "passed": build["passed"] or 0,
+                    "failed": build["failed"] or 0,
+                    "needs_improvement": build["needs_improvement"] or 0,
+                    "not_tested": build["not_tested"] or 0,
+                },
+            },
+            "suites": result_suites,
+        }
+    )
 
 
-@app.route('/api/testing/builds', methods=['POST'])
+@app.route("/api/testing/builds", methods=["POST"])
 def create_build():
     """Create a new build version."""
     data = request.json
-    version = data.get('version')
-    notes = data.get('notes', '')
+    version = data.get("version")
+    notes = data.get("notes", "")
 
     if not version:
-        return jsonify({'error': 'Version required'}), 400
+        return jsonify({"error": "Version required"}), 400
 
     db = get_db()
 
     # Count total test cases
-    total_tests = db.execute("SELECT COUNT(*) as count FROM test_cases").fetchone()['count']
+    total_tests = db.execute("SELECT COUNT(*) as count FROM test_cases").fetchone()["count"]
 
     try:
-        cursor = db.execute("""
+        cursor = db.execute(
+            """
             INSERT INTO test_builds (version, notes, total_tests, not_tested)
             VALUES (?, ?, ?, ?)
-        """, (version, notes, total_tests, total_tests))
+        """,
+            (version, notes, total_tests, total_tests),
+        )
         db.commit()
 
-        return jsonify({
-            'success': True,
-            'build_id': cursor.lastrowid,
-            'version': version
-        })
+        return jsonify({"success": True, "build_id": cursor.lastrowid, "version": version})
     except sqlite3.IntegrityError:
-        return jsonify({'error': 'Version already exists'}), 400
+        return jsonify({"error": "Version already exists"}), 400
 
 
-@app.route('/api/testing/builds/<version>/tests', methods=['POST'])
+@app.route("/api/testing/builds/<version>/tests", methods=["POST"])
 def submit_test_result(version):
     """Submit a test result for a specific build."""
     data = request.json
-    test_case_id = data.get('test_case_id')
-    status = data.get('status')
-    notes = data.get('notes', '')
+    test_case_id = data.get("test_case_id")
+    status = data.get("status")
+    notes = data.get("notes", "")
 
     if not test_case_id or not status:
-        return jsonify({'error': 'test_case_id and status required'}), 400
+        return jsonify({"error": "test_case_id and status required"}), 400
 
-    if status not in ['not_tested', 'pass', 'fail', 'needs_improvement']:
-        return jsonify({'error': 'Invalid status'}), 400
+    if status not in ["not_tested", "pass", "fail", "needs_improvement"]:
+        return jsonify({"error": "Invalid status"}), 400
 
     db = get_db()
 
     # Get build ID
     build = db.execute("SELECT id FROM test_builds WHERE version = ?", (version,)).fetchone()
     if not build:
-        return jsonify({'error': 'Build not found'}), 404
+        return jsonify({"error": "Build not found"}), 404
 
-    build_id = build['id']
+    build_id = build["id"]
 
     # Check if result already exists
-    existing = db.execute("""
+    existing = db.execute(
+        """
         SELECT id, status FROM test_results
         WHERE build_id = ? AND test_case_id = ?
-    """, (build_id, test_case_id)).fetchone()
+    """,
+        (build_id, test_case_id),
+    ).fetchone()
 
     if existing:
         # Update existing result
-        old_status = existing['status']
-        db.execute("""
+        old_status = existing["status"]
+        db.execute(
+            """
             UPDATE test_results
             SET status = ?, notes = ?, tested_at = CURRENT_TIMESTAMP
             WHERE id = ?
-        """, (status, notes, existing['id']))
-        result_id = existing['id']
+        """,
+            (status, notes, existing["id"]),
+        )
+        result_id = existing["id"]
     else:
         # Insert new result
-        old_status = 'not_tested'
-        cursor = db.execute("""
+        old_status = "not_tested"
+        cursor = db.execute(
+            """
             INSERT INTO test_results (build_id, test_case_id, status, notes)
             VALUES (?, ?, ?, ?)
-        """, (build_id, test_case_id, status, notes))
+        """,
+            (build_id, test_case_id, status, notes),
+        )
         result_id = cursor.lastrowid
 
     # Update build stats
     update_build_stats(db, build_id, old_status, status)
     db.commit()
 
-    return jsonify({'success': True, 'result_id': result_id})
+    return jsonify({"success": True, "result_id": result_id})
 
 
-@app.route('/api/testing/builds/<version>/tests/<int:test_case_id>', methods=['PUT'])
+@app.route("/api/testing/builds/<version>/tests/<int:test_case_id>", methods=["PUT"])
 def update_test_result(version, test_case_id):
     """Update an existing test result."""
     data = request.json
-    status = data.get('status')
-    notes = data.get('notes', '')
-    github_issue_url = data.get('github_issue_url')
+    status = data.get("status")
+    notes = data.get("notes", "")
+    github_issue_url = data.get("github_issue_url")
 
     if not status:
-        return jsonify({'error': 'status required'}), 400
+        return jsonify({"error": "status required"}), 400
 
     db = get_db()
 
     # Get build ID
     build = db.execute("SELECT id FROM test_builds WHERE version = ?", (version,)).fetchone()
     if not build:
-        return jsonify({'error': 'Build not found'}), 404
+        return jsonify({"error": "Build not found"}), 404
 
-    build_id = build['id']
+    build_id = build["id"]
 
     # Get existing result
-    existing = db.execute("""
+    existing = db.execute(
+        """
         SELECT id, status FROM test_results
         WHERE build_id = ? AND test_case_id = ?
-    """, (build_id, test_case_id)).fetchone()
+    """,
+        (build_id, test_case_id),
+    ).fetchone()
 
     if not existing:
-        return jsonify({'error': 'Test result not found'}), 404
+        return jsonify({"error": "Test result not found"}), 404
 
-    old_status = existing['status']
+    old_status = existing["status"]
 
     # Update result
-    db.execute("""
+    db.execute(
+        """
         UPDATE test_results
         SET status = ?, notes = ?, github_issue_url = ?, tested_at = CURRENT_TIMESTAMP
         WHERE id = ?
-    """, (status, notes, github_issue_url, existing['id']))
+    """,
+        (status, notes, github_issue_url, existing["id"]),
+    )
 
     # Update build stats
     update_build_stats(db, build_id, old_status, status)
     db.commit()
 
-    return jsonify({'success': True, 'result_id': existing['id']})
+    return jsonify({"success": True, "result_id": existing["id"]})
 
 
-@app.route('/api/testing/export/<version>', methods=['GET'])
+@app.route("/api/testing/export/<version>", methods=["GET"])
 def export_failed_tests(version):
     """Export failed tests as markdown checklist."""
     db = get_db()
@@ -17972,17 +18070,20 @@ def export_failed_tests(version):
     # Get build
     build = db.execute("SELECT id FROM test_builds WHERE version = ?", (version,)).fetchone()
     if not build:
-        return jsonify({'error': 'Build not found'}), 404
+        return jsonify({"error": "Build not found"}), 404
 
     # Get failed and needs_improvement tests grouped by suite
-    results = db.execute("""
+    results = db.execute(
+        """
         SELECT ts.suite_name, tc.test_name, tc.test_description, tr.notes, tr.status
         FROM test_results tr
         JOIN test_cases tc ON tr.test_case_id = tc.id
         JOIN test_suites ts ON tc.suite_id = ts.id
         WHERE tr.build_id = ? AND tr.status IN ('fail', 'needs_improvement')
         ORDER BY ts.display_order, tc.display_order
-    """, (build['id'],)).fetchall()
+    """,
+        (build["id"],),
+    ).fetchall()
 
     # Generate markdown
     markdown = f"# Test Failures - v{version}\n\n"
@@ -17990,13 +18091,13 @@ def export_failed_tests(version):
 
     current_suite = None
     for result in results:
-        if result['suite_name'] != current_suite:
-            current_suite = result['suite_name']
+        if result["suite_name"] != current_suite:
+            current_suite = result["suite_name"]
             markdown += f"\n## {current_suite}\n\n"
 
-        status_label = "Fix" if result['status'] == 'fail' else "Improve"
+        status_label = "Fix" if result["status"] == "fail" else "Improve"
         markdown += f"- [ ] {status_label}: {result['test_name']}"
-        if result['notes']:
+        if result["notes"]:
             markdown += f"\n  - Notes: {result['notes']}"
         markdown += f"\n  - Description: {result['test_description']}\n"
 
@@ -18005,45 +18106,41 @@ def export_failed_tests(version):
 
     # Create dev-docs directory path
     dev_docs_dir = os.path.join(
-        os.path.dirname(__file__),
-        '..',
-        '.claude',
-        'dev-docs',
-        f'testing-fixes-v{version}'
+        os.path.dirname(__file__), "..", ".claude", "dev-docs", f"testing-fixes-v{version}"
     )
-    file_path = os.path.join(dev_docs_dir, 'tasks.md')
+    file_path = os.path.join(dev_docs_dir, "tasks.md")
 
-    return jsonify({
-        'success': True,
-        'markdown': markdown,
-        'file_path': file_path,
-        'count': len(results)
-    })
+    return jsonify(
+        {"success": True, "markdown": markdown, "file_path": file_path, "count": len(results)}
+    )
 
 
-@app.route('/api/testing/github-issue', methods=['POST'])
+@app.route("/api/testing/github-issue", methods=["POST"])
 def create_github_issue():
     """Create GitHub issue for failed test."""
     data = request.json
-    test_case_id = data.get('test_case_id')
-    build_version = data.get('build_version')
-    notes = data.get('notes', '')
+    test_case_id = data.get("test_case_id")
+    build_version = data.get("build_version")
+    notes = data.get("notes", "")
 
     if not test_case_id or not build_version:
-        return jsonify({'error': 'test_case_id and build_version required'}), 400
+        return jsonify({"error": "test_case_id and build_version required"}), 400
 
     db = get_db()
 
     # Get test case details
-    test_case = db.execute("""
+    test_case = db.execute(
+        """
         SELECT tc.test_name, tc.test_description, ts.suite_name
         FROM test_cases tc
         JOIN test_suites ts ON tc.suite_id = ts.id
         WHERE tc.id = ?
-    """, (test_case_id,)).fetchone()
+    """,
+        (test_case_id,),
+    ).fetchone()
 
     if not test_case:
-        return jsonify({'error': 'Test case not found'}), 404
+        return jsonify({"error": "Test case not found"}), 404
 
     # Prepare issue content
     title = f"[Test Failure] {test_case['suite_name']}: {test_case['test_name']}"
@@ -18074,59 +18171,66 @@ def create_github_issue():
     try:
         # Escape quotes for shell command
         escaped_title = title.replace('"', '\\"')
-        escaped_body = body.replace('"', '\\"').replace('\n', '\\n')
+        escaped_body = body.replace('"', '\\"').replace("\n", "\\n")
 
         cmd = f'gh issue create --title "{escaped_title}" --body "{escaped_body}" --label "bug,testing"'
         result = os.popen(cmd).read()
 
         # Parse issue URL from output (gh returns URL on last line)
-        lines = result.strip().split('\n')
-        issue_url = lines[-1] if lines else ''
+        lines = result.strip().split("\n")
+        issue_url = lines[-1] if lines else ""
 
-        if not issue_url.startswith('http'):
-            return jsonify({'error': f'GitHub CLI failed: {result}'}), 500
+        if not issue_url.startswith("http"):
+            return jsonify({"error": f"GitHub CLI failed: {result}"}), 500
 
-        issue_number = issue_url.split('/')[-1]
+        issue_number = issue_url.split("/")[-1]
 
         # Update test result with GitHub URL
-        build = db.execute("SELECT id FROM test_builds WHERE version = ?", (build_version,)).fetchone()
+        build = db.execute(
+            "SELECT id FROM test_builds WHERE version = ?", (build_version,)
+        ).fetchone()
         if build:
-            db.execute("""
+            db.execute(
+                """
                 UPDATE test_results
                 SET github_issue_url = ?
                 WHERE build_id = ? AND test_case_id = ?
-            """, (issue_url, build['id'], test_case_id))
+            """,
+                (issue_url, build["id"], test_case_id),
+            )
             db.commit()
 
-        return jsonify({
-            'success': True,
-            'issue_url': issue_url,
-            'issue_number': issue_number
-        })
+        return jsonify({"success": True, "issue_url": issue_url, "issue_number": issue_number})
     except Exception as e:
-        return jsonify({'error': f'GitHub CLI failed: {str(e)}'}), 500
+        return jsonify({"error": f"GitHub CLI failed: {str(e)}"}), 500
 
 
 def update_build_stats(db, build_id, old_status, new_status):
     """Update build statistics when a test result changes."""
     # Decrement old status count
-    if old_status == 'pass':
+    if old_status == "pass":
         db.execute("UPDATE test_builds SET passed = passed - 1 WHERE id = ?", (build_id,))
-    elif old_status == 'fail':
+    elif old_status == "fail":
         db.execute("UPDATE test_builds SET failed = failed - 1 WHERE id = ?", (build_id,))
-    elif old_status == 'needs_improvement':
-        db.execute("UPDATE test_builds SET needs_improvement = needs_improvement - 1 WHERE id = ?", (build_id,))
-    elif old_status == 'not_tested':
+    elif old_status == "needs_improvement":
+        db.execute(
+            "UPDATE test_builds SET needs_improvement = needs_improvement - 1 WHERE id = ?",
+            (build_id,),
+        )
+    elif old_status == "not_tested":
         db.execute("UPDATE test_builds SET not_tested = not_tested - 1 WHERE id = ?", (build_id,))
 
     # Increment new status count
-    if new_status == 'pass':
+    if new_status == "pass":
         db.execute("UPDATE test_builds SET passed = passed + 1 WHERE id = ?", (build_id,))
-    elif new_status == 'fail':
+    elif new_status == "fail":
         db.execute("UPDATE test_builds SET failed = failed + 1 WHERE id = ?", (build_id,))
-    elif new_status == 'needs_improvement':
-        db.execute("UPDATE test_builds SET needs_improvement = needs_improvement + 1 WHERE id = ?", (build_id,))
-    elif new_status == 'not_tested':
+    elif new_status == "needs_improvement":
+        db.execute(
+            "UPDATE test_builds SET needs_improvement = needs_improvement + 1 WHERE id = ?",
+            (build_id,),
+        )
+    elif new_status == "not_tested":
         db.execute("UPDATE test_builds SET not_tested = not_tested + 1 WHERE id = ?", (build_id,))
 
 
