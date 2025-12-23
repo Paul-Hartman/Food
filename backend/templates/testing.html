@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Testing Dashboard - Food App</title>
+    <link rel="stylesheet" href="/static/css/style.css?v=20241218">
+    <style>
+        .testing-header {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            padding: 24px 16px;
+            margin: -16px -16px 24px -16px;
+        }
+
+        .build-selector {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+            overflow-x: auto;
+            padding-bottom: 8px;
+        }
+
+        .build-tab {
+            padding: 12px 20px;
+            background: white;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+
+        .build-tab.active {
+            background: #4CAF50;
+            color: white;
+            border-color: #4CAF50;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 16px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .stat-card.pass .stat-value { color: #4CAF50; }
+        .stat-card.fail .stat-value { color: #f44336; }
+        .stat-card.needs-improvement .stat-value { color: #ff9800; }
+
+        .progress-bar {
+            height: 8px;
+            background: #ddd;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 24px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4CAF50 0%, #45a049 100%);
+            transition: width 0.3s ease;
+        }
+
+        .test-suite {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 16px;
+            overflow: hidden;
+        }
+
+        .test-suite-header {
+            padding: 16px;
+            background: #f5f5f5;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+        }
+
+        .test-suite-body {
+            display: none;
+            padding: 16px;
+        }
+
+        .test-suite-body.expanded {
+            display: block;
+        }
+
+        .test-case {
+            padding: 16px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-bottom: 12px;
+        }
+
+        .status-selector {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .status-btn {
+            flex: 1;
+            padding: 8px 12px;
+            border: 2px solid #ddd;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .status-btn.active {
+            color: white;
+        }
+
+        .status-btn.pass.active {
+            background: #4CAF50;
+            border-color: #4CAF50;
+        }
+
+        .status-btn.fail.active {
+            background: #f44336;
+            border-color: #f44336;
+        }
+
+        .status-btn.needs-improvement.active {
+            background: #ff9800;
+            border-color: #ff9800;
+        }
+
+        .test-notes {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: inherit;
+            font-size: 0.875rem;
+            margin-bottom: 12px;
+            resize: vertical;
+            min-height: 60px;
+        }
+
+        .fab {
+            position: fixed;
+            bottom: 80px;
+            right: 16px;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            cursor: pointer;
+            font-size: 1.5rem;
+            z-index: 100;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 16px;
+        }
+
+        .modal-overlay.hidden {
+            display: none;
+        }
+
+        .modal {
+            background: white;
+            border-radius: 8px;
+            max-width: 500px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 24px;
+        }
+    </style>
+</head>
+<body>
+    <div class="testing-header">
+        <h1 style="margin-bottom: 8px;">Testing Dashboard</h1>
+        <p style="opacity: 0.9;">Food Mobile App - v<span id="current-version">1.0.1</span></p>
+    </div>
+
+    <div class="container">
+        <div class="build-selector" id="build-selector">
+            <div>Loading builds...</div>
+        </div>
+
+        <div class="stats-grid" id="stats-grid" style="display: none;">
+            <div class="stat-card pass">
+                <div class="stat-value" id="stat-passed">0</div>
+                <div class="stat-label">Passed</div>
+            </div>
+            <div class="stat-card fail">
+                <div class="stat-value" id="stat-failed">0</div>
+                <div class="stat-label">Failed</div>
+            </div>
+            <div class="stat-card needs-improvement">
+                <div class="stat-value" id="stat-needs-improvement">0</div>
+                <div class="stat-label">Needs Work</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="stat-not-tested">0</div>
+                <div class="stat-label">Not Tested</div>
+            </div>
+        </div>
+
+        <div class="progress-bar" id="progress-bar" style="display: none;">
+            <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+        </div>
+
+        <div id="test-suites">
+            <div>Loading tests...</div>
+        </div>
+
+        <button class="fab" onclick="showExportModal()" title="Export Failed Tests">↓</button>
+    </div>
+
+    <nav class="bottom-nav">
+        <a href="/" class="nav-item">
+            <div class="nav-item-icon">🍞</div>
+            Recipes
+        </a>
+        <a href="/shopping" class="nav-item">
+            <div class="nav-item-icon">🛒</div>
+            Shopping
+        </a>
+        <a href="/testing" class="nav-item active">
+            <div class="nav-item-icon">✓</div>
+            Testing
+        </a>
+        <a href="/nutrition" class="nav-item">
+            <div class="nav-item-icon">📊</div>
+            Nutrition
+        </a>
+    </nav>
+
+    <div class="modal-overlay hidden" id="export-modal">
+        <div class="modal">
+            <h2>Export Failed Tests</h2>
+            <div style="margin: 16px 0;">
+                <p id="export-preview">Loading...</p>
+            </div>
+            <div style="display: flex; gap: 12px; margin-top: 24px;">
+                <button onclick="hideExportModal()" style="flex: 1; padding: 12px; background: #ddd; border: none; border-radius: 4px;">Cancel</button>
+                <button onclick="downloadExport()" style="flex: 1; padding: 12px; background: #4CAF50; color: white; border: none; border-radius: 4px;">Download</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentBuild = null;
+        let testData = null;
+
+        async function loadBuilds() {
+            try {
+                const response = await fetch('/api/testing/builds');
+                const builds = await response.json();
+
+                const container = document.getElementById('build-selector');
+
+                if (builds.length === 0) {
+                    container.innerHTML = '<div>No builds found</div>';
+                    return;
+                }
+
+                container.innerHTML = builds.map(build => `
+                    <button class="build-tab ${build.version === '1.0.1' ? 'active' : ''}"
+                            onclick="selectBuild('${build.version}')">
+                        v${build.version}
+                        <small style="display: block; font-size: 0.75rem; margin-top: 4px;">
+                            ${build.completion_percent}%
+                        </small>
+                    </button>
+                `).join('');
+
+                selectBuild(builds[0].version);
+            } catch (error) {
+                console.error('Failed to load builds:', error);
+            }
+        }
+
+        async function selectBuild(version) {
+            currentBuild = version;
+            document.getElementById('current-version').textContent = version;
+
+            document.querySelectorAll('.build-tab').forEach(btn => {
+                btn.classList.toggle('active', btn.textContent.includes(version));
+            });
+
+            await loadBuildDetails(version);
+        }
+
+        async function loadBuildDetails(version) {
+            try {
+                const response = await fetch(`/api/testing/builds/${version}`);
+                testData = await response.json();
+
+                const stats = testData.build.stats;
+                document.getElementById('stat-passed').textContent = stats.passed;
+                document.getElementById('stat-failed').textContent = stats.failed;
+                document.getElementById('stat-needs-improvement').textContent = stats.needs_improvement;
+                document.getElementById('stat-not-tested').textContent = stats.not_tested;
+
+                const total = stats.total;
+                const completed = stats.passed + stats.failed + stats.needs_improvement;
+                const percent = total > 0 ? (completed / total * 100) : 0;
+                document.getElementById('progress-fill').style.width = `${percent}%`;
+
+                document.getElementById('stats-grid').style.display = 'grid';
+                document.getElementById('progress-bar').style.display = 'block';
+
+                renderTestSuites();
+            } catch (error) {
+                console.error('Failed to load build details:', error);
+            }
+        }
+
+        function renderTestSuites() {
+            const container = document.getElementById('test-suites');
+
+            if (!testData || !testData.suites) {
+                container.innerHTML = '<div>No test data available</div>';
+                return;
+            }
+
+            container.innerHTML = testData.suites.map(suite => {
+                const total = suite.test_cases.length;
+                const completed = suite.test_cases.filter(tc => tc.result.status !== 'not_tested').length;
+
+                return `
+                    <div class="test-suite">
+                        <div class="test-suite-header" onclick="toggleSuite(this)">
+                            <div>
+                                <strong>${suite.suite_name}</strong>
+                                <span style="margin-left: 8px; padding: 4px 8px; background: #e0e0e0; border-radius: 4px; font-size: 0.75rem;">
+                                    ${completed}/${total}
+                                </span>
+                            </div>
+                            <span class="chevron">›</span>
+                        </div>
+                        <div class="test-suite-body">
+                            ${renderTestCases(suite.test_cases)}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderTestCases(testCases) {
+            return testCases.map(testCase => {
+                const status = testCase.result.status;
+
+                return `
+                    <div class="test-case" data-test-id="${testCase.id}">
+                        <div style="font-weight: 600; margin-bottom: 4px;">${testCase.test_name}</div>
+                        <div style="font-size: 0.875rem; color: #666; margin-bottom: 12px;">${testCase.test_description}</div>
+
+                        <div class="status-selector">
+                            <button class="status-btn pass ${status === 'pass' ? 'active' : ''}"
+                                    onclick="updateTestStatus(${testCase.id}, 'pass')">
+                                Pass
+                            </button>
+                            <button class="status-btn fail ${status === 'fail' ? 'active' : ''}"
+                                    onclick="updateTestStatus(${testCase.id}, 'fail')">
+                                Fail
+                            </button>
+                            <button class="status-btn needs-improvement ${status === 'needs_improvement' ? 'active' : ''}"
+                                    onclick="updateTestStatus(${testCase.id}, 'needs_improvement')">
+                                Needs Work
+                            </button>
+                        </div>
+
+                        <textarea class="test-notes"
+                                  placeholder="Add notes..."
+                                  onchange="updateTestNotes(${testCase.id}, this.value)">${testCase.result.notes || ''}</textarea>
+
+                        ${testCase.result.github_issue_url ? `
+                            <a href="${testCase.result.github_issue_url}" target="_blank" style="color: #4CAF50;">
+                                View GitHub Issue
+                            </a>
+                        ` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function toggleSuite(header) {
+            const body = header.nextElementSibling;
+            const chevron = header.querySelector('.chevron');
+
+            const isExpanded = body.classList.toggle('expanded');
+            chevron.style.transform = isExpanded ? 'rotate(90deg)' : 'rotate(0)';
+        }
+
+        async function updateTestStatus(testCaseId, status) {
+            try {
+                const response = await fetch(`/api/testing/builds/${currentBuild}/tests`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        test_case_id: testCaseId,
+                        status: status
+                    })
+                });
+
+                if (response.ok) {
+                    await loadBuildDetails(currentBuild);
+                }
+            } catch (error) {
+                console.error('Failed to update test status:', error);
+            }
+        }
+
+        async function updateTestNotes(testCaseId, notes) {
+            try {
+                await fetch(`/api/testing/builds/${currentBuild}/tests/${testCaseId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ notes: notes, status: 'not_tested' })
+                });
+            } catch (error) {
+                console.error('Failed to update notes:', error);
+            }
+        }
+
+        async function showExportModal() {
+            document.getElementById('export-modal').classList.remove('hidden');
+
+            try {
+                const response = await fetch(`/api/testing/export/${currentBuild}`);
+                const result = await response.json();
+
+                document.getElementById('export-preview').textContent =
+                    result.count > 0 ? `${result.count} failed tests ready to export` : 'No failed tests to export';
+            } catch (error) {
+                console.error('Failed to load export preview:', error);
+            }
+        }
+
+        function hideExportModal() {
+            document.getElementById('export-modal').classList.add('hidden');
+        }
+
+        async function downloadExport() {
+            try {
+                const response = await fetch(`/api/testing/export/${currentBuild}`);
+                const result = await response.json();
+
+                if (result.success) {
+                    const blob = new Blob([result.markdown], { type: 'text/markdown' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `testing-fixes-v${currentBuild}.md`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+
+                    alert(`Exported ${result.count} failed tests`);
+                    hideExportModal();
+                }
+            } catch (error) {
+                console.error('Failed to export:', error);
+            }
+        }
+
+        loadBuilds();
+    </script>
+</body>
+</html>
