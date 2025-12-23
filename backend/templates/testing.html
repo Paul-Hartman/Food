@@ -202,6 +202,55 @@
             overflow-y: auto;
             padding: 24px;
         }
+
+        .platform-filter {
+            display: flex;
+            gap: 8px;
+            padding: 0 16px 16px 16px;
+            overflow-x: auto;
+        }
+
+        .filter-btn {
+            padding: 8px 16px;
+            background: white;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            cursor: pointer;
+            white-space: nowrap;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .filter-btn.active {
+            background: #4CAF50;
+            color: white;
+            border-color: #4CAF50;
+        }
+
+        .platform-badge {
+            display: inline-block;
+            font-size: 0.75rem;
+            padding: 2px 8px;
+            border-radius: 4px;
+            margin-left: 8px;
+            font-weight: 600;
+        }
+
+        .platform-web {
+            background: #2196F3;
+            color: white;
+        }
+
+        .platform-mobile {
+            background: #FF9800;
+            color: white;
+        }
+
+        .platform-both {
+            background: #9C27B0;
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -236,6 +285,13 @@
 
         <div class="progress-bar" id="progress-bar" style="display: none;">
             <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+        </div>
+
+        <div class="platform-filter" id="platform-filter" style="display: none;">
+            <button class="filter-btn active" onclick="filterByPlatform('all')">All</button>
+            <button class="filter-btn" onclick="filterByPlatform('web')">🌐 Web</button>
+            <button class="filter-btn" onclick="filterByPlatform('mobile')">📱 Mobile</button>
+            <button class="filter-btn" onclick="filterByPlatform('both')">🌐📱 Both</button>
         </div>
 
         <div id="test-suites">
@@ -280,6 +336,7 @@
     <script>
         let currentBuild = null;
         let testData = null;
+        let currentPlatformFilter = 'all';
 
         async function loadBuilds() {
             try {
@@ -338,6 +395,7 @@
 
                 document.getElementById('stats-grid').style.display = 'grid';
                 document.getElementById('progress-bar').style.display = 'block';
+                document.getElementById('platform-filter').style.display = 'flex';
 
                 renderTestSuites();
             } catch (error) {
@@ -379,10 +437,20 @@
         function renderTestCases(testCases) {
             return testCases.map(testCase => {
                 const status = testCase.result.status;
+                const platform = testCase.platform || 'both';
+                const platformIcon = platform === 'web' ? '🌐' : platform === 'mobile' ? '📱' : '🌐📱';
+                const platformClass = `platform-${platform}`;
+
+                // Filter based on current platform filter
+                const shouldShow = currentPlatformFilter === 'all' || currentPlatformFilter === platform;
+                const displayStyle = shouldShow ? '' : 'style="display: none;"';
 
                 return `
-                    <div class="test-case" data-test-id="${testCase.id}">
-                        <div style="font-weight: 600; margin-bottom: 4px;">${testCase.test_name}</div>
+                    <div class="test-case" data-test-id="${testCase.id}" data-platform="${platform}" ${displayStyle}>
+                        <div style="font-weight: 600; margin-bottom: 4px;">
+                            ${testCase.test_name}
+                            <span class="platform-badge ${platformClass}">${platformIcon} ${platform.toUpperCase()}</span>
+                        </div>
                         <div style="font-size: 0.875rem; color: #666; margin-bottom: 12px;">${testCase.test_description}</div>
 
                         <div class="status-selector">
@@ -493,6 +561,26 @@
             } catch (error) {
                 console.error('Failed to export:', error);
             }
+        }
+
+        function filterByPlatform(platform) {
+            currentPlatformFilter = platform;
+
+            // Update active button
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // Show/hide test cases based on filter
+            document.querySelectorAll('.test-case').forEach(testCase => {
+                const testPlatform = testCase.getAttribute('data-platform');
+                if (platform === 'all' || platform === testPlatform) {
+                    testCase.style.display = '';
+                } else {
+                    testCase.style.display = 'none';
+                }
+            });
         }
 
         loadBuilds();

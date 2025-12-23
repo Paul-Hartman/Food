@@ -1336,6 +1336,7 @@ def init_db():
                 test_name TEXT NOT NULL,            -- "Recipe list loads"
                 test_description TEXT NOT NULL,     -- "Verify recipe grid displays on launch"
                 category TEXT,                      -- "ui", "api", "offline", "edge_case"
+                platform TEXT DEFAULT 'both',       -- "web", "mobile", "both"
                 display_order INTEGER DEFAULT 0,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (suite_id) REFERENCES test_suites(id) ON DELETE CASCADE
