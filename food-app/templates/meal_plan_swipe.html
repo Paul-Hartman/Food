@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Meal Planning - Swipe</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        .swipe-page {
+            min-height: 100vh;
+            background: var(--bg);
+            padding-bottom: 140px;
+        }
+        .plan-header {
+            background: var(--card-bg);
+            padding: 16px;
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .plan-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .back-btn {
+            padding: 8px 12px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+        }
+        .meal-type-tabs {
+            display: flex;
+            gap: 4px;
+        }
+        .meal-tab {
+            padding: 6px 10px;
+            border-radius: 16px;
+            font-size: 0.75rem;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            cursor: pointer;
+            text-decoration: none;
+            color: var(--text-secondary);
+        }
+        .meal-tab.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        .meal-tab.complete {
+            background: var(--success-light);
+            color: var(--success);
+            border-color: var(--success);
+        }
+        .progress-section {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+        .budget-status {
+            font-weight: 600;
+        }
+        .budget-status.over {
+            color: var(--danger);
+        }
+        .budget-status.ok {
+            color: var(--success);
+        }
+        .progress-bar-mini {
+            height: 3px;
+            background: var(--border);
+            border-radius: 2px;
+            margin-top: 8px;
+            overflow: hidden;
+        }
+        .progress-bar-mini .fill {
+            height: 100%;
+            background: var(--primary);
+            transition: width 0.3s;
+        }
+        .swipe-container {
+            position: relative;
+            height: calc(100vh - 280px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            padding: 20px;
+        }
+        .card-stack {
+            position: relative;
+            width: 100%;
+            max-width: 340px;
+            height: 450px;
+        }
+        .recipe-card {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: var(--card-bg);
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            overflow: hidden;
+            cursor: grab;
+            touch-action: none;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+        .recipe-card:active {
+            cursor: grabbing;
+        }
+        .recipe-card.dragging {
+            transition: none;
+        }
+        .recipe-card:nth-child(2) {
+            transform: scale(0.95) translateY(10px);
+            z-index: -1;
+        }
+        .recipe-card:nth-child(3) {
+            transform: scale(0.9) translateY(20px);
+            z-index: -2;
+        }
+        .recipe-card .image {
+            height: 55%;
+            background-size: cover;
+            background-position: center;
+            position: relative;
+        }
+        .recipe-card .overlay {
+            position: absolute;
+            top: 20px;
+            padding: 12px 20px;
+            font-size: 1.5rem;
+            font-weight: 700;
+            border-radius: 8px;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .recipe-card .overlay.nope {
+            left: 20px;
+            background: var(--danger);
+            color: white;
+            transform: rotate(-15deg);
+        }
+        .recipe-card .overlay.like {
+            right: 20px;
+            background: var(--success);
+            color: white;
+            transform: rotate(15deg);
+        }
+        .recipe-card .overlay.prep {
+            left: 50%;
+            transform: translateX(-50%);
+            bottom: 20px;
+            top: auto;
+            background: var(--primary);
+            color: white;
+        }
+        .recipe-card .content {
+            padding: 16px;
+            height: 45%;
+            display: flex;
+            flex-direction: column;
+        }
+        .recipe-card .title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            line-height: 1.3;
+        }
+        .recipe-card .meta {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 12px;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+        .recipe-card .overlap-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 8px;
+            background: var(--success-light);
+            color: var(--success);
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .recipe-card .ingredients-preview {
+            flex: 1;
+            overflow: hidden;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            line-height: 1.4;
+        }
+        .recipe-card .cost-estimate {
+            margin-top: auto;
+            padding-top: 8px;
+            border-top: 1px solid var(--border);
+            font-size: 0.85rem;
+            display: flex;
+            justify-content: space-between;
+        }
+        .action-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            padding: 20px;
+            position: fixed;
+            bottom: 80px;
+            left: 0;
+            right: 0;
+            background: linear-gradient(transparent, var(--bg) 20%);
+        }
+        .action-btn {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            border: 2px solid;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            cursor: pointer;
+            background: var(--card-bg);
+            transition: transform 0.2s;
+        }
+        .action-btn:hover {
+            transform: scale(1.1);
+        }
+        .action-btn.nope {
+            border-color: var(--danger);
+            color: var(--danger);
+        }
+        .action-btn.prep {
+            border-color: var(--primary);
+            color: var(--primary);
+            width: 72px;
+            height: 72px;
+            font-size: 2rem;
+        }
+        .action-btn.like {
+            border-color: var(--success);
+            color: var(--success);
+        }
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-secondary);
+        }
+        .empty-state .icon {
+            font-size: 4rem;
+            margin-bottom: 16px;
+        }
+        .complete-banner {
+            background: var(--success-light);
+            color: var(--success);
+            padding: 16px;
+            margin: 16px;
+            border-radius: 12px;
+            text-align: center;
+            display: none;
+        }
+        .complete-banner h3 {
+            margin-bottom: 8px;
+        }
+        .complete-banner button {
+            margin-top: 12px;
+            padding: 12px 24px;
+            background: var(--success);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-secondary);
+        }
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 16px;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        @keyframes flyLeft {
+            to {
+                transform: translateX(-150%) rotate(-30deg);
+                opacity: 0;
+            }
+        }
+        @keyframes flyRight {
+            to {
+                transform: translateX(150%) rotate(30deg);
+                opacity: 0;
+            }
+        }
+        @keyframes flyUp {
+            to {
+                transform: translateY(-150%);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="swipe-page">
+        <div class="plan-header">
+            <div class="plan-header-row">
+                <a href="/plan" class="back-btn">&#x2190; Back</a>
+                <div class="meal-type-tabs">
+                    <a href="/plan/{{ plan_id }}/swipe/breakfast" class="meal-tab" id="tab-breakfast">B</a>
+                    <a href="/plan/{{ plan_id }}/swipe/lunch" class="meal-tab" id="tab-lunch">L</a>
+                    <a href="/plan/{{ plan_id }}/swipe/dinner" class="meal-tab" id="tab-dinner">D</a>
+                    <a href="/plan/{{ plan_id }}/swipe/snack" class="meal-tab" id="tab-snack" style="display:none;">S</a>
+                </div>
+            </div>
+            <div class="progress-section">
+                <span id="progress-text">Loading...</span>
+                <span class="budget-status" id="budget-status"></span>
+            </div>
+            <div class="progress-bar-mini">
+                <div class="fill" id="progress-fill" style="width: 0%"></div>
+            </div>
+        </div>
+
+        <div class="complete-banner" id="complete-banner">
+            <h3>&#x1F389; All meals selected!</h3>
+            <p>Your meal plan is ready. View your shopping list.</p>
+            <button onclick="viewShoppingList()">View Shopping List</button>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Finding recipes with shared ingredients...</p>
+        </div>
+
+        <div class="swipe-container" id="swipe-container" style="display:none;">
+            <div class="card-stack" id="card-stack"></div>
+        </div>
+
+        <div class="empty-state" id="empty-state" style="display:none;">
+            <div class="icon">&#x1F37D;</div>
+            <h3>All <span id="meal-type-display">{{ meal_type }}</span>s selected!</h3>
+            <p>Move on to the next meal type or view your plan.</p>
+            <div style="margin-top: 20px; display: flex; gap: 12px; justify-content: center;">
+                <button class="action-btn like" style="width: auto; height: auto; border-radius: 8px; padding: 12px 20px; font-size: 1rem;" id="next-meal-btn">
+                    Next Meal Type &#x2192;
+                </button>
+            </div>
+        </div>
+
+        <div class="action-buttons" id="action-buttons" style="display:none;">
+            <button class="action-btn nope" onclick="swipe('left')" title="Skip">&#x2717;</button>
+            <button class="action-btn prep" onclick="swipe('up')" title="Meal Prep">&#x1F957;</button>
+            <button class="action-btn like" onclick="swipe('right')" title="Add to Plan">&#x2764;</button>
+        </div>
+    </div>
+
+    <nav class="bottom-nav">
+        <a href="/" class="nav-item">Recipes</a>
+        <a href="/discover" class="nav-item">Discover</a>
+        <a href="/plan" class="nav-item active">Plan</a>
+        <a href="/shopping" class="nav-item">Shopping</a>
+    </nav>
+
+    <script>
+        const planId = {{ plan_id }};
+        const mealType = '{{ meal_type }}';
+        let recipes = [];
+        let currentIndex = 0;
+        let plan = null;
+        let isDragging = false;
+        let startX = 0, startY = 0;
+        let currentX = 0, currentY = 0;
+
+        async function init() {
+            // Load plan details
+            const planResponse = await fetch(`/api/meal-plans/${planId}`);
+            plan = await planResponse.json();
+
+            // Update tabs
+            updateTabs();
+
+            // Check if this meal type is complete
+            const selectedField = `${mealType}s_selected`;
+            const neededField = `${mealType}s_needed`;
+            if (plan[selectedField] >= plan[neededField]) {
+                showEmptyState();
+                return;
+            }
+
+            // Load recipes (smart recommendations if plan has items)
+            await loadRecipes();
+        }
+
+        function updateTabs() {
+            const tabs = ['breakfast', 'lunch', 'dinner', 'snack'];
+            tabs.forEach(type => {
+                const tab = document.getElementById(`tab-${type}`);
+                if (!tab) return;
+
+                const selected = plan[`${type}s_selected`];
+                const needed = plan[`${type}s_needed`];
+
+                if (needed === 0) {
+                    tab.style.display = 'none';
+                    return;
+                }
+
+                tab.style.display = 'block';
+                tab.classList.toggle('active', type === mealType);
+                tab.classList.toggle('complete', selected >= needed);
+                tab.textContent = `${type.charAt(0).toUpperCase()} ${selected}/${needed}`;
+            });
+
+            // Update progress
+            const totalNeeded = plan.breakfasts_needed + plan.lunches_needed +
+                              plan.dinners_needed + plan.snacks_needed;
+            const totalSelected = plan.breakfasts_selected + plan.lunches_selected +
+                                plan.dinners_selected + plan.snacks_selected;
+            const progress = (totalSelected / totalNeeded * 100).toFixed(0);
+
+            document.getElementById('progress-text').textContent =
+                `${totalSelected}/${totalNeeded} meals selected`;
+            document.getElementById('progress-fill').style.width = `${progress}%`;
+
+            // Budget
+            if (plan.budget_total) {
+                const remaining = plan.budget_total - (plan.total_estimated_cost || 0);
+                const budgetEl = document.getElementById('budget-status');
+                budgetEl.textContent = `EUR ${remaining.toFixed(0)} left`;
+                budgetEl.classList.toggle('over', remaining < 0);
+                budgetEl.classList.toggle('ok', remaining >= 0);
+            }
+        }
+
+        async function loadRecipes() {
+            const endpoint = plan.items?.length > 0
+                ? `/api/meal-plans/${planId}/smart-recipes?meal_type=${mealType}&limit=30`
+                : `/api/recipes/swipe/${mealType}`;
+
+            const response = await fetch(endpoint);
+            const data = await response.json();
+
+            recipes = data.recipes || data;
+
+            document.getElementById('loading').style.display = 'none';
+
+            if (recipes.length === 0) {
+                showEmptyState();
+                return;
+            }
+
+            document.getElementById('swipe-container').style.display = 'flex';
+            document.getElementById('action-buttons').style.display = 'flex';
+
+            renderCards();
+        }
+
+        function showEmptyState() {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('empty-state').style.display = 'block';
+            document.getElementById('action-buttons').style.display = 'none';
+            document.getElementById('swipe-container').style.display = 'none';
+
+            // Find next incomplete meal type
+            const order = ['breakfast', 'lunch', 'dinner', 'snack'];
+            const currentIdx = order.indexOf(mealType);
+
+            for (let i = 1; i <= order.length; i++) {
+                const nextType = order[(currentIdx + i) % order.length];
+                const selected = plan[`${nextType}s_selected`];
+                const needed = plan[`${nextType}s_needed`];
+
+                if (needed > 0 && selected < needed) {
+                    document.getElementById('next-meal-btn').onclick = () => {
+                        window.location.href = `/plan/${planId}/swipe/${nextType}`;
+                    };
+                    return;
+                }
+            }
+
+            // All complete!
+            document.getElementById('complete-banner').style.display = 'block';
+            document.getElementById('next-meal-btn').textContent = 'View Plan';
+            document.getElementById('next-meal-btn').onclick = viewShoppingList;
+        }
+
+        function renderCards() {
+            const stack = document.getElementById('card-stack');
+            stack.innerHTML = '';
+
+            // Show up to 3 cards
+            for (let i = Math.min(currentIndex + 2, recipes.length - 1); i >= currentIndex; i--) {
+                const recipe = recipes[i];
+                if (!recipe) continue;
+
+                const card = document.createElement('div');
+                card.className = 'recipe-card';
+                card.dataset.index = i;
+
+                const ingredients = recipe.ingredients || [];
+                const ingredientsPreview = ingredients.slice(0, 5).join(', ');
+                const overlapScore = recipe.overlap_score || 0;
+                const overlapIngredients = recipe.overlap_ingredients || [];
+
+                card.innerHTML = `
+                    <div class="image" style="background-image: url('${recipe.image_url || recipe.strMealThumb || "https://source.unsplash.com/400x300/?food"}')">
+                        <div class="overlay nope">NOPE</div>
+                        <div class="overlay like">YUM!</div>
+                        <div class="overlay prep">PREP</div>
+                    </div>
+                    <div class="content">
+                        ${overlapScore > 0 ? `
+                            <div class="overlap-badge">
+                                &#x267B; ${overlapScore} shared ingredient${overlapScore > 1 ? 's' : ''}
+                            </div>
+                        ` : ''}
+                        <div class="title">${recipe.title || recipe.strMeal}</div>
+                        <div class="meta">
+                            <span>${recipe.cuisine || recipe.strArea || 'Various'}</span>
+                            <span>${recipe.category || mealType}</span>
+                            ${ingredients.length ? `<span>${ingredients.length} ingredients</span>` : ''}
+                        </div>
+                        <div class="ingredients-preview">${ingredientsPreview}${ingredients.length > 5 ? '...' : ''}</div>
+                        <div class="cost-estimate">
+                            <span>Est. cost: ~EUR ${(ingredients.length * 1.5).toFixed(0)}</span>
+                            ${overlapIngredients.length > 0 ? `<span style="color:var(--success)">Uses: ${overlapIngredients.slice(0,2).join(', ')}</span>` : ''}
+                        </div>
+                    </div>
+                `;
+
+                if (i === currentIndex) {
+                    setupCardDrag(card);
+                }
+
+                stack.appendChild(card);
+            }
+        }
+
+        function setupCardDrag(card) {
+            const handleStart = (e) => {
+                isDragging = true;
+                card.classList.add('dragging');
+                const point = e.touches ? e.touches[0] : e;
+                startX = point.clientX;
+                startY = point.clientY;
+            };
+
+            const handleMove = (e) => {
+                if (!isDragging) return;
+                e.preventDefault();
+                const point = e.touches ? e.touches[0] : e;
+                currentX = point.clientX - startX;
+                currentY = point.clientY - startY;
+
+                const rotation = currentX * 0.05;
+                card.style.transform = `translate(${currentX}px, ${currentY}px) rotate(${rotation}deg)`;
+
+                // Show overlays
+                const nopeOverlay = card.querySelector('.overlay.nope');
+                const likeOverlay = card.querySelector('.overlay.like');
+                const prepOverlay = card.querySelector('.overlay.prep');
+
+                nopeOverlay.style.opacity = Math.min(Math.max(-currentX / 100, 0), 1);
+                likeOverlay.style.opacity = Math.min(Math.max(currentX / 100, 0), 1);
+                prepOverlay.style.opacity = Math.min(Math.max(-currentY / 100, 0), 1);
+            };
+
+            const handleEnd = () => {
+                if (!isDragging) return;
+                isDragging = false;
+                card.classList.remove('dragging');
+
+                const threshold = 100;
+
+                if (currentY < -threshold) {
+                    // Swipe up - meal prep
+                    completeSwipe('up', card);
+                } else if (currentX > threshold) {
+                    // Swipe right - like
+                    completeSwipe('right', card);
+                } else if (currentX < -threshold) {
+                    // Swipe left - nope
+                    completeSwipe('left', card);
+                } else {
+                    // Snap back
+                    card.style.transform = '';
+                    card.querySelector('.overlay.nope').style.opacity = 0;
+                    card.querySelector('.overlay.like').style.opacity = 0;
+                    card.querySelector('.overlay.prep').style.opacity = 0;
+                }
+
+                currentX = 0;
+                currentY = 0;
+            };
+
+            card.addEventListener('mousedown', handleStart);
+            card.addEventListener('touchstart', handleStart, { passive: true });
+            document.addEventListener('mousemove', handleMove);
+            document.addEventListener('touchmove', handleMove, { passive: false });
+            document.addEventListener('mouseup', handleEnd);
+            document.addEventListener('touchend', handleEnd);
+        }
+
+        function swipe(direction) {
+            const card = document.querySelector('.recipe-card');
+            if (!card) return;
+            completeSwipe(direction, card);
+        }
+
+        async function completeSwipe(direction, card) {
+            const recipe = recipes[currentIndex];
+
+            // Animate card exit
+            if (direction === 'left') {
+                card.style.animation = 'flyLeft 0.3s forwards';
+            } else if (direction === 'right') {
+                card.style.animation = 'flyRight 0.3s forwards';
+            } else if (direction === 'up') {
+                card.style.animation = 'flyUp 0.3s forwards';
+            }
+
+            // Send to API
+            try {
+                const response = await fetch(`/api/meal-plans/${planId}/swipe`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        direction,
+                        recipe_id: recipe.id || recipe.idMeal,
+                        recipe_title: recipe.title || recipe.strMeal,
+                        meal_type: mealType,
+                        ingredients: recipe.ingredients || []
+                    })
+                });
+
+                const result = await response.json();
+                console.log('Swipe result:', result);
+
+                // Update plan data
+                if (result.progress) {
+                    plan.breakfasts_selected = parseInt(result.progress.breakfast.split('/')[0]);
+                    plan.lunches_selected = parseInt(result.progress.lunch.split('/')[0]);
+                    plan.dinners_selected = parseInt(result.progress.dinner.split('/')[0]);
+                    plan.snacks_selected = parseInt(result.progress.snack.split('/')[0]);
+                    plan.total_estimated_cost = result.total_plan_cost;
+                }
+
+                // Update UI
+                updateTabs();
+
+                // Check if complete
+                if (result.is_complete) {
+                    document.getElementById('complete-banner').style.display = 'block';
+                }
+
+                // Check if this meal type is complete
+                const selectedField = `${mealType}s_selected`;
+                const neededField = `${mealType}s_needed`;
+                if (plan[selectedField] >= plan[neededField]) {
+                    setTimeout(showEmptyState, 300);
+                    return;
+                }
+            } catch (error) {
+                console.error('Swipe failed:', error);
+            }
+
+            // Next card
+            setTimeout(() => {
+                currentIndex++;
+                if (currentIndex >= recipes.length) {
+                    // Load more recipes
+                    loadRecipes();
+                } else {
+                    renderCards();
+                }
+            }, 300);
+        }
+
+        function viewShoppingList() {
+            window.location.href = `/api/meal-plans/${planId}/shopping-list`;
+        }
+
+        init();
+    </script>
+</body>
+</html>

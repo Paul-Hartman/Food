@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meal Prep Mode</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        :root {
+            --prep-bg: #1a1a2e;
+            --card-bg: #16213e;
+            --accent: #e94560;
+            --success: #4ade80;
+            --warning: #fbbf24;
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--prep-bg);
+            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            min-height: 100vh;
+            padding-bottom: 100px;
+        }
+
+        .prep-header {
+            background: linear-gradient(135deg, var(--accent), #9333ea);
+            padding: 24px 20px;
+            text-align: center;
+        }
+
+        .prep-header h1 {
+            font-size: 1.5rem;
+            margin-bottom: 4px;
+        }
+
+        .prep-header .subtitle {
+            opacity: 0.9;
+            font-size: 0.9rem;
+        }
+
+        .prep-summary {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            margin-top: 16px;
+            flex-wrap: wrap;
+        }
+
+        .summary-stat {
+            text-align: center;
+        }
+
+        .summary-stat .value {
+            font-size: 1.8rem;
+            font-weight: bold;
+        }
+
+        .summary-stat .label {
+            font-size: 0.75rem;
+            opacity: 0.8;
+            text-transform: uppercase;
+        }
+
+        .workflow-section {
+            padding: 20px;
+        }
+
+        .section-title {
+            font-size: 1.1rem;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Workflow Timeline */
+        .workflow-timeline {
+            position: relative;
+            padding-left: 40px;
+        }
+
+        .workflow-timeline::before {
+            content: '';
+            position: absolute;
+            left: 15px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(to bottom, var(--accent), var(--success));
+        }
+
+        .workflow-phase {
+            position: relative;
+            margin-bottom: 24px;
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 16px;
+            border-left: 3px solid var(--accent);
+        }
+
+        .workflow-phase.completed {
+            border-left-color: var(--success);
+            opacity: 0.7;
+        }
+
+        .phase-number {
+            position: absolute;
+            left: -40px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 30px;
+            height: 30px;
+            background: var(--accent);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .workflow-phase.completed .phase-number {
+            background: var(--success);
+        }
+
+        .phase-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .phase-icon {
+            font-size: 1.5rem;
+        }
+
+        .phase-title {
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .phase-duration {
+            margin-left: auto;
+            background: rgba(255,255,255,0.1);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+        }
+
+        .phase-description {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-bottom: 12px;
+        }
+
+        .phase-tasks {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .phase-task {
+            background: rgba(255,255,255,0.05);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+        }
+
+        /* Prep Categories */
+        .prep-categories {
+            padding: 0 20px 20px;
+        }
+
+        .category-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            margin-bottom: 16px;
+            overflow: hidden;
+        }
+
+        .category-header {
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .category-header:hover {
+            background: rgba(255,255,255,0.05);
+        }
+
+        .category-icon {
+            font-size: 2rem;
+            width: 50px;
+            height: 50px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .category-info {
+            flex: 1;
+        }
+
+        .category-title {
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .category-meta {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .category-toggle {
+            font-size: 1.5rem;
+            color: var(--text-muted);
+            transition: transform 0.3s;
+        }
+
+        .category-card.expanded .category-toggle {
+            transform: rotate(180deg);
+        }
+
+        .category-tasks {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .category-card.expanded .category-tasks {
+            max-height: 2000px;
+        }
+
+        .task-list {
+            padding: 0 16px 16px;
+        }
+
+        .task-item {
+            background: rgba(255,255,255,0.03);
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .task-checkbox {
+            width: 24px;
+            height: 24px;
+            border: 2px solid var(--text-muted);
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: all 0.2s;
+        }
+
+        .task-checkbox.checked {
+            background: var(--success);
+            border-color: var(--success);
+        }
+
+        .task-checkbox.checked::after {
+            content: '✓';
+            color: white;
+            font-weight: bold;
+        }
+
+        .task-item.completed {
+            opacity: 0.5;
+        }
+
+        .task-item.completed .task-ingredient {
+            text-decoration: line-through;
+        }
+
+        .task-content {
+            flex: 1;
+        }
+
+        .task-ingredient {
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .task-details {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .task-badge {
+            background: var(--accent);
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
+        /* Storage Info */
+        .storage-info {
+            background: rgba(74, 222, 128, 0.1);
+            border: 1px solid rgba(74, 222, 128, 0.3);
+            border-radius: 10px;
+            padding: 12px;
+            margin: 0 16px 16px;
+        }
+
+        .storage-title {
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: var(--success);
+            margin-bottom: 6px;
+        }
+
+        .storage-details {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        /* Containers Section */
+        .containers-section {
+            padding: 0 20px 20px;
+        }
+
+        .container-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .container-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+        }
+
+        .container-icon {
+            font-size: 2rem;
+            margin-bottom: 8px;
+        }
+
+        .container-qty {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--accent);
+        }
+
+        .container-type {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        /* Tips Section */
+        .tips-section {
+            padding: 0 20px 20px;
+        }
+
+        .tips-card {
+            background: linear-gradient(135deg, rgba(233, 69, 96, 0.1), rgba(147, 51, 234, 0.1));
+            border: 1px solid rgba(233, 69, 96, 0.2);
+            border-radius: 12px;
+            padding: 16px;
+        }
+
+        .tip-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .tip-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .tip-bullet {
+            color: var(--warning);
+        }
+
+        .tip-text {
+            font-size: 0.85rem;
+        }
+
+        /* Progress Bar */
+        .progress-section {
+            padding: 20px;
+            background: var(--card-bg);
+            position: sticky;
+            bottom: 0;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), var(--success));
+            border-radius: 4px;
+            transition: width 0.3s;
+        }
+
+        .start-prep-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, var(--accent), #9333ea);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 12px;
+        }
+
+        .start-prep-btn:hover {
+            opacity: 0.9;
+        }
+
+        /* Loading State */
+        .loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 50vh;
+            gap: 16px;
+        }
+
+        .loading-spinner {
+            width: 48px;
+            height: 48px;
+            border: 3px solid rgba(255,255,255,0.1);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .empty-icon {
+            font-size: 4rem;
+            margin-bottom: 16px;
+        }
+
+        .empty-title {
+            font-size: 1.2rem;
+            margin-bottom: 8px;
+        }
+
+        .empty-text {
+            color: var(--text-muted);
+            margin-bottom: 24px;
+        }
+
+        .empty-btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background: var(--accent);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+
+        /* Back button */
+        .back-btn {
+            position: absolute;
+            top: 24px;
+            left: 20px;
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div class="loading">
+            <div class="loading-spinner"></div>
+            <p>Generating prep tasks...</p>
+        </div>
+    </div>
+
+    <script>
+        const PLAN_ID = {{ plan_id }};
+        let prepData = null;
+        let completedTasks = new Set();
+
+        async function loadPrepTasks() {
+            try {
+                const response = await fetch(`/api/meal-plans/${PLAN_ID}/prep-tasks`);
+                if (!response.ok) {
+                    throw new Error('Failed to load prep tasks');
+                }
+                prepData = await response.json();
+                renderPrepView();
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('app').innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">📋</div>
+                        <div class="empty-title">No Recipes in Plan</div>
+                        <div class="empty-text">Add some recipes to your meal plan first, then come back to prep!</div>
+                        <a href="/plan/${PLAN_ID}/swipe/breakfast" class="empty-btn">Add Recipes</a>
+                    </div>
+                `;
+            }
+        }
+
+        function renderPrepView() {
+            const { prep_tasks, workflow, containers_needed, tips, total_prep_time_display, total_recipes, plan_type } = prepData;
+
+            const totalTasks = Object.values(prep_tasks).reduce((sum, cat) => sum + cat.tasks.length, 0);
+            const completedCount = completedTasks.size;
+            const progress = totalTasks > 0 ? (completedCount / totalTasks * 100) : 0;
+
+            document.getElementById('app').innerHTML = `
+                <div class="prep-header">
+                    <button class="back-btn" onclick="history.back()">←</button>
+                    <h1>Meal Prep Mode</h1>
+                    <p class="subtitle">${plan_type.charAt(0).toUpperCase() + plan_type.slice(1)} Plan - ${total_recipes} Recipes</p>
+                    <div class="prep-summary">
+                        <div class="summary-stat">
+                            <div class="value">${total_prep_time_display}</div>
+                            <div class="label">Total Time</div>
+                        </div>
+                        <div class="summary-stat">
+                            <div class="value">${totalTasks}</div>
+                            <div class="label">Prep Tasks</div>
+                        </div>
+                        <div class="summary-stat">
+                            <div class="value">${workflow.length}</div>
+                            <div class="label">Phases</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Workflow Timeline -->
+                <div class="workflow-section">
+                    <h2 class="section-title">📋 Prep Workflow</h2>
+                    <div class="workflow-timeline">
+                        ${workflow.map((phase, i) => `
+                            <div class="workflow-phase" data-phase="${i}">
+                                <div class="phase-number">${phase.phase}</div>
+                                <div class="phase-header">
+                                    <span class="phase-icon">${phase.icon}</span>
+                                    <span class="phase-title">${phase.title}</span>
+                                    <span class="phase-duration">${phase.duration}</span>
+                                </div>
+                                <p class="phase-description">${phase.description}</p>
+                                <div class="phase-tasks">
+                                    ${phase.tasks.slice(0, 5).map(task => `
+                                        <span class="phase-task">${task}</span>
+                                    `).join('')}
+                                    ${phase.tasks.length > 5 ? `<span class="phase-task">+${phase.tasks.length - 5} more</span>` : ''}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+
+                <!-- Prep Categories -->
+                <div class="prep-categories">
+                    <h2 class="section-title">✂️ Prep Tasks by Category</h2>
+                    ${Object.entries(prep_tasks).filter(([_, cat]) => cat.tasks.length > 0).map(([key, category]) => `
+                        <div class="category-card" data-category="${key}">
+                            <div class="category-header" onclick="toggleCategory('${key}')">
+                                <div class="category-icon">${category.icon}</div>
+                                <div class="category-info">
+                                    <div class="category-title">${category.title}</div>
+                                    <div class="category-meta">${category.tasks.length} items · ${category.estimated_time} min</div>
+                                </div>
+                                <span class="category-toggle">▼</span>
+                            </div>
+                            <div class="category-tasks">
+                                ${category.storage ? `
+                                    <div class="storage-info">
+                                        <div class="storage-title">📦 Storage: ${category.storage.container}</div>
+                                        <div class="storage-details">
+                                            Keeps ${category.storage.fridge_days} days in fridge · ${category.storage.tips}
+                                        </div>
+                                    </div>
+                                ` : ''}
+                                <div class="task-list">
+                                    ${category.tasks.map((task, i) => `
+                                        <div class="task-item ${completedTasks.has(key + '_' + i) ? 'completed' : ''}" data-task="${key}_${i}">
+                                            <div class="task-checkbox ${completedTasks.has(key + '_' + i) ? 'checked' : ''}"
+                                                 onclick="toggleTask('${key}', ${i})"></div>
+                                            <div class="task-content">
+                                                <div class="task-ingredient">${task.ingredient}</div>
+                                                <div class="task-details">
+                                                    ${task.quantity} · ~${task.time_estimate} min
+                                                    <br>${task.used_in}
+                                                </div>
+                                            </div>
+                                            ${task.recipe_count > 1 ? `<span class="task-badge">${task.recipe_count}x</span>` : ''}
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+
+                <!-- Containers Needed -->
+                ${containers_needed.length > 0 ? `
+                    <div class="containers-section">
+                        <h2 class="section-title">📦 Containers You'll Need</h2>
+                        <div class="container-grid">
+                            ${containers_needed.map(c => `
+                                <div class="container-card">
+                                    <div class="container-icon">📦</div>
+                                    <div class="container-qty">${c.quantity}</div>
+                                    <div class="container-type">${c.type}</div>
+                                    <div class="container-type">${c.for}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                ` : ''}
+
+                <!-- Pro Tips -->
+                <div class="tips-section">
+                    <h2 class="section-title">💡 Pro Tips</h2>
+                    <div class="tips-card">
+                        ${tips.map(tip => `
+                            <div class="tip-item">
+                                <span class="tip-bullet">★</span>
+                                <span class="tip-text">${tip}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+
+                <!-- Progress Footer -->
+                <div class="progress-section">
+                    <div class="progress-header">
+                        <span>Progress</span>
+                        <span>${completedCount}/${totalTasks} tasks (${Math.round(progress)}%)</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${progress}%"></div>
+                    </div>
+                    <button class="start-prep-btn" onclick="startPrepTimer()">
+                        ${completedCount === 0 ? '🚀 Start Prep Session' : completedCount === totalTasks ? '✅ All Done!' : '⏱️ Continue Prepping'}
+                    </button>
+                </div>
+            `;
+        }
+
+        function toggleCategory(key) {
+            const card = document.querySelector(`.category-card[data-category="${key}"]`);
+            card.classList.toggle('expanded');
+        }
+
+        function toggleTask(category, index) {
+            const taskKey = `${category}_${index}`;
+            if (completedTasks.has(taskKey)) {
+                completedTasks.delete(taskKey);
+            } else {
+                completedTasks.add(taskKey);
+                // Haptic feedback if available
+                if (navigator.vibrate) navigator.vibrate(50);
+            }
+            // Re-render to update progress
+            renderPrepView();
+
+            // Persist to server
+            fetch(`/api/meal-plans/${PLAN_ID}/prep-tasks/complete`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ task_id: taskKey, completed: completedTasks.has(taskKey) })
+            });
+        }
+
+        function startPrepTimer() {
+            // Could open a timer modal or redirect to a focused prep view
+            alert('Prep timer feature coming soon! For now, use your phone timer and work through the phases.');
+        }
+
+        // Initialize
+        loadPrepTasks();
+    </script>
+</body>
+</html>

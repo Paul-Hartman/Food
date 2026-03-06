@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Food App - Choose Deck</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="deck-browser">
+        <div class="deck-browser-header">
+            <a href="/discover" class="back-btn">&larr; Back</a>
+            <h1>
+                Planning
+                <span class="meal-badge">{{ meal_type }}</span>
+            </h1>
+            <div></div>
+        </div>
+
+        <div id="decks-container">
+            <div class="loading">
+                <div class="loading-spinner"></div>
+                Loading decks...
+            </div>
+        </div>
+
+        <a href="/cooking-deck" class="tonight-deck-link" id="tonight-link" style="display:none;">
+            <span>Tonight's Deck</span>
+            <span class="count" id="tonight-count">0</span>
+        </a>
+    </div>
+
+    <nav class="bottom-nav">
+        <a href="/" class="nav-item">
+            <div class="nav-item-icon"><img src="/static/images/recipe.svg" alt="Recipes"></div>
+            Recipes
+        </a>
+        <a href="/discover" class="nav-item active">
+            <span class="icon">&#128293;</span>
+            Discover
+        </a>
+        <a href="/shopping" class="nav-item">
+            <div class="nav-item-icon"><img src="/static/images/shopping.svg" alt="Shopping"></div>
+            Shopping
+        </a>
+        <a href="/nutrition" class="nav-item">
+            <div class="nav-item-icon"><img src="/static/images/chart.svg" alt="Nutrition"></div>
+            Nutrition
+        </a>
+    </nav>
+
+    <script>
+        const mealType = '{{ meal_type }}';
+        const deckTypeLabels = {
+            'culture': 'By Culture',
+            'diet': 'By Diet',
+            'type': 'By Type',
+            'smart': 'Smart Decks'
+        };
+
+        async function loadDecks() {
+            try {
+                const response = await fetch('/api/decks');
+                const data = await response.json();
+                renderDecks(data);
+            } catch (error) {
+                document.getElementById('decks-container').innerHTML =
+                    '<div class="empty-state"><p>Failed to load decks</p></div>';
+            }
+        }
+
+        function renderDecks(data) {
+            const container = document.getElementById('decks-container');
+            container.innerHTML = '';
+
+            data.type_order.forEach(deckType => {
+                const decks = data.decks[deckType];
+                if (!decks || decks.length === 0) return;
+
+                const section = document.createElement('div');
+                section.className = 'deck-section';
+                section.innerHTML = `
+                    <div class="deck-section-title">${deckTypeLabels[deckType] || deckType}</div>
+                    <div class="deck-grid">
+                        ${decks.map(deck => `
+                            <a href="/discover/${mealType}/${deck.id}" class="deck-card">
+                                <span class="icon">${deck.icon || '&#127869;'}</span>
+                                <span class="name">${deck.name}</span>
+                            </a>
+                        `).join('')}
+                    </div>
+                `;
+                container.appendChild(section);
+            });
+        }
+
+        async function loadTonightCount() {
+            try {
+                const response = await fetch('/api/cooking-deck?meal_type=' + mealType);
+                const data = await response.json();
+                const count = data.meals[mealType] ? data.meals[mealType].length : 0;
+                if (count > 0) {
+                    document.getElementById('tonight-link').style.display = 'flex';
+                    document.getElementById('tonight-count').textContent = count;
+                }
+            } catch (error) {
+                console.error('Failed to load tonight count:', error);
+            }
+        }
+
+        loadDecks();
+        loadTonightCount();
+    </script>
+</body>
+</html>

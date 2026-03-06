@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Potion Alchemy - Food App</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/universal-cards.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #4c1d95 0%, #7c3aed 50%, #6366f1 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .alchemy-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .alchemy-header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+
+        .alchemy-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .alchemy-header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .alchemy-layout {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 24px;
+        }
+
+        @media (max-width: 1024px) {
+            .alchemy-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Ingredients Panel */
+        .ingredients-panel {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .panel-header {
+            margin-bottom: 20px;
+        }
+
+        .panel-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 16px;
+        }
+
+        .search-box {
+            width: 100%;
+            padding: 14px 18px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            font-size: 1rem;
+            margin-bottom: 20px;
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: #8b5cf6;
+        }
+
+        .category-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .category-tab {
+            padding: 8px 16px;
+            border-radius: 20px;
+            border: none;
+            background: #f3f4f6;
+            color: #6b7280;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .category-tab.active {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            color: white;
+        }
+
+        .ingredients-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 16px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        /* Ingredient Cards - using universal card system */
+        .ingredient-card {
+            cursor: grab;
+            user-select: none;
+            transition: all 0.2s ease;
+        }
+
+        .ingredient-card:active {
+            cursor: grabbing;
+        }
+
+        .ingredient-card.dragging {
+            opacity: 0.5;
+            transform: scale(0.95);
+        }
+
+        .ingredient-card .card-image {
+            height: 100px;
+            background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
+        }
+
+        .ingredient-card .card-content {
+            padding: 12px;
+        }
+
+        .ingredient-card .card-title {
+            font-size: 0.9rem;
+            text-align: center;
+        }
+
+        .ingredient-card .card-icon {
+            font-size: 2.5rem;
+            text-align: center;
+            display: block;
+            margin: 10px 0;
+        }
+
+        /* Cauldron Panel */
+        .cauldron-panel {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            position: sticky;
+            top: 20px;
+        }
+
+        .cauldron-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .cauldron-slots {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .cauldron-slot {
+            aspect-ratio: 1;
+            border: 3px dashed #cbd5e1;
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 120px;
+            transition: all 0.3s ease;
+            background: #f9fafb;
+        }
+
+        .cauldron-slot.filled {
+            border-style: solid;
+            border-color: #8b5cf6;
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.05), rgba(124, 58, 237, 0.05));
+        }
+
+        .cauldron-slot.drag-over {
+            border-color: #10b981;
+            background: rgba(16, 185, 129, 0.1);
+            transform: scale(1.05);
+        }
+
+        .cauldron-slot .slot-icon {
+            font-size: 2rem;
+            color: #cbd5e1;
+        }
+
+        .cauldron-slot.filled .slot-icon {
+            font-size: 2.5rem;
+        }
+
+        .cauldron-slot .slot-name {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #64748b;
+            margin-top: 8px;
+            text-align: center;
+        }
+
+        .cauldron-slot.filled .slot-name {
+            color: #1f2937;
+        }
+
+        .cauldron-slot .remove-btn {
+            margin-top: 8px;
+            padding: 4px 12px;
+            background: #ef4444;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            cursor: pointer;
+        }
+
+        .brewing-method {
+            margin-bottom: 20px;
+        }
+
+        .brewing-method label {
+            display: block;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 8px;
+        }
+
+        .method-select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            font-size: 1rem;
+            background: white;
+        }
+
+        .potion-preview {
+            background: linear-gradient(135deg, #f0f4ff, #e0e7ff);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .potion-preview h3 {
+            color: #8b5cf6;
+            margin-bottom: 12px;
+            font-size: 1.1rem;
+        }
+
+        .nutrition-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .nutrition-item {
+            background: white;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .nutrition-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #8b5cf6;
+        }
+
+        .nutrition-label {
+            font-size: 0.85rem;
+            color: #6b7280;
+            margin-top: 4px;
+        }
+
+        .brew-button {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .brew-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(139, 92, 246, 0.4);
+        }
+
+        .brew-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .effects-list {
+            margin-top: 12px;
+        }
+
+        .effect-tag {
+            display: inline-block;
+            padding: 4px 12px;
+            background: rgba(139, 92, 246, 0.1);
+            color: #8b5cf6;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="alchemy-container">
+        <div class="alchemy-header">
+            <h1>🧪 Potion Alchemy</h1>
+            <p>Combine ingredients to create powerful nutritional potions</p>
+        </div>
+
+        <div class="alchemy-layout">
+            <!-- Ingredients Panel -->
+            <div class="ingredients-panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">📦 Ingredient Library</h2>
+                    <input
+                        type="text"
+                        class="search-box"
+                        id="searchBox"
+                        placeholder="Search ingredients..."
+                    >
+                </div>
+
+                <div class="category-tabs" id="categoryTabs">
+                    <button class="category-tab active" data-category="all">All</button>
+                    <button class="category-tab" data-category="herbs">🌿 Herbs</button>
+                    <button class="category-tab" data-category="spices">🌶️ Spices</button>
+                    <button class="category-tab" data-category="fruits">🍎 Fruits</button>
+                    <button class="category-tab" data-category="vegetables">🥕 Vegetables</button>
+                    <button class="category-tab" data-category="grains">🌾 Grains</button>
+                    <button class="category-tab" data-category="dairy">🥛 Dairy</button>
+                </div>
+
+                <div class="ingredients-grid" id="ingredientsGrid">
+                    <!-- Ingredient cards will be loaded here -->
+                </div>
+            </div>
+
+            <!-- Cauldron Panel -->
+            <div class="cauldron-panel">
+                <h2 class="cauldron-title">🔮 Brewing Cauldron</h2>
+
+                <div class="cauldron-slots" id="cauldronSlots">
+                    <div class="cauldron-slot" data-slot="0">
+                        <div class="slot-icon">+</div>
+                        <div class="slot-name">Empty Slot</div>
+                    </div>
+                    <div class="cauldron-slot" data-slot="1">
+                        <div class="slot-icon">+</div>
+                        <div class="slot-name">Empty Slot</div>
+                    </div>
+                    <div class="cauldron-slot" data-slot="2">
+                        <div class="slot-icon">+</div>
+                        <div class="slot-name">Empty Slot</div>
+                    </div>
+                    <div class="cauldron-slot" data-slot="3">
+                        <div class="slot-icon">+</div>
+                        <div class="slot-name">Empty Slot</div>
+                    </div>
+                </div>
+
+                <div class="brewing-method">
+                    <label for="methodSelect">Brewing Method</label>
+                    <select id="methodSelect" class="method-select">
+                        <option value="blend">🌀 Blend - Quick smoothie</option>
+                        <option value="brew">☕ Brew - Hot infusion</option>
+                        <option value="ferment">🫙 Ferment - Probiotic boost</option>
+                        <option value="juice">🍹 Juice - Fresh extract</option>
+                        <option value="steep">🍵 Steep - Gentle infusion</option>
+                    </select>
+                </div>
+
+                <div class="potion-preview">
+                    <h3>Potion Preview</h3>
+                    <div class="nutrition-grid">
+                        <div class="nutrition-item">
+                            <div class="nutrition-value" id="caloriesPreview">0</div>
+                            <div class="nutrition-label">Calories</div>
+                        </div>
+                        <div class="nutrition-item">
+                            <div class="nutrition-value" id="proteinPreview">0g</div>
+                            <div class="nutrition-label">Protein</div>
+                        </div>
+                        <div class="nutrition-item">
+                            <div class="nutrition-value" id="carbsPreview">0g</div>
+                            <div class="nutrition-label">Carbs</div>
+                        </div>
+                        <div class="nutrition-item">
+                            <div class="nutrition-value" id="fatPreview">0g</div>
+                            <div class="nutrition-label">Fat</div>
+                        </div>
+                    </div>
+                    <div class="effects-list" id="effectsList">
+                        <!-- Effects will be shown here -->
+                    </div>
+                </div>
+
+                <button class="brew-button" id="brewButton" onclick="brewPotion()">
+                    🧪 Brew Potion
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let ingredients = [];
+        let cauldron = [null, null, null, null];
+        let draggedIngredient = null;
+
+        // Load ingredients on page load
+        async function loadIngredients() {
+            try {
+                const response = await fetch('/api/alchemy/ingredients');
+                const data = await response.json();
+                ingredients = data.ingredients || [];
+                renderIngredients();
+            } catch (error) {
+                console.error('Error loading ingredients:', error);
+                document.getElementById('ingredientsGrid').innerHTML =
+                    '<div class="card-empty"><div class="card-empty-icon">❌</div><p class="card-empty-text">Failed to load ingredients</p></div>';
+            }
+        }
+
+        function renderIngredients(filter = 'all', search = '') {
+            const grid = document.getElementById('ingredientsGrid');
+
+            let filtered = ingredients;
+
+            // Filter by category
+            if (filter !== 'all') {
+                filtered = filtered.filter(ing => ing.category === filter);
+            }
+
+            // Filter by search
+            if (search) {
+                filtered = filtered.filter(ing =>
+                    ing.name.toLowerCase().includes(search.toLowerCase())
+                );
+            }
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `
+                    <div class="card-empty">
+                        <div class="card-empty-icon">🔍</div>
+                        <p class="card-empty-text">No ingredients found</p>
+                    </div>
+                `;
+                return;
+            }
+
+            grid.innerHTML = filtered.map(ing => `
+                <div
+                    class="universal-card ingredient-card card-compact"
+                    draggable="true"
+                    data-ingredient-id="${ing.id}"
+                    data-ingredient-name="${ing.name}"
+                    data-ingredient-icon="${ing.icon || '🥗'}"
+                    data-calories="${ing.calories || 0}"
+                    data-protein="${ing.protein || 0}"
+                    data-carbs="${ing.carbs || 0}"
+                    data-fat="${ing.fat || 0}"
+                >
+                    <div class="card-image">
+                        <span class="card-icon">${ing.icon || '🥗'}</span>
+                    </div>
+                    <div class="card-content">
+                        <h3 class="card-title">${ing.name}</h3>
+                    </div>
+                </div>
+            `).join('');
+
+            // Add drag event listeners
+            document.querySelectorAll('.ingredient-card').forEach(card => {
+                card.addEventListener('dragstart', handleDragStart);
+                card.addEventListener('dragend', handleDragEnd);
+            });
+        }
+
+        // Category tabs
+        document.getElementById('categoryTabs').addEventListener('click', (e) => {
+            if (e.target.classList.contains('category-tab')) {
+                document.querySelectorAll('.category-tab').forEach(tab => tab.classList.remove('active'));
+                e.target.classList.add('active');
+                const category = e.target.dataset.category;
+                const search = document.getElementById('searchBox').value;
+                renderIngredients(category, search);
+            }
+        });
+
+        // Search
+        document.getElementById('searchBox').addEventListener('input', (e) => {
+            const activeCategory = document.querySelector('.category-tab.active').dataset.category;
+            renderIngredients(activeCategory, e.target.value);
+        });
+
+        // Drag and drop handlers
+        function handleDragStart(e) {
+            draggedIngredient = {
+                id: e.target.dataset.ingredientId,
+                name: e.target.dataset.ingredientName,
+                icon: e.target.dataset.ingredientIcon,
+                calories: parseFloat(e.target.dataset.calories),
+                protein: parseFloat(e.target.dataset.protein),
+                carbs: parseFloat(e.target.dataset.carbs),
+                fat: parseFloat(e.target.dataset.fat)
+            };
+            e.target.classList.add('dragging');
+        }
+
+        function handleDragEnd(e) {
+            e.target.classList.remove('dragging');
+        }
+
+        // Cauldron slot events
+        const slots = document.querySelectorAll('.cauldron-slot');
+        slots.forEach(slot => {
+            slot.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                slot.classList.add('drag-over');
+            });
+
+            slot.addEventListener('dragleave', () => {
+                slot.classList.remove('drag-over');
+            });
+
+            slot.addEventListener('drop', (e) => {
+                e.preventDefault();
+                slot.classList.remove('drag-over');
+
+                if (draggedIngredient) {
+                    const slotIndex = parseInt(slot.dataset.slot);
+                    addToCauldron(slotIndex, draggedIngredient);
+                    draggedIngredient = null;
+                }
+            });
+
+            // Click to clear slot
+            slot.addEventListener('click', () => {
+                if (slot.classList.contains('filled')) {
+                    const slotIndex = parseInt(slot.dataset.slot);
+                    removeFromCauldron(slotIndex);
+                }
+            });
+        });
+
+        function addToCauldron(slotIndex, ingredient) {
+            cauldron[slotIndex] = ingredient;
+            updateCauldronDisplay();
+            updatePotionPreview();
+        }
+
+        function removeFromCauldron(slotIndex) {
+            cauldron[slotIndex] = null;
+            updateCauldronDisplay();
+            updatePotionPreview();
+        }
+
+        function updateCauldronDisplay() {
+            slots.forEach((slot, index) => {
+                const ingredient = cauldron[index];
+                if (ingredient) {
+                    slot.classList.add('filled');
+                    slot.innerHTML = `
+                        <div class="slot-icon">${ingredient.icon}</div>
+                        <div class="slot-name">${ingredient.name}</div>
+                        <button class="remove-btn" onclick="removeFromCauldron(${index}); event.stopPropagation();">Remove</button>
+                    `;
+                } else {
+                    slot.classList.remove('filled');
+                    slot.innerHTML = `
+                        <div class="slot-icon">+</div>
+                        <div class="slot-name">Empty Slot</div>
+                    `;
+                }
+            });
+        }
+
+        function updatePotionPreview() {
+            const filledSlots = cauldron.filter(ing => ing !== null);
+
+            if (filledSlots.length === 0) {
+                document.getElementById('caloriesPreview').textContent = '0';
+                document.getElementById('proteinPreview').textContent = '0g';
+                document.getElementById('carbsPreview').textContent = '0g';
+                document.getElementById('fatPreview').textContent = '0g';
+                document.getElementById('effectsList').innerHTML = '';
+                document.getElementById('brewButton').disabled = true;
+                return;
+            }
+
+            // Calculate nutrition (real values from ingredients)
+            const totalCalories = filledSlots.reduce((sum, ing) => sum + ing.calories, 0);
+            const totalProtein = filledSlots.reduce((sum, ing) => sum + ing.protein, 0);
+            const totalCarbs = filledSlots.reduce((sum, ing) => sum + ing.carbs, 0);
+            const totalFat = filledSlots.reduce((sum, ing) => sum + ing.fat, 0);
+
+            document.getElementById('caloriesPreview').textContent = Math.round(totalCalories);
+            document.getElementById('proteinPreview').textContent = Math.round(totalProtein) + 'g';
+            document.getElementById('carbsPreview').textContent = Math.round(totalCarbs) + 'g';
+            document.getElementById('fatPreview').textContent = Math.round(totalFat) + 'g';
+
+            // Generate effects based on ingredients
+            const effects = [];
+            if (totalProtein > 10) effects.push('💪 Muscle Building');
+            if (totalCarbs > 20) effects.push('⚡ Energy Boost');
+            if (filledSlots.length >= 3) effects.push('🌈 Nutrient Dense');
+
+            document.getElementById('effectsList').innerHTML = effects.map(e =>
+                `<span class="effect-tag">${e}</span>`
+            ).join('');
+
+            document.getElementById('brewButton').disabled = false;
+        }
+
+        async function brewPotion() {
+            const filledSlots = cauldron.filter(ing => ing !== null);
+            if (filledSlots.length === 0) {
+                alert('Add ingredients to the cauldron first!');
+                return;
+            }
+
+            const method = document.getElementById('methodSelect').value;
+            const ingredientIds = filledSlots.map(ing => ing.id);
+
+            try {
+                const response = await fetch('/api/alchemy/brew', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        ingredient_ids: ingredientIds,
+                        method: method
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    alert(`🎉 Potion brewed successfully!\n\n${result.potion_name}\n\nNutrition logged to your daily intake.`);
+                    // Clear cauldron
+                    cauldron = [null, null, null, null];
+                    updateCauldronDisplay();
+                    updatePotionPreview();
+                } else {
+                    alert('Failed to brew potion: ' + (result.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error brewing potion:', error);
+                alert('Failed to brew potion. Please try again.');
+            }
+        }
+
+        // Initialize
+        loadIngredients();
+    </script>
+</body>
+</html>

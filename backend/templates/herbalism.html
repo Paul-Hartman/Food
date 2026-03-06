@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Herbalism Grimoire - Traditional Medicine Explorer</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: linear-gradient(135deg, #1b4332 0%, #2d6a4f 40%, #40916c 100%);
+            min-height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            color: #e0e0e0;
+        }
+
+        .app-header {
+            text-align: center;
+            padding: 30px 20px 10px;
+        }
+        .app-header h1 { font-size: 2.2rem; color: #b7e4c7; }
+        .app-header p { color: #95d5b2; font-size: 1rem; }
+
+        /* Journal bar */
+        .journal-bar {
+            max-width: 1400px;
+            margin: 16px auto;
+            padding: 14px 24px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .journal-bar .title-badge {
+            background: rgba(183,228,199,0.15);
+            border: 1px solid rgba(183,228,199,0.3);
+            padding: 6px 16px;
+            border-radius: 20px;
+            color: #b7e4c7;
+            font-weight: 600;
+        }
+        .journal-bar .xp-bar {
+            flex: 1;
+            min-width: 150px;
+            height: 8px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .journal-bar .xp-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #52b788, #b7e4c7);
+            border-radius: 4px;
+            transition: width 0.5s;
+        }
+        .journal-bar .xp-text { color: #95d5b2; font-size: 0.8rem; }
+        .journal-bar .stat { color: #95d5b2; font-size: 0.85rem; }
+
+        .container { max-width: 1400px; margin: 0 auto; padding: 0 20px 100px; }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 4px;
+            margin: 16px 0;
+            overflow-x: auto;
+            padding-bottom: 4px;
+        }
+        .tab-btn {
+            padding: 10px 18px;
+            border: none;
+            background: rgba(255,255,255,0.06);
+            color: #95d5b2;
+            border-radius: 10px 10px 0 0;
+            cursor: pointer;
+            font-size: 0.9rem;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+        .tab-btn:hover { background: rgba(255,255,255,0.1); }
+        .tab-btn.active {
+            background: rgba(183,228,199,0.15);
+            color: #b7e4c7;
+            border-bottom: 2px solid #b7e4c7;
+        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* Cards */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 16px;
+        }
+        .card {
+            background: rgba(0,0,0,0.2);
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid rgba(183,228,199,0.1);
+            transition: all 0.3s;
+        }
+        .card:hover { border-color: rgba(183,228,199,0.3); transform: translateY(-2px); }
+        .card h3 { color: #b7e4c7; margin-bottom: 6px; font-size: 1.1rem; }
+        .card .subtitle { color: #52b788; font-size: 0.85rem; margin-bottom: 8px; }
+        .card p { color: #bbb; font-size: 0.9rem; line-height: 1.5; }
+        .card .meta { color: #74c69d; font-size: 0.8rem; margin-top: 8px; }
+        .card.clickable { cursor: pointer; }
+
+        /* System cards (medicine traditions) */
+        .system-card {
+            background: rgba(0,0,0,0.25);
+            border-radius: 16px;
+            padding: 24px;
+            border: 1px solid rgba(183,228,199,0.1);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .system-card:hover { border-color: #52b788; transform: translateY(-3px); }
+        .system-card h3 { color: #b7e4c7; font-size: 1.3rem; margin-bottom: 4px; }
+        .system-card .origin { color: #52b788; font-size: 0.9rem; margin-bottom: 8px; }
+        .system-card .philosophy { color: #bbb; font-size: 0.9rem; line-height: 1.5; }
+        .system-card .herb-count {
+            margin-top: 10px;
+            color: #74c69d;
+            font-size: 0.85rem;
+        }
+
+        /* Herb detail panel */
+        .detail-panel {
+            display: none;
+            background: rgba(0,0,0,0.3);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(183,228,199,0.2);
+        }
+        .detail-panel.active { display: block; }
+        .close-btn {
+            float: right;
+            background: none;
+            border: none;
+            color: #999;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        .close-btn:hover { color: #fff; }
+
+        /* Classification cards */
+        .classification-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 12px;
+            margin-top: 12px;
+        }
+        .classification-card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 16px;
+            border-left: 3px solid #52b788;
+        }
+        .classification-card h4 { color: #b7e4c7; margin-bottom: 6px; }
+        .classification-card .prop { color: #ccc; font-size: 0.85rem; margin: 4px 0; }
+        .classification-card .prop strong { color: #95d5b2; }
+
+        /* Preparation builder */
+        .prep-builder {
+            background: rgba(0,0,0,0.2);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+        .prep-builder h3 { color: #b7e4c7; margin-bottom: 16px; }
+        .prep-builder select, .prep-builder input {
+            padding: 10px 14px;
+            border-radius: 10px;
+            border: 1px solid rgba(183,228,199,0.2);
+            background: rgba(0,0,0,0.3);
+            color: #fff;
+            font-size: 0.9rem;
+            margin-right: 8px;
+            margin-bottom: 8px;
+        }
+        .prep-builder select option { background: #1b4332; }
+
+        .prep-result {
+            background: rgba(183,228,199,0.08);
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 16px;
+            display: none;
+        }
+        .prep-result.active { display: block; }
+        .prep-result h4 { color: #b7e4c7; margin-bottom: 8px; }
+        .prep-result p { color: #ccc; font-size: 0.9rem; line-height: 1.5; }
+
+        /* Safety checker */
+        .safety-checker {
+            background: rgba(0,0,0,0.2);
+            border-radius: 16px;
+            padding: 24px;
+        }
+        .safety-checker h3 { color: #b7e4c7; margin-bottom: 16px; }
+        .interaction-card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 14px;
+            margin-bottom: 8px;
+        }
+        .interaction-card.high { border-left: 3px solid #e76f51; }
+        .interaction-card.moderate { border-left: 3px solid #f4a261; }
+        .interaction-card.low { border-left: 3px solid #52b788; }
+        .interaction-card h4 { color: #fff; font-size: 0.95rem; }
+        .interaction-card .severity {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 8px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+        .severity.high { background: rgba(231,111,81,0.2); color: #e76f51; }
+        .severity.moderate { background: rgba(244,162,97,0.2); color: #f4a261; }
+        .severity.low { background: rgba(82,183,136,0.2); color: #52b788; }
+
+        /* Remedy cards */
+        .remedy-card {
+            background: rgba(0,0,0,0.2);
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid rgba(183,228,199,0.1);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .remedy-card:hover { border-color: #52b788; }
+        .remedy-card h3 { color: #b7e4c7; margin-bottom: 4px; }
+        .remedy-card .culture { color: #52b788; font-size: 0.85rem; }
+        .remedy-card .condition { color: #74c69d; font-size: 0.85rem; margin-top: 4px; }
+        .remedy-card .xp { color: #95d5b2; font-size: 0.8rem; margin-top: 6px; }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            overflow-y: auto;
+            padding: 40px 20px;
+        }
+        .modal.active { display: block; }
+        .modal-content {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #1b4332;
+            border-radius: 20px;
+            padding: 30px;
+            border: 1px solid rgba(183,228,199,0.3);
+        }
+        .modal-content h2 { color: #b7e4c7; margin-bottom: 8px; }
+
+        /* Monograph */
+        .monograph-section {
+            margin-top: 16px;
+            padding: 14px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 12px;
+        }
+        .monograph-section h4 { color: #52b788; margin-bottom: 8px; font-size: 0.95rem; }
+        .monograph-section p { color: #ccc; font-size: 0.9rem; line-height: 1.6; }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+        .btn-green { background: #52b788; color: #1b4332; font-weight: 600; }
+        .btn-green:hover { background: #74c69d; }
+        .btn-outline {
+            background: transparent;
+            border: 1px solid rgba(183,228,199,0.3);
+            color: #b7e4c7;
+        }
+        .btn-outline:hover { background: rgba(183,228,199,0.1); }
+
+        .herb-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 10px;
+        }
+        .herb-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .herb-item:hover { background: rgba(255,255,255,0.1); }
+        .herb-item .icon { font-size: 1.3rem; }
+        .herb-item .name { color: #fff; font-size: 0.95rem; }
+        .herb-item .temp { color: #74c69d; font-size: 0.75rem; }
+
+        .loading { text-align: center; padding: 40px; color: #74c69d; }
+        .empty-state { text-align: center; padding: 60px; color: #52b788; }
+
+        .xp-toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(82,183,136,0.95);
+            color: #fff;
+            padding: 14px 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            z-index: 2000;
+            transform: translateY(-100px);
+            opacity: 0;
+            transition: all 0.3s;
+        }
+        .xp-toast.show { transform: translateY(0); opacity: 1; }
+
+        @media (max-width: 768px) {
+            .card-grid { grid-template-columns: 1fr; }
+            .classification-grid { grid-template-columns: 1fr; }
+            .herb-list { grid-template-columns: 1fr; }
+            .journal-bar { flex-direction: column; gap: 8px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-header">
+        <h1>Herbalism Grimoire</h1>
+        <p>Traditional Medicine Across Cultures &amp; Centuries</p>
+    </div>
+
+    <!-- Journal/XP Bar -->
+    <div class="journal-bar" id="journal-bar">
+        <div class="title-badge" id="herbalist-title">Herb Gatherer</div>
+        <div class="xp-bar"><div class="xp-fill" id="xp-fill" style="width:0%"></div></div>
+        <div class="xp-text" id="xp-text">0 XP</div>
+        <div class="stat" id="stat-preps">0 preparations</div>
+        <div class="stat" id="stat-systems">0 systems explored</div>
+    </div>
+
+    <div class="container">
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('materia')">Materia Medica</button>
+            <button class="tab-btn" onclick="switchTab('traditions')">Traditions</button>
+            <button class="tab-btn" onclick="switchTab('history')">History</button>
+            <button class="tab-btn" onclick="switchTab('preparations')">Preparations</button>
+            <button class="tab-btn" onclick="switchTab('remedies')">Folk Remedies</button>
+            <button class="tab-btn" onclick="switchTab('safety')">Safety Checker</button>
+            <button class="tab-btn" onclick="switchTab('journal')">Journal</button>
+        </div>
+
+        <!-- MATERIA MEDICA TAB -->
+        <div class="tab-content active" id="tab-materia">
+            <div style="margin-bottom:16px;">
+                <input type="text" class="search-input" id="herb-search" placeholder="Search herbs..."
+                       style="width:100%;padding:12px 18px;border:1px solid rgba(183,228,199,0.2);border-radius:12px;background:rgba(0,0,0,0.2);color:#fff;font-size:1rem;"
+                       oninput="filterHerbs()">
+            </div>
+            <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;" id="system-filter-chips"></div>
+            <div class="detail-panel" id="herb-detail"></div>
+            <div class="herb-list" id="herb-grid">
+                <div class="loading">Loading herbs...</div>
+            </div>
+        </div>
+
+        <!-- TRADITIONS TAB -->
+        <div class="tab-content" id="tab-traditions">
+            <div class="card-grid" id="systems-grid">
+                <div class="loading">Loading traditions...</div>
+            </div>
+            <div class="detail-panel" id="system-detail" style="margin-top:20px;"></div>
+        </div>
+
+        <!-- HISTORY TAB -->
+        <div class="tab-content" id="tab-history">
+            <div style="margin-bottom:16px;">
+                <select id="history-herb-select" onchange="loadHerbHistory()" style="padding:10px;border-radius:10px;border:1px solid rgba(183,228,199,0.2);background:rgba(0,0,0,0.3);color:#fff;">
+                    <option value="">Select a herb...</option>
+                </select>
+            </div>
+            <div id="history-timeline">
+                <div class="empty-state">Select a herb to see its history across cultures</div>
+            </div>
+        </div>
+
+        <!-- PREPARATIONS TAB -->
+        <div class="tab-content" id="tab-preparations">
+            <div class="prep-builder">
+                <h3>Preparation Builder</h3>
+                <div>
+                    <select id="prep-herb-select">
+                        <option value="">Choose herb...</option>
+                    </select>
+                    <select id="prep-method-select">
+                        <option value="">Choose method...</option>
+                    </select>
+                    <button class="btn btn-green" onclick="buildPreparation()">Prepare</button>
+                </div>
+                <div class="prep-result" id="prep-result"></div>
+            </div>
+
+            <h3 style="color:#b7e4c7;margin:20px 0 12px;">Preparation Methods</h3>
+            <div class="card-grid" id="methods-grid">
+                <div class="loading">Loading methods...</div>
+            </div>
+        </div>
+
+        <!-- FOLK REMEDIES TAB -->
+        <div class="tab-content" id="tab-remedies">
+            <div class="card-grid" id="remedies-grid">
+                <div class="loading">Loading remedies...</div>
+            </div>
+        </div>
+
+        <!-- SAFETY CHECKER TAB -->
+        <div class="tab-content" id="tab-safety">
+            <div class="safety-checker">
+                <h3>Herb-Drug Interaction Checker</h3>
+                <p style="color:#95d5b2;font-size:0.85rem;margin-bottom:16px;">Check potential interactions between herbs and medications</p>
+                <div style="margin-bottom:12px;">
+                    <select id="safety-herb-select" multiple style="width:100%;min-height:80px;padding:10px;border-radius:10px;border:1px solid rgba(183,228,199,0.2);background:rgba(0,0,0,0.3);color:#fff;">
+                    </select>
+                    <small style="color:#666;">Hold Ctrl/Cmd to select multiple herbs</small>
+                </div>
+                <div style="margin-bottom:12px;">
+                    <input type="text" id="safety-meds" placeholder="Enter medications (comma-separated)..."
+                           style="width:100%;padding:12px;border-radius:10px;border:1px solid rgba(183,228,199,0.2);background:rgba(0,0,0,0.3);color:#fff;">
+                </div>
+                <button class="btn btn-green" onclick="checkInteractions()">Check Interactions</button>
+                <div id="safety-results" style="margin-top:16px;"></div>
+            </div>
+        </div>
+
+        <!-- JOURNAL TAB -->
+        <div class="tab-content" id="tab-journal">
+            <div id="journal-detail">
+                <div class="loading">Loading journal...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div class="modal" id="remedy-modal">
+        <div class="modal-content" id="remedy-modal-content"></div>
+    </div>
+    <div class="modal" id="monograph-modal">
+        <div class="modal-content" id="monograph-modal-content"></div>
+    </div>
+
+    <!-- XP Toast -->
+    <div class="xp-toast" id="xp-toast"></div>
+
+    <script>
+        let allHerbs = [];
+        let allSystems = [];
+        let allMethods = [];
+        let activeSystemFilter = '';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadJournal();
+            loadHerbs();
+            loadSystems();
+            loadMethods();
+        });
+
+        // Tab switching
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById(`tab-${tab}`).classList.add('active');
+
+            if (tab === 'remedies') loadRemedies();
+            if (tab === 'journal') loadJournalDetail();
+        }
+
+        // JOURNAL
+        async function loadJournal() {
+            try {
+                const res = await fetch('/api/herbalism/journal');
+                const j = await res.json();
+                document.getElementById('herbalist-title').textContent = j.herbalist_title;
+                document.getElementById('xp-text').textContent = `${j.herbalist_xp} XP (Lvl ${j.herbalist_level})`;
+                document.getElementById('stat-preps').textContent = `${j.preparations_made} preparations`;
+                const explored = JSON.parse(j.systems_explored || '[]');
+                document.getElementById('stat-systems').textContent = `${explored.length} systems`;
+                // XP bar
+                const nextXp = j.next_level_xp || j.herbalist_xp + 100;
+                const prevXp = j.levels && j.levels.length > 1 ? j.levels[j.herbalist_level - 1]?.threshold || 0 : 0;
+                const pct = Math.min(100, ((j.herbalist_xp - prevXp) / (nextXp - prevXp)) * 100);
+                document.getElementById('xp-fill').style.width = pct + '%';
+            } catch(e) {}
+        }
+
+        async function loadJournalDetail() {
+            const container = document.getElementById('journal-detail');
+            try {
+                const res = await fetch('/api/herbalism/journal');
+                const j = await res.json();
+                const explored = JSON.parse(j.systems_explored || '[]');
+                const remedies = JSON.parse(j.remedies_discovered || '[]');
+
+                let html = `
+                <div class="card" style="margin-bottom:20px;">
+                    <h3>${j.herbalist_title}</h3>
+                    <p>Level ${j.herbalist_level} | ${j.herbalist_xp} XP | ${j.preparations_made} preparations made</p>
+                    <p style="margin-top:8px;">Systems explored: ${explored.length > 0 ? explored.join(', ') : 'None yet'}</p>
+                    <p>Remedies discovered: ${remedies.length}</p>
+                </div>
+                <h3 style="color:#b7e4c7;margin-bottom:12px;">Level Progression</h3>
+                <div class="card-grid">`;
+
+                if (j.levels) {
+                    j.levels.forEach((l, i) => {
+                        const achieved = j.herbalist_xp >= l.threshold;
+                        html += `<div class="card" style="opacity:${achieved ? 1 : 0.5};">
+                            <h3>${achieved ? '&#10003; ' : ''}${l.title}</h3>
+                            <p>${l.threshold} XP required</p>
+                        </div>`;
+                    });
+                }
+                html += '</div>';
+                container.innerHTML = html;
+            } catch(e) {
+                container.innerHTML = '<div class="empty-state">Could not load journal</div>';
+            }
+        }
+
+        // HERBS (Materia Medica)
+        async function loadHerbs() {
+            try {
+                const res = await fetch('/api/alchemy/ingredients');
+                allHerbs = await res.json();
+                renderHerbs(allHerbs);
+                populateHerbSelects();
+                buildSystemFilterChips();
+            } catch(e) {
+                document.getElementById('herb-grid').innerHTML = '<div class="empty-state">Could not load herbs</div>';
+            }
+        }
+
+        function buildSystemFilterChips() {
+            // Will be populated after systems load
+        }
+
+        function filterHerbs() {
+            const q = document.getElementById('herb-search').value.toLowerCase();
+            let filtered = allHerbs;
+            if (q) filtered = filtered.filter(h => h.display_name.toLowerCase().includes(q) || (h.scientific_name || '').toLowerCase().includes(q));
+            renderHerbs(filtered);
+        }
+
+        function renderHerbs(herbs) {
+            const grid = document.getElementById('herb-grid');
+            if (!herbs.length) {
+                grid.innerHTML = '<div class="empty-state">No herbs found</div>';
+                return;
+            }
+            grid.innerHTML = herbs.map(h => `
+                <div class="herb-item" onclick="showHerbDetail(${h.id})">
+                    <span class="icon">${h.icon || '🌿'}</span>
+                    <div>
+                        <div class="name">${h.display_name}</div>
+                        <div class="temp">${h.scientific_name || ''} ${h.tcm_temperature ? '| ' + h.tcm_temperature : ''}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function populateHerbSelects() {
+            const options = allHerbs.map(h => `<option value="${h.id}">${h.display_name}</option>`).join('');
+            ['prep-herb-select', 'history-herb-select', 'safety-herb-select'].forEach(id => {
+                const sel = document.getElementById(id);
+                const first = sel.innerHTML;
+                sel.innerHTML = first + options;
+            });
+        }
+
+        async function showHerbDetail(herbId) {
+            const panel = document.getElementById('herb-detail');
+            panel.innerHTML = '<div class="loading">Loading...</div>';
+            panel.classList.add('active');
+            panel.scrollIntoView({ behavior: 'smooth' });
+
+            try {
+                const [classRes, monRes] = await Promise.all([
+                    fetch(`/api/herbalism/herbs/${herbId}/classifications`),
+                    fetch(`/api/herbalism/herbs/${herbId}/monograph`).catch(() => ({ ok: false }))
+                ]);
+                const classData = await classRes.json();
+                let monograph = null;
+                if (monRes.ok) monograph = await monRes.json();
+
+                const herb = classData.herb;
+                let html = `<button class="close-btn" onclick="closeHerbDetail()">&times;</button>`;
+                html += `<h2>${herb.display_name}</h2>`;
+
+                if (monograph && !monograph.error) {
+                    html += `<div style="color:#52b788;margin-bottom:12px;">${monograph.latin_name || ''} | ${monograph.botanical_family || ''}</div>`;
+                    if (monograph.plant_description) html += `<p style="color:#bbb;line-height:1.6;margin-bottom:12px;">${monograph.plant_description}</p>`;
+
+                    html += `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">`;
+                    if (monograph.parts_used) html += `<span style="padding:4px 10px;border-radius:8px;background:rgba(82,183,136,0.2);color:#52b788;font-size:0.8rem;">Parts: ${monograph.parts_used}</span>`;
+                    if (monograph.evidence_quality) html += `<span style="padding:4px 10px;border-radius:8px;background:rgba(244,162,97,0.2);color:#f4a261;font-size:0.8rem;">Evidence: ${monograph.evidence_quality}</span>`;
+                    html += `</div>`;
+
+                    if (monograph.key_constituents) {
+                        html += `<div class="monograph-section"><h4>Key Constituents</h4><p>${monograph.key_constituents}</p></div>`;
+                    }
+                    if (monograph.pharmacology) {
+                        html += `<div class="monograph-section"><h4>Pharmacology</h4><p>${monograph.pharmacology}</p></div>`;
+                    }
+                    if (monograph.safety_profile) {
+                        html += `<div class="monograph-section"><h4>Safety Profile</h4><p>${monograph.safety_profile}</p></div>`;
+                    }
+                }
+
+                // Classifications across traditions
+                if (classData.classifications && classData.classifications.length) {
+                    html += `<h3 style="color:#b7e4c7;margin:20px 0 8px;">Across Traditions</h3>`;
+                    html += `<div class="classification-grid">`;
+                    classData.classifications.forEach(c => {
+                        html += `<div class="classification-card">
+                            <h4>${c.system_name}</h4>
+                            ${c.temperature_quality ? `<div class="prop"><strong>Temperature:</strong> ${c.temperature_quality}</div>` : ''}
+                            ${c.taste_qualities ? `<div class="prop"><strong>Taste:</strong> ${c.taste_qualities}</div>` : ''}
+                            ${c.therapeutic_actions ? `<div class="prop"><strong>Actions:</strong> ${c.therapeutic_actions}</div>` : ''}
+                            ${c.traditional_indications ? `<div class="prop"><strong>Indications:</strong> ${c.traditional_indications}</div>` : ''}
+                            ${c.dosage_traditional ? `<div class="prop"><strong>Dosage:</strong> ${c.dosage_traditional}</div>` : ''}
+                        </div>`;
+                    });
+                    html += `</div>`;
+                }
+
+                // View full monograph & interactions buttons
+                html += `<div style="margin-top:20px;display:flex;gap:8px;">`;
+                html += `<button class="btn btn-outline" onclick="viewInteractions(${herbId})">Check Interactions</button>`;
+                html += `<button class="btn btn-outline" onclick="viewHistory(${herbId})">View History</button>`;
+                html += `<button class="btn btn-outline" onclick="viewPreparations(${herbId})">Preparations</button>`;
+                html += `</div>`;
+
+                panel.innerHTML = html;
+            } catch(e) {
+                panel.innerHTML = '<div class="empty-state">Error loading herb details</div>';
+            }
+        }
+
+        function closeHerbDetail() {
+            document.getElementById('herb-detail').classList.remove('active');
+        }
+
+        async function viewInteractions(herbId) {
+            switchTab('safety');
+            document.getElementById('safety-herb-select').value = herbId;
+            checkInteractions();
+        }
+
+        async function viewHistory(herbId) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.querySelectorAll('.tab-btn')[2].classList.add('active');
+            document.getElementById('tab-history').classList.add('active');
+            document.getElementById('history-herb-select').value = herbId;
+            loadHerbHistory();
+        }
+
+        async function viewPreparations(herbId) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.querySelectorAll('.tab-btn')[3].classList.add('active');
+            document.getElementById('tab-preparations').classList.add('active');
+            document.getElementById('prep-herb-select').value = herbId;
+        }
+
+        // TRADITIONS (Medicine Systems)
+        async function loadSystems() {
+            try {
+                const res = await fetch('/api/herbalism/systems');
+                allSystems = await res.json();
+                renderSystems();
+            } catch(e) {
+                document.getElementById('systems-grid').innerHTML = '<div class="empty-state">Could not load systems</div>';
+            }
+        }
+
+        function renderSystems() {
+            const grid = document.getElementById('systems-grid');
+            grid.innerHTML = allSystems.map(s => `
+                <div class="system-card" onclick="showSystemDetail('${s.system_code}')">
+                    <h3>${s.system_name}</h3>
+                    <div class="origin">${s.origin_region || ''}</div>
+                    <div class="philosophy">${(s.core_philosophy || '').substring(0, 150)}${(s.core_philosophy || '').length > 150 ? '...' : ''}</div>
+                    <div class="herb-count">${s.herb_count} herbs classified</div>
+                </div>
+            `).join('');
+        }
+
+        async function showSystemDetail(code) {
+            const panel = document.getElementById('system-detail');
+            panel.innerHTML = '<div class="loading">Loading...</div>';
+            panel.classList.add('active');
+            panel.scrollIntoView({ behavior: 'smooth' });
+
+            try {
+                const res = await fetch(`/api/herbalism/systems/${code}`);
+                const data = await res.json();
+
+                let html = `<button class="close-btn" onclick="closeSystemDetail()">&times;</button>`;
+                html += `<h2>${data.system_name}</h2>`;
+                html += `<div style="color:#52b788;margin-bottom:8px;">${data.origin_region || ''}</div>`;
+                if (data.foundational_text) html += `<p style="color:#999;font-size:0.85rem;margin-bottom:8px;">Key text: ${data.foundational_text}</p>`;
+                if (data.core_philosophy) html += `<p style="color:#bbb;line-height:1.6;margin-bottom:16px;">${data.core_philosophy}</p>`;
+
+                if (data.herbs && data.herbs.length) {
+                    html += `<h3 style="color:#b7e4c7;margin-bottom:12px;">Herbs in This Tradition (${data.herbs.length})</h3>`;
+                    html += `<div class="herb-list">`;
+                    data.herbs.forEach(h => {
+                        html += `<div class="herb-item" onclick="showHerbDetail(${h.id})">
+                            <span class="icon">${h.icon || '🌿'}</span>
+                            <div>
+                                <div class="name">${h.display_name}</div>
+                                <div class="temp">${h.temperature_quality || ''} ${h.therapeutic_actions ? '| ' + h.therapeutic_actions.substring(0, 50) : ''}</div>
+                            </div>
+                        </div>`;
+                    });
+                    html += `</div>`;
+                }
+
+                // Explore button for XP
+                html += `<div style="margin-top:20px;"><button class="btn btn-green" onclick="exploreSystem('${code}')">Explore This Tradition (+XP)</button></div>`;
+
+                panel.innerHTML = html;
+            } catch(e) {
+                panel.innerHTML = '<div class="empty-state">Error loading system</div>';
+            }
+        }
+
+        function closeSystemDetail() {
+            document.getElementById('system-detail').classList.remove('active');
+        }
+
+        async function exploreSystem(code) {
+            try {
+                const res = await fetch('/api/herbalism/journal/explore-system', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ system_code: code })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showXpToast(`+${data.xp_earned} XP${data.is_new ? ' (New tradition!)' : ''}`);
+                    loadJournal();
+                }
+            } catch(e) {}
+        }
+
+        // HISTORY
+        async function loadHerbHistory() {
+            const herbId = document.getElementById('history-herb-select').value;
+            const container = document.getElementById('history-timeline');
+            if (!herbId) {
+                container.innerHTML = '<div class="empty-state">Select a herb to see its history</div>';
+                return;
+            }
+            container.innerHTML = '<div class="loading">Loading...</div>';
+            try {
+                const res = await fetch(`/api/herbalism/herbs/${herbId}/history`);
+                const uses = await res.json();
+                if (!uses.length) {
+                    container.innerHTML = '<div class="empty-state">No historical records for this herb</div>';
+                    return;
+                }
+                let html = '<div style="display:flex;flex-direction:column;gap:10px;">';
+                uses.forEach(u => {
+                    const yearRange = `${formatYear(u.period_start_year)} - ${formatYear(u.period_end_year)}`;
+                    html += `<div class="card">
+                        <div style="display:flex;justify-content:space-between;align-items:start;">
+                            <h3>${u.culture_name}</h3>
+                            <span style="color:#52b788;font-size:0.85rem;">${yearRange}</span>
+                        </div>
+                        <div style="color:#74c69d;font-size:0.85rem;margin-bottom:6px;">${u.region || ''} | ${u.use_category}</div>
+                        ${u.preparation_method ? `<p>Preparation: ${u.preparation_method}</p>` : ''}
+                        ${u.social_context ? `<p>${u.social_context}</p>` : ''}
+                        ${u.trade_route ? `<p style="color:#95d5b2;font-size:0.8rem;">Trade route: ${u.trade_route}</p>` : ''}
+                    </div>`;
+                });
+                html += '</div>';
+                container.innerHTML = html;
+            } catch(e) {
+                container.innerHTML = '<div class="empty-state">Error loading history</div>';
+            }
+        }
+
+        // PREPARATIONS
+        async function loadMethods() {
+            try {
+                const res = await fetch('/api/herbalism/methods');
+                allMethods = await res.json();
+                renderMethods();
+                const sel = document.getElementById('prep-method-select');
+                allMethods.forEach(m => {
+                    const opt = document.createElement('option');
+                    opt.value = m.id;
+                    opt.textContent = m.method_name;
+                    sel.appendChild(opt);
+                });
+            } catch(e) {}
+        }
+
+        function renderMethods() {
+            const grid = document.getElementById('methods-grid');
+            grid.innerHTML = allMethods.map(m => `
+                <div class="card">
+                    <h3>${m.method_name}</h3>
+                    <div class="subtitle">${m.method_code}</div>
+                    ${m.solvent ? `<p><strong>Solvent:</strong> ${m.solvent}</p>` : ''}
+                    ${m.duration_range ? `<p><strong>Duration:</strong> ${m.duration_range}</p>` : ''}
+                    ${m.temperature_range ? `<p><strong>Temperature:</strong> ${m.temperature_range}</p>` : ''}
+                    ${m.shelf_life ? `<p><strong>Shelf life:</strong> ${m.shelf_life}</p>` : ''}
+                    ${m.general_instructions ? `<p style="margin-top:8px;font-size:0.85rem;">${m.general_instructions.substring(0, 200)}...</p>` : ''}
+                </div>
+            `).join('');
+        }
+
+        async function buildPreparation() {
+            const herbId = document.getElementById('prep-herb-select').value;
+            const methodId = document.getElementById('prep-method-select').value;
+            const resultDiv = document.getElementById('prep-result');
+
+            if (!herbId || !methodId) {
+                resultDiv.innerHTML = '<p style="color:#e76f51;">Select both a herb and a method</p>';
+                resultDiv.classList.add('active');
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/herbalism/prepare', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ herb_id: parseInt(herbId), method_id: parseInt(methodId) })
+                });
+                const data = await res.json();
+
+                if (data.error) {
+                    resultDiv.innerHTML = `<p style="color:#f4a261;">${data.error}</p>`;
+                } else {
+                    const p = data.preparation;
+                    resultDiv.innerHTML = `
+                        <h4>${p.herb_name} - ${p.method_name}</h4>
+                        ${p.plant_part_used ? `<p><strong>Part used:</strong> ${p.plant_part_used}</p>` : ''}
+                        ${p.herb_to_solvent_ratio ? `<p><strong>Ratio:</strong> ${p.herb_to_solvent_ratio}</p>` : ''}
+                        ${p.specific_instructions ? `<p style="margin-top:8px;">${p.specific_instructions}</p>` : ''}
+                        ${p.dosage ? `<p><strong>Dosage:</strong> ${p.dosage}</p>` : ''}
+                        ${p.best_for ? `<p><strong>Best for:</strong> ${p.best_for}</p>` : ''}
+                    `;
+                    showXpToast(`+${data.xp_earned} XP - ${data.title}`);
+                    loadJournal();
+                }
+                resultDiv.classList.add('active');
+            } catch(e) {
+                resultDiv.innerHTML = '<p style="color:#e76f51;">Error making preparation</p>';
+                resultDiv.classList.add('active');
+            }
+        }
+
+        // FOLK REMEDIES
+        async function loadRemedies() {
+            const grid = document.getElementById('remedies-grid');
+            grid.innerHTML = '<div class="loading">Loading remedies...</div>';
+            try {
+                const res = await fetch('/api/herbalism/remedies');
+                const remedies = await res.json();
+                if (!remedies.length) {
+                    grid.innerHTML = '<div class="empty-state">No remedies found</div>';
+                    return;
+                }
+                grid.innerHTML = remedies.map(r => `
+                    <div class="remedy-card" onclick="showRemedyDetail(${r.id})">
+                        <h3>${r.remedy_name}</h3>
+                        <div class="culture">${r.origin_culture || ''} ${r.system_name ? '| ' + r.system_name : ''}</div>
+                        <div class="condition">Treats: ${r.condition_treated || 'Various'}</div>
+                        <div class="xp">+${r.discovery_xp || 25} XP</div>
+                    </div>
+                `).join('');
+            } catch(e) {
+                grid.innerHTML = '<div class="empty-state">Error loading remedies</div>';
+            }
+        }
+
+        async function showRemedyDetail(id) {
+            const modal = document.getElementById('remedy-modal');
+            const content = document.getElementById('remedy-modal-content');
+            content.innerHTML = '<div class="loading">Loading...</div>';
+            modal.classList.add('active');
+
+            try {
+                const res = await fetch(`/api/herbalism/remedies/${id}`);
+                const r = await res.json();
+
+                let html = `<button class="close-btn" onclick="closeModal('remedy-modal')">&times;</button>`;
+                html += `<h2>${r.remedy_name}</h2>`;
+                html += `<div style="color:#52b788;margin-bottom:12px;">${r.origin_culture || ''} ${r.system_name ? '| ' + r.system_name : ''}</div>`;
+
+                if (r.historical_narrative) {
+                    html += `<div class="monograph-section"><h4>History</h4><p>${r.historical_narrative}</p></div>`;
+                }
+
+                if (r.ingredients_json) {
+                    const ingredients = JSON.parse(r.ingredients_json);
+                    html += `<div class="monograph-section"><h4>Ingredients</h4><ul style="list-style:none;padding:0;">`;
+                    ingredients.forEach(i => { html += `<li style="padding:4px 0;color:#ccc;">${typeof i === 'string' ? i : i.name + (i.amount ? ' - ' + i.amount : '')}</li>`; });
+                    html += `</ul></div>`;
+                }
+
+                if (r.preparation_instructions || r.general_instructions) {
+                    html += `<div class="monograph-section"><h4>Preparation</h4><p>${r.preparation_instructions || r.general_instructions}</p></div>`;
+                }
+
+                if (r.scientific_validation) {
+                    html += `<div class="monograph-section"><h4>Scientific Evidence</h4><p>${r.scientific_validation}</p></div>`;
+                }
+
+                html += `<div style="margin-top:16px;display:flex;gap:8px;align-items:center;">`;
+                html += `<span style="padding:4px 10px;border-radius:8px;background:rgba(82,183,136,0.2);color:#52b788;font-size:0.8rem;">Safety: ${r.safety_rating || 'unknown'}</span>`;
+                html += `<button class="btn btn-green" onclick="makeRemedy(${r.id})">Make This Remedy (+${r.discovery_xp || 25} XP)</button>`;
+                html += `</div>`;
+
+                content.innerHTML = html;
+            } catch(e) {
+                content.innerHTML = '<div class="empty-state">Error loading remedy</div>';
+            }
+        }
+
+        async function makeRemedy(id) {
+            try {
+                const res = await fetch(`/api/herbalism/remedies/${id}/make`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showXpToast(`+${data.xp_earned} XP${data.is_new_discovery ? ' (New Discovery!)' : ''} - ${data.title}`);
+                    loadJournal();
+                }
+            } catch(e) {}
+        }
+
+        // SAFETY CHECKER
+        async function checkInteractions() {
+            const sel = document.getElementById('safety-herb-select');
+            const herbIds = Array.from(sel.selectedOptions).map(o => parseInt(o.value));
+            const meds = document.getElementById('safety-meds').value.split(',').map(s => s.trim()).filter(Boolean);
+            const container = document.getElementById('safety-results');
+
+            if (!herbIds.length) {
+                container.innerHTML = '<p style="color:#f4a261;">Select at least one herb</p>';
+                return;
+            }
+
+            container.innerHTML = '<div class="loading">Checking...</div>';
+
+            try {
+                const res = await fetch('/api/herbalism/interactions/check', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ herb_ids: herbIds, medications: meds })
+                });
+                const data = await res.json();
+
+                if (!data.interactions.length) {
+                    container.innerHTML = '<div class="card" style="border-left:3px solid #52b788;"><h3>No known interactions found</h3><p>Always consult a healthcare provider for personalized advice.</p></div>';
+                    return;
+                }
+
+                let html = '';
+                if (data.has_severe) {
+                    html += '<div style="background:rgba(231,111,81,0.15);padding:12px;border-radius:10px;margin-bottom:12px;color:#e76f51;font-weight:600;">Warning: Severe interactions detected!</div>';
+                }
+                data.interactions.forEach(i => {
+                    html += `<div class="interaction-card ${i.severity}">
+                        <div style="display:flex;justify-content:space-between;align-items:center;">
+                            <h4>${i.herb_name} + ${i.drug_name}</h4>
+                            <span class="severity ${i.severity}">${i.severity}</span>
+                        </div>
+                        <p style="color:#ccc;font-size:0.85rem;margin-top:4px;">${i.drug_class || ''}</p>
+                        <p style="margin-top:6px;">${i.interaction_type}</p>
+                        ${i.mechanism ? `<p style="color:#999;font-size:0.85rem;margin-top:4px;">Mechanism: ${i.mechanism}</p>` : ''}
+                        ${i.management ? `<p style="color:#74c69d;font-size:0.85rem;margin-top:4px;">Management: ${i.management}</p>` : ''}
+                    </div>`;
+                });
+                container.innerHTML = html;
+            } catch(e) {
+                container.innerHTML = '<div class="empty-state">Error checking interactions</div>';
+            }
+        }
+
+        // UTILS
+        function formatYear(year) {
+            if (year === null || year === undefined) return '?';
+            if (year < 0) return `${Math.abs(year)} BCE`;
+            return `${year} CE`;
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+
+        function showXpToast(msg) {
+            const toast = document.getElementById('xp-toast');
+            toast.textContent = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        // Close modals on background click
+        document.querySelectorAll('.modal').forEach(m => {
+            m.addEventListener('click', function(e) {
+                if (e.target === this) this.classList.remove('active');
+            });
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.modal').forEach(m => m.classList.remove('active'));
+                closeHerbDetail();
+                closeSystemDetail();
+            }
+        });
+    </script>
+</body>
+</html>

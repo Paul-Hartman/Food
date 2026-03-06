@@ -1,0 +1,98 @@
+{
+  "name": "Food App",
+  "version": "0.9.0",
+  "description": "Meal planning, recipe management, pantry tracking, and nutrition analysis",
+  "categories": [
+    {
+      "name": "Recipe Management",
+      "features": [
+        {"id": "recipe-browse", "name": "Browse Recipes", "status": "complete", "notes": "RecipesScreen.tsx with card layout"},
+        {"id": "recipe-detail", "name": "Recipe Detail View", "status": "complete", "notes": "EnhancedRecipeDetailScreen.tsx"},
+        {"id": "recipe-ingredients", "name": "Ingredient List Display", "status": "complete", "notes": ""},
+        {"id": "recipe-instructions", "name": "Cooking Instructions", "status": "complete", "notes": ""},
+        {"id": "recipe-images", "name": "Recipe Images from MealDB", "status": "complete", "notes": "populate_recipes_from_mealdb.py"}
+      ]
+    },
+    {
+      "name": "Meal Planning (Tinder-Style)",
+      "features": [
+        {"id": "meal-plan-create", "name": "Create Meal Plan (Day/Week/Month)", "status": "complete", "notes": "MealPlanScreen.tsx"},
+        {"id": "meal-plan-swipe", "name": "Swipe Left/Right/Up for Recipes", "status": "complete", "notes": "PanResponder + Animated API"},
+        {"id": "meal-plan-smart-suggest", "name": "Smart Recipe Suggestions", "status": "complete", "notes": "Based on ingredient overlap"},
+        {"id": "meal-plan-budget", "name": "Budget Tracking", "status": "in_progress", "notes": "Backend ready, UI needs polish"},
+        {"id": "meal-plan-progress", "name": "Progress Indicator per Meal Type", "status": "complete", "notes": "breakfast/lunch/dinner/snack counters"},
+        {"id": "shopping-from-plan", "name": "Generate Shopping List from Plan", "status": "in_progress", "notes": "API exists, navigation pending"}
+      ]
+    },
+    {
+      "name": "Pantry Management",
+      "features": [
+        {"id": "pantry-list", "name": "View Pantry Items", "status": "complete", "notes": "PantryScreen.tsx"},
+        {"id": "pantry-barcode", "name": "Barcode Scanner", "status": "complete", "notes": "BarcodeScanner.tsx"},
+        {"id": "pantry-add-manual", "name": "Manual Item Entry", "status": "complete", "notes": ""},
+        {"id": "pantry-expiry", "name": "Expiry Date Tracking", "status": "planned", "notes": ""},
+        {"id": "pantry-quantity", "name": "Quantity/Amount Tracking", "status": "planned", "notes": ""}
+      ]
+    },
+    {
+      "name": "Shopping List",
+      "features": [
+        {"id": "shopping-view", "name": "View Shopping List", "status": "complete", "notes": "ShoppingScreen.tsx"},
+        {"id": "shopping-add", "name": "Add Items to List", "status": "complete", "notes": ""},
+        {"id": "shopping-check", "name": "Check Off Items", "status": "complete", "notes": ""},
+        {"id": "shopping-by-store", "name": "Group by Store Section", "status": "planned", "notes": "Aisle organization"},
+        {"id": "shopping-aldi-deals", "name": "Aldi Deals Integration", "status": "planned", "notes": ""}
+      ]
+    },
+    {
+      "name": "Nutrition Analysis",
+      "features": [
+        {"id": "nutrition-display", "name": "Nutrition Display", "status": "complete", "notes": "NutritionScreen.tsx"},
+        {"id": "nutrition-comprehensive", "name": "Comprehensive Nutrition View", "status": "complete", "notes": "ComprehensiveNutritionScreen.tsx"},
+        {"id": "nutrition-yuka-score", "name": "Yuka-Style Health Score", "status": "complete", "notes": "YukaStyleScoreCard.tsx"},
+        {"id": "nutrition-synergies", "name": "Nutrient Synergies Analysis", "status": "complete", "notes": "MealSynergyAnalyzer.tsx"},
+        {"id": "nutrition-deficiency", "name": "Deficiency Warnings", "status": "planned", "notes": ""}
+      ]
+    },
+    {
+      "name": "Product Search",
+      "features": [
+        {"id": "product-search", "name": "Search OpenFoodFacts", "status": "complete", "notes": "ProductSearchScreen.tsx"},
+        {"id": "product-detail", "name": "Product Detail Card", "status": "complete", "notes": "ProductNutritionCard.tsx"},
+        {"id": "ingredient-analysis", "name": "Ingredient Analysis", "status": "complete", "notes": "IngredientAnalyzer.tsx"},
+        {"id": "apothecary-style", "name": "Apothecary Ingredient Database", "status": "complete", "notes": "ApothecaryScreen.tsx"}
+      ]
+    },
+    {
+      "name": "Cooking Mode",
+      "features": [
+        {"id": "cooking-view", "name": "Cooking Screen", "status": "complete", "notes": "CookingScreen.tsx"},
+        {"id": "cooking-timer", "name": "Cooking Timers", "status": "planned", "notes": ""},
+        {"id": "cooking-meater", "name": "Meater Thermometer Integration", "status": "planned", "notes": "API exists in backend"}
+      ]
+    },
+    {
+      "name": "Backend API",
+      "features": [
+        {"id": "api-recipes", "name": "Recipe CRUD Endpoints", "status": "complete", "notes": "/api/recipes"},
+        {"id": "api-pantry", "name": "Pantry Endpoints", "status": "complete", "notes": "/api/pantry"},
+        {"id": "api-shopping", "name": "Shopping List Endpoints", "status": "complete", "notes": "/api/shopping"},
+        {"id": "api-meal-plans", "name": "Meal Planning Endpoints", "status": "complete", "notes": "/api/meal-plans/*"},
+        {"id": "api-nutrition", "name": "Nutrition API", "status": "complete", "notes": "comprehensive_nutrition_api.py"}
+      ]
+    }
+  ],
+  "bugs": [],
+  "improvements": [
+    {"description": "Add water intake tracking with smart bottle integration", "addedAt": "Dec 17, 2024"},
+    {"description": "Add multi-week meal rotation planning", "addedAt": "Dec 17, 2024"},
+    {"description": "Connect fitness app for calorie requirements", "addedAt": "Dec 17, 2024"}
+  ],
+  "progressLog": [
+    {
+      "date": "Dec 17, 2024",
+      "done": "Created MealPlanScreen with Tinder-style swipe UI. Added API integration functions. Fixed TypeScript errors.",
+      "blockers": null
+    }
+  ]
+}

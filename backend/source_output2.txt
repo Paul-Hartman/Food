@@ -1,0 +1,740 @@
+================================================================================
+RECIPE SOURCING: Building stub recipes from food catalog data
+================================================================================
+
+Found 111 cuisines needing recipes:
+  Southeast Asian: 1026 foods in catalog
+  Indonesian: 1004 foods in catalog
+  Spanish: 887 foods in catalog
+  Turkish: 692 foods in catalog
+  Eastern European: 609 foods in catalog
+  American (Southern): 546 foods in catalog
+  Scandinavian: 388 foods in catalog
+  Pan-African: 350 foods in catalog
+  Latin American: 349 foods in catalog
+  Belgian: 210 foods in catalog
+  Caribbean: 181 foods in catalog
+  Nigerian: 160 foods in catalog
+  Jewish: 152 foods in catalog
+  Dutch: 141 foods in catalog
+  Central Asian: 94 foods in catalog
+  Portuguese: 86 foods in catalog
+  Russian: 85 foods in catalog
+  Polish: 81 foods in catalog
+  Filipino: 65 foods in catalog
+  Swedish: 65 foods in catalog
+  ... and 91 more
+
+────────────────────────────────────────────────────────────
+Processing: Southeast Asian (1026 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 459
+  Inserted: 459 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Indonesian (1004 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 348
+  Inserted: 348 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Spanish (887 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 191
+  Inserted: 191 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Turkish (692 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 157
+  Inserted: 157 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Eastern European (609 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 170
+  Inserted: 170 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: American (Southern) (546 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 126
+  Inserted: 126 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Scandinavian (388 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 104
+  Inserted: 104 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Pan-African (350 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 83
+  Inserted: 83 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Latin American (349 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 94
+  Inserted: 94 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Belgian (210 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 37
+  Inserted: 37 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Caribbean (181 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 59
+  Inserted: 59 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Nigerian (160 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 48
+  Inserted: 48 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Jewish (152 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 50
+  Inserted: 50 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Dutch (141 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 13
+  Inserted: 13 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Central Asian (94 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 30
+  Inserted: 30 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Portuguese (86 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 12
+  Inserted: 12 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Russian (85 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 31
+  Inserted: 31 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Polish (81 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 19
+  Inserted: 19 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Filipino (65 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 11
+  Inserted: 11 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Swedish (65 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 19
+  Inserted: 19 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Finnish (63 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 15
+  Inserted: 15 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Kurdish (61 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 5
+  Inserted: 5 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Taiwanese (57 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 13
+  Inserted: 13 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Malaysian (52 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 13
+  Inserted: 13 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Algerian (51 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 5
+  Inserted: 5 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Polynesian (50 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 19
+  Inserted: 19 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Iranian (47 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 17
+  Inserted: 17 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Ukrainian (47 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 19
+  Inserted: 19 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Brazilian (46 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 12
+  Inserted: 12 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Peruvian (44 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 9
+  Inserted: 9 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Chilean (42 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 10
+  Inserted: 10 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Swiss (42 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 13
+  Inserted: 13 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Armenian (40 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 11
+  Inserted: 11 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Moroccan (39 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 6
+  Inserted: 6 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Ghanaian (37 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 4
+  Inserted: 4 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Austrian (36 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 16
+  Inserted: 16 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Australian (35 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 2
+  Inserted: 2 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Canadian (35 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 8
+  Inserted: 8 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Danish (34 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 7
+  Inserted: 7 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Hungarian (33 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 7
+  Inserted: 7 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Georgian (32 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 5
+  Inserted: 5 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Tunisian (31 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 5
+  Inserted: 5 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Czech (30 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 9
+  Inserted: 9 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Romanian (30 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 7
+  Inserted: 7 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Argentine (29 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 5
+  Inserted: 5 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Norwegian (29 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 10
+  Inserted: 10 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Irish (27 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 5
+  Inserted: 5 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Bangladeshi (23 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 4
+  Inserted: 4 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Azerbaijani (22 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 4
+  Inserted: 4 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Senegalese (22 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 3
+  Inserted: 3 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Belarusian (21 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 11
+  Inserted: 11 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Croatian (21 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 1
+  Inserted: 1 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Bolivian (20 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 2
+  Inserted: 2 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Egyptian (20 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 7
+  Inserted: 7 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Venezuelan (20 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 5
+  Inserted: 5 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Serbian (19 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 5
+  Inserted: 5 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Ugandan (19 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 7
+  Inserted: 7 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Bulgarian (18 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 8
+  Inserted: 8 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: South African (18 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 3
+  Inserted: 3 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Slovak (17 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 3
+  Inserted: 3 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Colombian (16 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 9
+  Inserted: 9 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Syrian (16 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 5
+  Inserted: 5 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Albanian (15 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 3
+  Inserted: 3 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Nepali (15 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 3
+  Inserted: 3 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Cuban (14 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 6
+  Inserted: 6 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Israeli (14 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 4
+  Inserted: 4 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Kazakh (14 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 4
+  Inserted: 4 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Cambodian (13 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 7
+  Inserted: 7 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Lithuanian (13 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 7
+  Inserted: 7 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Mongolian (13 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 1
+  Inserted: 1 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Burmese (12 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 3
+  Inserted: 3 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Pakistani (12 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 4
+  Inserted: 4 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Paraguayan (12 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 3
+  Inserted: 3 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Afghan (11 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 4
+  Inserted: 4 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Palestinian (11 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 3
+  Inserted: 3 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Slovenian (11 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 0
+
+────────────────────────────────────────────────────────────
+Processing: American (Tex-Mex) (11 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 4
+  Inserted: 4 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Cameroonian (10 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 4
+  Inserted: 4 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Uzbek (10 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 4
+  Inserted: 4 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Estonian (10 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 3
+  Inserted: 3 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Iraqi (10 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 2
+  Inserted: 2 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Libyan (10 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 2
+  Inserted: 2 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Moldovan (10 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 4
+  Inserted: 4 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Saudi Arabian (10 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 3
+  Inserted: 3 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Haitian (9 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 1
+  Inserted: 1 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Kosovar (9 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 3
+  Inserted: 3 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Kyrgyz (9 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 3
+  Inserted: 3 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Latvian (9 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 3
+  Inserted: 3 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Uruguayan (9 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 5
+  Inserted: 5 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Ethiopian (8 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 0
+
+────────────────────────────────────────────────────────────
+Processing: Kenyan (8 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 3
+  Inserted: 3 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Lebanese (8 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 3
+  Inserted: 3 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Tajik (8 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 3
+  Inserted: 3 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Bosnian (7 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 1
+  Inserted: 1 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Cypriot (7 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 2
+  Inserted: 2 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: North Macedonian (7 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 1
+  Inserted: 1 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Maltese (7 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 0
+
+────────────────────────────────────────────────────────────
+Processing: Singaporean (7 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 3
+  Inserted: 3 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Trinidadian (7 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 1
+  Inserted: 1 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Ecuadorian (6 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 1
+  Inserted: 1 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Jamaican (6 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 3
+  Inserted: 3 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Laotian (6 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 0
+
+────────────────────────────────────────────────────────────
+Processing: Luxembourgish (6 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 2
+  Inserted: 2 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: New Zealand (6 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 1
+  Inserted: 1 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Sri Lankan (6 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 0
+
+────────────────────────────────────────────────────────────
+Processing: Bhutanese (5 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 0
+
+────────────────────────────────────────────────────────────
+Processing: Jordanian (5 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 3
+  Inserted: 3 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Montenegrin (5 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 0
+
+────────────────────────────────────────────────────────────
+Processing: Yemeni (5 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 1
+  Inserted: 1 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Icelandic (4 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 1
+  Inserted: 1 stub recipes
+
+────────────────────────────────────────────────────────────
+Processing: Puerto Rican (3 foods in catalog)
+────────────────────────────────────────────────────────────
+  Foods with sufficient data: 0
+
+================================================================================
+WIKIPEDIA CUISINE ARTICLE PASS
+================================================================================
+  Cuisines with <5 recipes to supplement via Wikipedia: 54
+  Bangladeshi: +2 from Wikipedia pass
+  Croatian: +1 from Wikipedia pass
+  Uzbek: +1 from Wikipedia pass
+  Libyan: +1 from Wikipedia pass
+  Haitian: +1 from Wikipedia pass
+  Ethiopian: +1 from Wikipedia pass
+  Singaporean: +1 from Wikipedia pass
+  Wikipedia pass total: +8 recipes
+
+================================================================================
+SOURCING COMPLETE
+================================================================================
+  Total stub recipes inserted:   2525
+  Total skipped (insufficient):  0
+  Wikipedia supplements fetched:  49
+
+Results by cuisine (top 30):
+  Southeast Asian               : 459 recipes
+  Indonesian                    : 348 recipes
+  Spanish                       : 191 recipes
+  Eastern European              : 170 recipes
+  Turkish                       : 157 recipes
+  American (Southern)           : 126 recipes
+  Scandinavian                  : 104 recipes
+  Latin American                : 94 recipes
+  Pan-African                   : 83 recipes
+  Caribbean                     : 59 recipes
+  Jewish                        : 50 recipes
+  Nigerian                      : 48 recipes
+  Belgian                       : 37 recipes
+  Russian                       : 31 recipes
+  Central Asian                 : 30 recipes
+  Polish                        : 19 recipes
+  Swedish                       : 19 recipes
+  Polynesian                    : 19 recipes
+  Ukrainian                     : 19 recipes
+  Iranian                       : 17 recipes
+  Austrian                      : 16 recipes
+  Finnish                       : 15 recipes
+  Dutch                         : 13 recipes
+  Taiwanese                     : 13 recipes
+  Malaysian                     : 13 recipes
+  Swiss                         : 13 recipes
+  Portuguese                    : 12 recipes
+  Brazilian                     : 12 recipes
+  Filipino                      : 11 recipes
+  Armenian                      : 11 recipes
+
+  (7 cuisines had no foods with sufficient data)
+
+Done.

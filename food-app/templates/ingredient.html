@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Ingredient - Food App</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        .ingredient-hero {
+            background: linear-gradient(135deg, var(--secondary) 0%, var(--primary) 100%);
+            padding: 40px 20px;
+            text-align: center;
+            color: white;
+        }
+        .ingredient-hero-image {
+            width: 150px;
+            height: 150px;
+            margin: 0 auto 20px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        .ingredient-hero-image img {
+            width: 120px;
+            height: 120px;
+            object-fit: contain;
+        }
+        .attribute-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            margin-top: 16px;
+        }
+        .attribute-tag {
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: white;
+        }
+        .amount-adjuster {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            margin: 20px 0;
+        }
+        .amount-btn {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            border: none;
+            background: var(--primary);
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .amount-btn:hover {
+            transform: scale(1.1);
+        }
+        .amount-btn:active {
+            transform: scale(0.95);
+        }
+        .amount-input {
+            width: 100px;
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: 600;
+            border: 2px solid var(--border);
+            border-radius: var(--radius);
+            padding: 8px;
+        }
+        .amount-unit {
+            font-size: 1rem;
+            color: var(--text-light);
+        }
+        .nutrition-card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 20px;
+            margin: 16px;
+        }
+        .nutrition-card h3 {
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .nutrition-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        .nutrition-row:last-child {
+            border-bottom: none;
+        }
+        .nutrition-name {
+            font-weight: 500;
+        }
+        .nutrition-value {
+            color: var(--primary);
+            font-weight: 600;
+        }
+        .nutrition-bar {
+            height: 8px;
+            background: var(--bg-dark);
+            border-radius: 4px;
+            margin-top: 8px;
+            overflow: hidden;
+        }
+        .nutrition-bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+        .recipes-using {
+            margin: 16px;
+        }
+        .recipes-using h3 {
+            margin-bottom: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="ingredient-hero">
+        <a href="javascript:history.back()" class="back-btn" style="position:absolute;left:16px;top:16px;color:white;">
+            <img src="/static/images/arrow-left.svg" alt="Back" style="filter:brightness(0) invert(1);">
+            Back
+        </a>
+        <div class="ingredient-hero-image" id="hero-image">
+            <div class="loading-spinner"></div>
+        </div>
+        <h1 id="ingredient-name">Loading...</h1>
+        <div class="attribute-tags" id="attribute-tags"></div>
+    </div>
+
+    <div class="container">
+        <div class="nutrition-card">
+            <h3>
+                <img src="/static/images/calories.svg" alt="Nutrition" style="width:24px;">
+                Adjust Amount
+            </h3>
+            <div class="amount-adjuster">
+                <button class="amount-btn" onclick="adjustAmount(-10)">-</button>
+                <div>
+                    <input type="number" class="amount-input" id="amount-input" value="100" onchange="updateNutrition()">
+                    <div class="amount-unit">grams</div>
+                </div>
+                <button class="amount-btn" onclick="adjustAmount(10)">+</button>
+            </div>
+        </div>
+
+        <div class="nutrition-card">
+            <h3>
+                <img src="/static/images/chart.svg" alt="Nutrition" style="width:24px;">
+                Nutrition Facts
+            </h3>
+            <div id="nutrition-facts">
+                <div class="loading">Loading...</div>
+            </div>
+        </div>
+
+        <div class="recipes-using">
+            <h3>Recipes using this ingredient</h3>
+            <div class="recipe-grid" id="recipes-grid">
+                <div class="loading"><div class="loading-spinner"></div></div>
+            </div>
+        </div>
+    </div>
+
+    <nav class="bottom-nav">
+        <a href="/" class="nav-item">
+            <div class="nav-item-icon"><img src="/static/images/recipe.svg" alt="Recipes"></div>
+            Recipes
+        </a>
+        <a href="/shopping" class="nav-item">
+            <div class="nav-item-icon"><img src="/static/images/shopping.svg" alt="Shopping"></div>
+            Shopping
+        </a>
+        <a href="/pantry" class="nav-item">
+            <div class="nav-item-icon"><img src="/static/images/pantry.svg" alt="Pantry"></div>
+            Pantry
+        </a>
+        <a href="/nutrition" class="nav-item">
+            <div class="nav-item-icon"><img src="/static/images/chart.svg" alt="Nutrition"></div>
+            Nutrition
+        </a>
+    </nav>
+
+    <script>
+        const ingredientName = '{{ ingredient_name }}';
+        let baseNutrition = null;
+
+        async function loadIngredient() {
+            document.getElementById('ingredient-name').textContent = ingredientName;
+            document.getElementById('hero-image').innerHTML = `
+                <img src="https://www.themealdb.com/images/ingredients/${ingredientName}.png"
+                     alt="${ingredientName}"
+                     onerror="this.src='/static/images/ingredient.svg'">`;
+
+            try {
+                const response = await fetch(`/api/mealdb/ingredient/${encodeURIComponent(ingredientName)}`);
+                const data = await response.json();
+                baseNutrition = data.nutrition;
+
+                // Render attributes
+                const tagsContainer = document.getElementById('attribute-tags');
+                tagsContainer.innerHTML = data.attributes.map(attr =>
+                    `<span class="attribute-tag" style="background:${attr.color}">${attr.name}</span>`
+                ).join('');
+
+                updateNutrition();
+                loadRecipesUsing();
+            } catch (error) {
+                console.error('Failed to load ingredient:', error);
+            }
+        }
+
+        function adjustAmount(delta) {
+            const input = document.getElementById('amount-input');
+            let value = parseInt(input.value) + delta;
+            if (value < 1) value = 1;
+            if (value > 1000) value = 1000;
+            input.value = value;
+            updateNutrition();
+        }
+
+        function updateNutrition() {
+            if (!baseNutrition) return;
+
+            const amount = parseInt(document.getElementById('amount-input').value) || 100;
+            const multiplier = amount / 100;
+
+            const facts = document.getElementById('nutrition-facts');
+            const nutrients = [
+                { name: 'Calories', value: Math.round(baseNutrition.calories * multiplier), unit: 'kcal', max: 500, color: '#e74c3c' },
+                { name: 'Protein', value: Math.round(baseNutrition.protein * multiplier * 10) / 10, unit: 'g', max: 50, color: '#3498db' },
+                { name: 'Carbohydrates', value: Math.round(baseNutrition.carbs * multiplier * 10) / 10, unit: 'g', max: 100, color: '#f39c12' },
+                { name: 'Fat', value: Math.round(baseNutrition.fat * multiplier * 10) / 10, unit: 'g', max: 50, color: '#27ae60' },
+                { name: 'Fiber', value: Math.round(baseNutrition.fiber * multiplier * 10) / 10, unit: 'g', max: 25, color: '#9b59b6' }
+            ];
+
+            facts.innerHTML = nutrients.map(n => `
+                <div class="nutrition-row">
+                    <span class="nutrition-name">${n.name}</span>
+                    <span class="nutrition-value">${n.value} ${n.unit}</span>
+                </div>
+                <div class="nutrition-bar">
+                    <div class="nutrition-bar-fill" style="width:${Math.min(100, (n.value / n.max) * 100)}%;background:${n.color}"></div>
+                </div>
+            `).join('');
+        }
+
+        async function loadRecipesUsing() {
+            try {
+                const response = await fetch(`/api/mealdb/filter/ingredient/${encodeURIComponent(ingredientName)}`);
+                const recipes = await response.json();
+
+                const grid = document.getElementById('recipes-grid');
+                if (!recipes || recipes.length === 0) {
+                    grid.innerHTML = '<p style="color:var(--text-light)">No recipes found</p>';
+                    return;
+                }
+
+                grid.innerHTML = recipes.slice(0, 6).map((recipe, index) => `
+                    <a href="/recipe/mealdb/${recipe.id}" class="recipe-card interactive-card bounce-in" style="animation-delay:${index * 0.05}s"
+                       onmousemove="handleTilt(event, this)"
+                       onmouseleave="resetTilt(this)">
+                        <div class="card-inner">
+                            <div class="recipe-card-image">
+                                <img src="${recipe.image_url}" alt="${recipe.name}" loading="lazy">
+                            </div>
+                            <div class="card-glare"></div>
+                            <div class="recipe-card-body">
+                                <div class="recipe-card-title">${recipe.name}</div>
+                            </div>
+                        </div>
+                    </a>
+                `).join('');
+            } catch (error) {
+                document.getElementById('recipes-grid').innerHTML = '<p>Failed to load recipes</p>';
+            }
+        }
+
+        // 3D Tilt effect
+        function handleTilt(e, card) {
+            const rect = card.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            const centerX = rect.width / 2;
+            const centerY = rect.height / 2;
+            const rotateX = (y - centerY) / 10;
+            const rotateY = (centerX - x) / 10;
+
+            const inner = card.querySelector('.card-inner');
+            if (inner) {
+                inner.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.03, 1.03, 1.03)`;
+            }
+
+            const glare = card.querySelector('.card-glare');
+            if (glare) {
+                const glareX = (x / rect.width) * 100;
+                const glareY = (y / rect.height) * 100;
+                glare.style.background = `radial-gradient(circle at ${glareX}% ${glareY}%, rgba(255,255,255,0.4) 0%, transparent 60%)`;
+                glare.style.opacity = '1';
+            }
+        }
+
+        function resetTilt(card) {
+            const inner = card.querySelector('.card-inner');
+            if (inner) inner.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) scale3d(1, 1, 1)';
+            const glare = card.querySelector('.card-glare');
+            if (glare) glare.style.opacity = '0';
+        }
+
+        loadIngredient();
+    </script>
+</body>
+</html>

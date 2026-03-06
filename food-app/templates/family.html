@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Family Members - Food App</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        .family-container {
+            padding: 20px;
+            max-width: 600px;
+            margin: 0 auto;
+            padding-bottom: 100px;
+        }
+        .family-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+        .family-header h1 {
+            font-size: 1.5rem;
+        }
+        .add-member-btn {
+            padding: 10px 16px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .member-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .member-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            flex-shrink: 0;
+        }
+        .member-info {
+            flex: 1;
+        }
+        .member-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .member-name .primary-badge {
+            font-size: 0.7rem;
+            background: var(--primary);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+        .member-details {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+        .member-restrictions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 8px;
+        }
+        .restriction-tag {
+            font-size: 0.75rem;
+            background: rgba(233, 69, 96, 0.2);
+            color: #e94560;
+            padding: 4px 10px;
+            border-radius: 12px;
+        }
+        .member-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .action-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+        }
+        .action-btn.edit {
+            background: var(--bg);
+            border: 1px solid var(--border);
+        }
+        .action-btn.delete {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+        }
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: 16px;
+        }
+
+        /* Modal styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+        .modal {
+            background: var(--card-bg);
+            border-radius: 16px;
+            width: 100%;
+            max-width: 400px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modal-header h2 {
+            font-size: 1.2rem;
+        }
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-secondary);
+        }
+        .modal-body {
+            padding: 20px;
+        }
+        .form-group {
+            margin-bottom: 16px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            margin-bottom: 6px;
+            color: var(--text-secondary);
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            background: var(--bg);
+            color: inherit;
+        }
+        .color-picker {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .color-option {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 3px solid transparent;
+            transition: border-color 0.2s;
+        }
+        .color-option.selected {
+            border-color: white;
+        }
+        .emoji-picker {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .emoji-option {
+            width: 44px;
+            height: 44px;
+            border-radius: 8px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            background: var(--bg);
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: border-color 0.2s;
+        }
+        .emoji-option.selected {
+            border-color: var(--primary);
+        }
+        .dietary-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .dietary-option {
+            padding: 8px 14px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+        .dietary-option.selected {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+        .modal-footer {
+            padding: 20px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 12px;
+        }
+        .modal-footer button {
+            flex: 1;
+            padding: 14px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        .btn-cancel {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            color: inherit;
+        }
+        .btn-save {
+            background: var(--primary);
+            border: none;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="family-container">
+        <div class="family-header">
+            <h1>Family Members</h1>
+            <button class="add-member-btn" onclick="openModal()">
+                <span>+</span> Add Member
+            </button>
+        </div>
+
+        <div id="members-list">
+            <div class="loading">
+                <div class="loading-spinner"></div>
+                Loading family members...
+            </div>
+        </div>
+
+        <div class="empty-state" id="empty-state" style="display: none;">
+            <div class="empty-state-icon">&#x1F46A;</div>
+            <h2>No Family Members Yet</h2>
+            <p>Add your family members to track meals and preferences for everyone!</p>
+        </div>
+    </div>
+
+    <!-- Add/Edit Modal -->
+    <div class="modal-overlay" id="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 id="modal-title">Add Family Member</h2>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="member-id">
+
+                <div class="form-group">
+                    <label>Name</label>
+                    <input type="text" id="member-name" placeholder="Enter name">
+                </div>
+
+                <div class="form-group">
+                    <label>Avatar</label>
+                    <div class="emoji-picker">
+                        <div class="emoji-option selected" data-emoji="&#x1F468;">&#x1F468;</div>
+                        <div class="emoji-option" data-emoji="&#x1F469;">&#x1F469;</div>
+                        <div class="emoji-option" data-emoji="&#x1F466;">&#x1F466;</div>
+                        <div class="emoji-option" data-emoji="&#x1F467;">&#x1F467;</div>
+                        <div class="emoji-option" data-emoji="&#x1F474;">&#x1F474;</div>
+                        <div class="emoji-option" data-emoji="&#x1F475;">&#x1F475;</div>
+                        <div class="emoji-option" data-emoji="&#x1F9D1;">&#x1F9D1;</div>
+                        <div class="emoji-option" data-emoji="&#x1F436;">&#x1F436;</div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Color</label>
+                    <div class="color-picker">
+                        <div class="color-option selected" data-color="#6366f1" style="background: #6366f1;"></div>
+                        <div class="color-option" data-color="#e94560" style="background: #e94560;"></div>
+                        <div class="color-option" data-color="#10b981" style="background: #10b981;"></div>
+                        <div class="color-option" data-color="#f59e0b" style="background: #f59e0b;"></div>
+                        <div class="color-option" data-color="#8b5cf6" style="background: #8b5cf6;"></div>
+                        <div class="color-option" data-color="#06b6d4" style="background: #06b6d4;"></div>
+                        <div class="color-option" data-color="#ec4899" style="background: #ec4899;"></div>
+                        <div class="color-option" data-color="#84cc16" style="background: #84cc16;"></div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Dietary Restrictions</label>
+                    <div class="dietary-options">
+                        <div class="dietary-option" data-restriction="vegetarian">Vegetarian</div>
+                        <div class="dietary-option" data-restriction="vegan">Vegan</div>
+                        <div class="dietary-option" data-restriction="gluten-free">Gluten-Free</div>
+                        <div class="dietary-option" data-restriction="dairy-free">Dairy-Free</div>
+                        <div class="dietary-option" data-restriction="nut-allergy">Nut Allergy</div>
+                        <div class="dietary-option" data-restriction="keto">Keto</div>
+                        <div class="dietary-option" data-restriction="halal">Halal</div>
+                        <div class="dietary-option" data-restriction="kosher">Kosher</div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Daily Calorie Target (optional)</label>
+                    <input type="number" id="calorie-target" placeholder="e.g. 2000">
+                </div>
+
+                <div class="form-group">
+                    <label style="display: flex; align-items: center; gap: 8px;">
+                        <input type="checkbox" id="is-primary" style="width: auto;">
+                        Set as primary member
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+                <button class="btn-save" onclick="saveMember()">Save Member</button>
+            </div>
+        </div>
+    </div>
+
+    <nav class="bottom-nav">
+        <a href="/" class="nav-item">
+            <div class="nav-item-icon"><img src="/static/images/recipe.svg" alt="Recipes"></div>
+            Recipes
+        </a>
+        <a href="/calendar" class="nav-item">
+            <span class="icon">&#x1F4C5;</span>
+            Calendar
+        </a>
+        <a href="/family" class="nav-item active">
+            <span class="icon">&#x1F46A;</span>
+            Family
+        </a>
+        <a href="/shopping" class="nav-item">
+            <div class="nav-item-icon"><img src="/static/images/shopping.svg" alt="Shopping"></div>
+            Shopping
+        </a>
+    </nav>
+
+    <script>
+        let selectedEmoji = '&#x1F468;';
+        let selectedColor = '#6366f1';
+        let selectedRestrictions = [];
+        let editingId = null;
+
+        // Initialize event listeners
+        document.querySelectorAll('.emoji-option').forEach(el => {
+            el.addEventListener('click', () => {
+                document.querySelectorAll('.emoji-option').forEach(e => e.classList.remove('selected'));
+                el.classList.add('selected');
+                selectedEmoji = el.dataset.emoji;
+            });
+        });
+
+        document.querySelectorAll('.color-option').forEach(el => {
+            el.addEventListener('click', () => {
+                document.querySelectorAll('.color-option').forEach(e => e.classList.remove('selected'));
+                el.classList.add('selected');
+                selectedColor = el.dataset.color;
+            });
+        });
+
+        document.querySelectorAll('.dietary-option').forEach(el => {
+            el.addEventListener('click', () => {
+                el.classList.toggle('selected');
+                const restriction = el.dataset.restriction;
+                if (selectedRestrictions.includes(restriction)) {
+                    selectedRestrictions = selectedRestrictions.filter(r => r !== restriction);
+                } else {
+                    selectedRestrictions.push(restriction);
+                }
+            });
+        });
+
+        async function loadMembers() {
+            try {
+                const response = await fetch('/api/family/members');
+                const members = await response.json();
+
+                const container = document.getElementById('members-list');
+
+                if (members.length === 0) {
+                    container.style.display = 'none';
+                    document.getElementById('empty-state').style.display = 'block';
+                    return;
+                }
+
+                document.getElementById('empty-state').style.display = 'none';
+                container.style.display = 'block';
+
+                container.innerHTML = members.map(member => {
+                    const restrictions = member.dietary_restrictions ? JSON.parse(member.dietary_restrictions) : [];
+                    return `
+                        <div class="member-card">
+                            <div class="member-avatar" style="background: ${member.color}22; color: ${member.color};">
+                                ${member.avatar_emoji || '&#x1F464;'}
+                            </div>
+                            <div class="member-info">
+                                <div class="member-name">
+                                    ${escapeHtml(member.name)}
+                                    ${member.is_primary ? '<span class="primary-badge">Primary</span>' : ''}
+                                </div>
+                                <div class="member-details">
+                                    ${member.calorie_target ? `${member.calorie_target} cal/day` : 'No calorie target'}
+                                </div>
+                                ${restrictions.length > 0 ? `
+                                    <div class="member-restrictions">
+                                        ${restrictions.map(r => `<span class="restriction-tag">${r}</span>`).join('')}
+                                    </div>
+                                ` : ''}
+                            </div>
+                            <div class="member-actions">
+                                <button class="action-btn edit" onclick="editMember(${member.id})">&#x270F;</button>
+                                <button class="action-btn delete" onclick="deleteMember(${member.id})">&#x1F5D1;</button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (error) {
+                console.error('Failed to load members:', error);
+                document.getElementById('members-list').innerHTML = `
+                    <div class="empty-state">
+                        <p>Failed to load family members</p>
+                    </div>
+                `;
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function openModal(member = null) {
+            editingId = member ? member.id : null;
+            document.getElementById('modal-title').textContent = member ? 'Edit Family Member' : 'Add Family Member';
+            document.getElementById('member-id').value = member ? member.id : '';
+            document.getElementById('member-name').value = member ? member.name : '';
+            document.getElementById('calorie-target').value = member ? (member.calorie_target || '') : '';
+            document.getElementById('is-primary').checked = member ? member.is_primary : false;
+
+            // Reset selections
+            selectedEmoji = member ? member.avatar_emoji : '&#x1F468;';
+            selectedColor = member ? member.color : '#6366f1';
+            selectedRestrictions = member && member.dietary_restrictions ? JSON.parse(member.dietary_restrictions) : [];
+
+            // Update UI
+            document.querySelectorAll('.emoji-option').forEach(el => {
+                el.classList.toggle('selected', el.dataset.emoji === selectedEmoji);
+            });
+            document.querySelectorAll('.color-option').forEach(el => {
+                el.classList.toggle('selected', el.dataset.color === selectedColor);
+            });
+            document.querySelectorAll('.dietary-option').forEach(el => {
+                el.classList.toggle('selected', selectedRestrictions.includes(el.dataset.restriction));
+            });
+
+            document.getElementById('modal-overlay').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('modal-overlay').classList.remove('active');
+            editingId = null;
+        }
+
+        async function saveMember() {
+            const name = document.getElementById('member-name').value.trim();
+            if (!name) {
+                alert('Please enter a name');
+                return;
+            }
+
+            const data = {
+                name: name,
+                avatar_emoji: selectedEmoji,
+                color: selectedColor,
+                dietary_restrictions: JSON.stringify(selectedRestrictions),
+                calorie_target: document.getElementById('calorie-target').value || null,
+                is_primary: document.getElementById('is-primary').checked ? 1 : 0
+            };
+
+            try {
+                const url = editingId ? `/api/family/members/${editingId}` : '/api/family/members';
+                const method = editingId ? 'PUT' : 'POST';
+
+                const response = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    closeModal();
+                    loadMembers();
+                } else {
+                    const error = await response.json();
+                    alert(error.error || 'Failed to save member');
+                }
+            } catch (error) {
+                console.error('Failed to save member:', error);
+                alert('Failed to save member');
+            }
+        }
+
+        async function editMember(id) {
+            try {
+                const response = await fetch('/api/family/members');
+                const members = await response.json();
+                const member = members.find(m => m.id === id);
+                if (member) {
+                    openModal(member);
+                }
+            } catch (error) {
+                console.error('Failed to load member:', error);
+            }
+        }
+
+        async function deleteMember(id) {
+            if (!confirm('Are you sure you want to remove this family member?')) return;
+
+            try {
+                const response = await fetch(`/api/family/members/${id}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    loadMembers();
+                } else {
+                    alert('Failed to delete member');
+                }
+            } catch (error) {
+                console.error('Failed to delete member:', error);
+                alert('Failed to delete member');
+            }
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('modal-overlay').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('modal-overlay')) {
+                closeModal();
+            }
+        });
+
+        loadMembers();
+    </script>
+</body>
+</html>

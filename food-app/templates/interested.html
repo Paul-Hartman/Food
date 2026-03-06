@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Food App - Interested Recipes</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="interested-page">
+        <div class="interested-header">
+            <a href="/discover" class="back-btn">&larr; Back</a>
+            <h1>Interested Recipes</h1>
+            <div></div>
+        </div>
+
+        <div id="recipes-container">
+            <div class="loading">
+                <div class="loading-spinner"></div>
+                Loading recipes...
+            </div>
+        </div>
+
+        <div class="empty-state" id="empty-state" style="display:none;">
+            <div class="icon">&#128203;</div>
+            <h2>No Saved Recipes</h2>
+            <p>Swipe right on recipes you like to save them here!</p>
+            <a href="/discover" class="btn btn-primary">Discover Recipes</a>
+        </div>
+    </div>
+
+    <nav class="bottom-nav">
+        <a href="/" class="nav-item">
+            <div class="nav-item-icon"><img src="/static/images/recipe.svg" alt="Recipes"></div>
+            Recipes
+        </a>
+        <a href="/discover" class="nav-item active">
+            <span class="icon">&#128293;</span>
+            Discover
+        </a>
+        <a href="/shopping" class="nav-item">
+            <div class="nav-item-icon"><img src="/static/images/shopping.svg" alt="Shopping"></div>
+            Shopping
+        </a>
+        <a href="/nutrition" class="nav-item">
+            <div class="nav-item-icon"><img src="/static/images/chart.svg" alt="Nutrition"></div>
+            Nutrition
+        </a>
+    </nav>
+
+    <script>
+        async function loadRecipes() {
+            try {
+                const response = await fetch('/api/interested');
+                const recipes = await response.json();
+
+                if (recipes.length === 0) {
+                    document.getElementById('recipes-container').style.display = 'none';
+                    document.getElementById('empty-state').style.display = 'block';
+                    return;
+                }
+
+                renderRecipes(recipes);
+            } catch (error) {
+                console.error('Failed to load recipes:', error);
+                document.getElementById('recipes-container').innerHTML =
+                    '<div class="empty-state"><p>Failed to load recipes</p></div>';
+            }
+        }
+
+        function renderRecipes(recipes) {
+            const container = document.getElementById('recipes-container');
+            container.innerHTML = recipes.map(recipe => `
+                <div class="interested-card" data-id="${recipe.id}">
+                    <div class="interested-card-image">
+                        <img src="${recipe.image_url}" alt="${escapeHtml(recipe.name)}"
+                             onerror="this.style.display='none'">
+                    </div>
+                    <div class="interested-card-content">
+                        <div class="interested-card-title">${escapeHtml(recipe.name)}</div>
+                        <div class="interested-card-meta">
+                            ${recipe.cuisine ? `<span>&#127758; ${recipe.cuisine}</span>` : ''}
+                            ${recipe.category ? `<span>&#127860; ${recipe.category}</span>` : ''}
+                        </div>
+                    </div>
+                    <div class="interested-card-actions">
+                        <button class="action-btn cook" onclick="cookTonight(${recipe.id}, '${escapeHtml(recipe.name)}', '${recipe.image_url}')" title="Cook Tonight">
+                            &#9757;
+                        </button>
+                        <button class="action-btn remove" onclick="removeRecipe(${recipe.id})" title="Remove">
+                            &#10005;
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        async function cookTonight(id, name, imageUrl) {
+            const mealType = await showMealSelector();
+            if (!mealType) return;
+
+            try {
+                await fetch('/api/swipe/up', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        recipe_id: id,
+                        name: name,
+                        image_url: imageUrl,
+                        meal_type: mealType
+                    })
+                });
+                showToast(`Added to ${mealType} deck!`, 'success');
+            } catch (error) {
+                console.error('Failed to add to cooking deck:', error);
+                showToast('Failed to add recipe', 'error');
+            }
+        }
+
+        function showMealSelector() {
+            return new Promise((resolve) => {
+                const overlay = document.createElement('div');
+                overlay.className = 'meal-selector-overlay';
+                overlay.innerHTML = `
+                    <div class="meal-selector-modal">
+                        <h3>Which meal?</h3>
+                        <div class="meal-selector-options">
+                            <button data-meal="breakfast">&#9728; Breakfast</button>
+                            <button data-meal="lunch">&#127774; Lunch</button>
+                            <button data-meal="dinner">&#127769; Dinner</button>
+                            <button data-meal="snack">&#127871; Snack</button>
+                        </div>
+                        <button class="meal-selector-cancel">Cancel</button>
+                    </div>
+                `;
+
+                overlay.querySelectorAll('[data-meal]').forEach(btn => {
+                    btn.onclick = () => {
+                        overlay.remove();
+                        resolve(btn.dataset.meal);
+                    };
+                });
+
+                overlay.querySelector('.meal-selector-cancel').onclick = () => {
+                    overlay.remove();
+                    resolve(null);
+                };
+
+                overlay.onclick = (e) => {
+                    if (e.target === overlay) {
+                        overlay.remove();
+                        resolve(null);
+                    }
+                };
+
+                document.body.appendChild(overlay);
+            });
+        }
+
+        async function removeRecipe(id) {
+            if (!confirm('Remove this recipe from your list?')) return;
+
+            try {
+                await fetch(`/api/interested/${id}`, {
+                    method: 'DELETE'
+                });
+
+                const card = document.querySelector(`[data-id="${id}"]`);
+                if (card) {
+                    card.style.animation = 'slideOut 0.3s ease forwards';
+                    setTimeout(() => {
+                        card.remove();
+                        checkEmpty();
+                    }, 300);
+                }
+            } catch (error) {
+                console.error('Failed to remove recipe:', error);
+                showToast('Failed to remove recipe', 'error');
+            }
+        }
+
+        function checkEmpty() {
+            const cards = document.querySelectorAll('.interested-card');
+            if (cards.length === 0) {
+                document.getElementById('recipes-container').style.display = 'none';
+                document.getElementById('empty-state').style.display = 'block';
+            }
+        }
+
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.style.cssText = `
+                position: fixed;
+                bottom: 100px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: ${type === 'success' ? 'var(--success)' : type === 'error' ? 'var(--danger)' : 'var(--secondary)'};
+                color: white;
+                padding: 12px 24px;
+                border-radius: 24px;
+                font-weight: 500;
+                z-index: 1000;
+                animation: fadeInUp 0.3s ease;
+            `;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.animation = 'fadeOut 0.3s ease forwards';
+                setTimeout(() => toast.remove(), 300);
+            }, 2000);
+        }
+
+        // Add CSS animations
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fadeInUp {
+                from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+                to { opacity: 1; transform: translateX(-50%) translateY(0); }
+            }
+            @keyframes fadeOut {
+                to { opacity: 0; }
+            }
+            @keyframes slideOut {
+                to { opacity: 0; transform: translateX(-100%); }
+            }
+            .meal-selector-overlay {
+                position: fixed;
+                inset: 0;
+                background: rgba(0,0,0,0.5);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 1000;
+            }
+            .meal-selector-modal {
+                background: white;
+                border-radius: 16px;
+                padding: 24px;
+                text-align: center;
+                min-width: 280px;
+            }
+            .meal-selector-modal h3 {
+                margin: 0 0 16px;
+            }
+            .meal-selector-options {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 12px;
+                margin-bottom: 16px;
+            }
+            .meal-selector-options button {
+                padding: 16px;
+                border: 2px solid var(--border);
+                border-radius: 12px;
+                background: white;
+                font-size: 1rem;
+                cursor: pointer;
+                transition: all 0.2s ease;
+            }
+            .meal-selector-options button:hover {
+                border-color: var(--primary);
+                background: var(--primary-light);
+            }
+            .meal-selector-cancel {
+                padding: 12px 24px;
+                border: none;
+                background: var(--gray-100);
+                border-radius: 8px;
+                cursor: pointer;
+            }
+        `;
+        document.head.appendChild(style);
+
+        loadRecipes();
+    </script>
+</body>
+</html>

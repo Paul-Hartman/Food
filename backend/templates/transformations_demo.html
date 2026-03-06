@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Molecular Gastronomy Demo - Transformations</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/universal-cards.css">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        }
+
+        .header h1 {
+            margin: 0 0 10px 0;
+            font-size: 2.5rem;
+        }
+
+        .header .subtitle {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+
+        /* Ingredient Section */
+        .ingredient-section {
+            margin-bottom: 40px;
+        }
+
+        .ingredient-header {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .ingredient-name {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: #333;
+            margin: 0 0 10px 0;
+        }
+
+        .transformation-counts {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .count-badge {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .count-cooking {
+            background: #fff3e0;
+            color: #e65100;
+        }
+
+        .count-prep {
+            background: #e8eaf6;
+            color: #283593;
+        }
+
+        .count-fermentation {
+            background: #f3e5f5;
+            color: #6a1b9a;
+        }
+
+        /* Category Headers */
+        .category-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 25px 0 15px 0;
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .category-icon {
+            font-size: 1.5rem;
+        }
+
+        /* Transformation Cards */
+        .transformation-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .transformation-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+            border-left: 4px solid;
+        }
+
+        .transformation-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+        }
+
+        .card-dry-heat { border-left-color: #ff6b6b; }
+        .card-moist-heat { border-left-color: #4ecdc4; }
+        .card-prep { border-left-color: #95a5a6; }
+        .card-fermentation { border-left-color: #9b59b6; }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 15px;
+        }
+
+        .method-name {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #333;
+            margin: 0;
+        }
+
+        .method-type {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
+        .type-dry-heat {
+            background: #ffe5e5;
+            color: #c92a2a;
+        }
+
+        .type-moist-heat {
+            background: #e0f7f6;
+            color: #087f5b;
+        }
+
+        .type-prep {
+            background: #e9ecef;
+            color: #495057;
+        }
+
+        /* Card Content */
+        .card-section {
+            margin-bottom: 15px;
+        }
+
+        .section-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+
+        .section-content {
+            color: #444;
+            line-height: 1.6;
+        }
+
+        /* Temperature Range */
+        .temp-range {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            font-weight: 500;
+        }
+
+        .temp-icon {
+            font-size: 1.2rem;
+        }
+
+        /* Intensity Bar */
+        .intensity-bar {
+            margin-top: 8px;
+        }
+
+        .intensity-label {
+            font-size: 0.85rem;
+            color: #666;
+            margin-bottom: 4px;
+        }
+
+        .intensity-track {
+            background: #e9ecef;
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .intensity-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #51cf66 0%, #ffd43b 50%, #ff6b6b 100%);
+            border-radius: 4px;
+            transition: width 0.3s;
+        }
+
+        /* Chemistry Tabs */
+        .chemistry-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .chemistry-tab {
+            padding: 6px 12px;
+            border: 2px solid #dee2e6;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+
+        .chemistry-tab.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .chemistry-content {
+            display: none;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        .chemistry-content.active {
+            display: block;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+
+        .empty-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧪 Molecular Gastronomy Demo</h1>
+            <p class="subtitle">Scientifically accurate ingredient transformations</p>
+        </div>
+
+        {% for ingredient_data in ingredients %}
+        <div class="ingredient-section">
+            <div class="ingredient-header">
+                <h2 class="ingredient-name">{{ ingredient_data.ingredient.name }}</h2>
+                <div class="transformation-counts">
+                    {% if ingredient_data.counts.cooking > 0 %}
+                    <span class="count-badge count-cooking">
+                        🔥 {{ ingredient_data.counts.cooking }} Cooking Methods
+                    </span>
+                    {% endif %}
+                    {% if ingredient_data.counts.prep > 0 %}
+                    <span class="count-badge count-prep">
+                        🔪 {{ ingredient_data.counts.prep }} Prep Methods
+                    </span>
+                    {% endif %}
+                    {% if ingredient_data.counts.fermentation > 0 %}
+                    <span class="count-badge count-fermentation">
+                        🦠 {{ ingredient_data.counts.fermentation }} Fermentation Methods
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if ingredient_data.cooking_transformations %}
+            <div class="category-header">
+                <span class="category-icon">🔥</span>
+                Cooking Transformations
+            </div>
+            <div class="transformation-grid">
+                {% for transformation in ingredient_data.cooking_transformations %}
+                <div class="transformation-card card-{{ 'dry-heat' if transformation.heat_type == 'Dry' else 'moist-heat' }}">
+                    <div class="card-header">
+                        <h3 class="method-name">{{ transformation.method_name }}</h3>
+                        <span class="method-type type-{{ 'dry-heat' if transformation.heat_type == 'Dry' else 'moist-heat' }}">
+                            {{ transformation.heat_type }} Heat
+                        </span>
+                    </div>
+
+                    {% if transformation.temp_range_f %}
+                    <div class="card-section">
+                        <div class="temp-range">
+                            <span class="temp-icon">🌡️</span>
+                            <span>{{ transformation.temp_range_f }}</span>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="card-section">
+                        <div class="section-label">Texture Changes</div>
+                        <div class="section-content">{{ transformation.texture_changes }}</div>
+                    </div>
+
+                    <div class="card-section">
+                        <div class="section-label">Flavor Impact</div>
+                        <div class="section-content">{{ transformation.flavor_changes }}</div>
+                        {% if transformation.flavor_intensity_multiplier %}
+                        <div class="intensity-bar">
+                            <div class="intensity-label">
+                                Flavor Intensity: {{ transformation.flavor_intensity_multiplier }}x
+                            </div>
+                            <div class="intensity-track">
+                                <div class="intensity-fill" style="width: {{ (transformation.flavor_intensity_multiplier / 5.0 * 100) | round }}%"></div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    {% if transformation.chemistry_beginner or transformation.chemistry_detail or transformation.chemistry_expert %}
+                    <div class="card-section">
+                        <div class="chemistry-tabs">
+                            <button class="chemistry-tab active" onclick="showChemistry(this, 'beginner')">Beginner</button>
+                            <button class="chemistry-tab" onclick="showChemistry(this, 'detail')">Chemistry</button>
+                            <button class="chemistry-tab" onclick="showChemistry(this, 'expert')">Expert</button>
+                        </div>
+                        {% if transformation.chemistry_beginner %}
+                        <div class="chemistry-content active" data-level="beginner">
+                            {{ transformation.chemistry_beginner }}
+                        </div>
+                        {% endif %}
+                        {% if transformation.chemistry_detail %}
+                        <div class="chemistry-content" data-level="detail">
+                            {{ transformation.chemistry_detail }}
+                        </div>
+                        {% endif %}
+                        {% if transformation.chemistry_expert %}
+                        <div class="chemistry-content" data-level="expert">
+                            {{ transformation.chemistry_expert }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            {% if ingredient_data.prep_methods %}
+            <div class="category-header">
+                <span class="category-icon">🔪</span>
+                Prep Method Variations
+            </div>
+            <div class="transformation-grid">
+                {% for prep in ingredient_data.prep_methods %}
+                <div class="transformation-card card-prep">
+                    <div class="card-header">
+                        <h3 class="method-name">{{ prep.prep_variation }}</h3>
+                        <span class="method-type type-prep">Prep Method</span>
+                    </div>
+
+                    {% if prep.surface_area_multiplier %}
+                    <div class="card-section">
+                        <div class="section-label">Surface Area Impact</div>
+                        <div class="section-content">{{ prep.surface_area_multiplier }}x surface area</div>
+                        <div class="intensity-bar">
+                            <div class="intensity-track">
+                                <div class="intensity-fill" style="width: {{ (prep.surface_area_multiplier / 50.0 * 100) | round }}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="card-section">
+                        <div class="section-label">Flavor Impact</div>
+                        <div class="section-content">{{ prep.flavor_impact }}</div>
+                        {% if prep.flavor_intensity_multiplier %}
+                        <div class="intensity-bar">
+                            <div class="intensity-label">
+                                Flavor Intensity: {{ prep.flavor_intensity_multiplier }}x
+                            </div>
+                            <div class="intensity-track">
+                                <div class="intensity-fill" style="width: {{ (prep.flavor_intensity_multiplier / 5.0 * 100) | round }}%"></div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="card-section">
+                        <div class="section-label">Texture Impact</div>
+                        <div class="section-content">{{ prep.texture_impact }}</div>
+                    </div>
+
+                    {% if prep.chemistry_explanation %}
+                    <div class="card-section">
+                        <div class="section-label">Chemistry</div>
+                        <div class="section-content">{{ prep.chemistry_explanation }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            {% if ingredient_data.fermentation_transformations %}
+            <div class="category-header">
+                <span class="category-icon">🦠</span>
+                Fermentation Transformations
+            </div>
+            <div class="transformation-grid">
+                {% for fermentation in ingredient_data.fermentation_transformations %}
+                <div class="transformation-card card-fermentation">
+                    <div class="card-header">
+                        <h3 class="method-name">{{ fermentation.method_name }}</h3>
+                        <span class="method-type" style="background: #f3e5f5; color: #6a1b9a;">Fermentation</span>
+                    </div>
+
+                    <div class="card-section">
+                        <div class="section-label">Description</div>
+                        <div class="section-content">{{ fermentation.description }}</div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+
+        {% if not ingredients or ingredients|length == 0 %}
+        <div class="empty-state">
+            <div class="empty-icon">🍳</div>
+            <h2>No Transformations Yet</h2>
+            <p>Add ingredient transformation data to see cards here</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <script>
+        function showChemistry(button, level) {
+            const card = button.closest('.transformation-card');
+
+            // Update tabs
+            card.querySelectorAll('.chemistry-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            button.classList.add('active');
+
+            // Update content
+            card.querySelectorAll('.chemistry-content').forEach(content => {
+                content.classList.remove('active');
+                if (content.dataset.level === level) {
+                    content.classList.add('active');
+                }
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Molecular Gastronomy - Ingredient Transformations</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/universal-cards.css">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        }
+
+        .header h1 {
+            margin: 0 0 10px 0;
+            font-size: 2.5rem;
+        }
+
+        .header .subtitle {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+
+        .ingredient-info {
+            background: rgba(255,255,255,0.2);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .ingredient-info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .info-item {
+            font-size: 0.9rem;
+        }
+
+        .info-label {
+            opacity: 0.8;
+            font-size: 0.85rem;
+        }
+
+        /* Search */
+        .search-section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px;
+            font-size: 1rem;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            transition: border-color 0.3s;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        /* Filter Bar */
+        .filter-bar {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .filter-label {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .filter-btn {
+            padding: 8px 16px;
+            border: 2px solid #ddd;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .filter-btn:hover {
+            border-color: #667eea;
+            color: #667eea;
+        }
+
+        .filter-btn.active {
+            background: #667eea;
+            border-color: #667eea;
+            color: white;
+        }
+
+        .filter-btn.dry-heat.active {
+            background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+            border-color: #ff6b35;
+        }
+
+        .filter-btn.moist-heat.active {
+            background: linear-gradient(135deg, #4ecdc4 0%, #44a3a3 100%);
+            border-color: #4ecdc4;
+        }
+
+        .filter-btn.prep.active {
+            background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
+            border-color: #95a5a6;
+        }
+
+        .filter-btn.fermentation.active {
+            background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);
+            border-color: #9b59b6;
+        }
+
+        /* Section Headers */
+        .section-header {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #2c3e50;
+            margin: 30px 0 15px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-count {
+            font-size: 1rem;
+            font-weight: 400;
+            color: #7f8c8d;
+        }
+
+        /* Cooking Cards */
+        .cooking-card {
+            border-left: 4px solid #ddd;
+        }
+
+        .cooking-card.dry-heat {
+            border-left-color: #ff6b35;
+        }
+
+        .cooking-card.moist-heat {
+            border-left-color: #4ecdc4;
+        }
+
+        .cooking-card.combination {
+            border-left-color: #f39c12;
+        }
+
+        .category-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .badge-dry-heat {
+            background: #ffe5dc;
+            color: #d63e0f;
+        }
+
+        .badge-moist-heat {
+            background: #d4f4f2;
+            color: #2c9b95;
+        }
+
+        .badge-combination {
+            background: #fef3e0;
+            color: #d68000;
+        }
+
+        /* Flavor/Texture Changes */
+        .change-section {
+            margin: 15px 0;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 6px;
+        }
+
+        .change-title {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+
+        .change-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 5px 0;
+            font-size: 0.85rem;
+        }
+
+        .change-arrow {
+            color: #27ae60;
+            font-weight: 700;
+        }
+
+        /* Intensity Bar */
+        .intensity-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 10px 0;
+        }
+
+        .intensity-visual {
+            flex: 1;
+            height: 24px;
+            background: #ecf0f1;
+            border-radius: 4px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .intensity-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #27ae60 0%, #2ecc71 100%);
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+
+        .intensity-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #2c3e50;
+            min-width: 60px;
+        }
+
+        /* Chemistry Tabs */
+        .chemistry-tabs {
+            display: flex;
+            gap: 5px;
+            margin: 15px 0 10px 0;
+            border-bottom: 2px solid #ecf0f1;
+        }
+
+        .chemistry-tab {
+            padding: 8px 16px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-size: 0.9rem;
+            color: #7f8c8d;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .chemistry-tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+            font-weight: 600;
+        }
+
+        .chemistry-content {
+            display: none;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            line-height: 1.6;
+            font-size: 0.9rem;
+        }
+
+        .chemistry-content.active {
+            display: block;
+        }
+
+        /* Prep Method Cards */
+        .prep-card {
+            border-left: 4px solid #95a5a6;
+        }
+
+        .surface-area-visual {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin: 10px 0;
+        }
+
+        .area-block {
+            width: 10px;
+            height: 10px;
+            background: #95a5a6;
+            border-radius: 2px;
+        }
+
+        .intensity-mild {
+            color: #95a5a6;
+        }
+
+        .intensity-medium {
+            color: #f39c12;
+        }
+
+        .intensity-strong {
+            color: #e67e22;
+        }
+
+        .intensity-very-intense {
+            color: #c0392b;
+            font-weight: 700;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #7f8c8d;
+        }
+
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8rem;
+            }
+
+            .filter-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .filter-btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>Molecular Gastronomy</h1>
+            <div class="subtitle">Explore how cooking methods transform ingredients at the molecular level</div>
+
+            <div class="ingredient-info" id="ingredient-info" style="display: none;">
+                <strong id="ingredient-name">Loading...</strong>
+                <div class="ingredient-info-grid">
+                    <div class="info-item">
+                        <div class="info-label">Base Flavor:</div>
+                        <div id="base-flavor">-</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Base Texture:</div>
+                        <div id="base-texture">-</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Key Compounds:</div>
+                        <div id="key-compounds">-</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Enzyme Systems:</div>
+                        <div id="enzyme-systems">-</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search -->
+        <div class="search-section">
+            <input type="text" class="search-input" id="ingredient-search" placeholder="Search for an ingredient (e.g., tomatoes, garlic, onions)...">
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="filter-bar">
+            <span class="filter-label">Show:</span>
+            <button class="filter-btn active" data-filter="all">All</button>
+            <button class="filter-btn dry-heat" data-filter="dry-heat">🔥 Dry Heat</button>
+            <button class="filter-btn moist-heat" data-filter="moist-heat">💧 Moist Heat</button>
+            <button class="filter-btn prep" data-filter="prep">🔪 Prep Methods</button>
+            <button class="filter-btn fermentation" data-filter="fermentation">🦠 Fermentation</button>
+        </div>
+
+        <!-- Cooking Transformations -->
+        <div id="cooking-section" style="display: none;">
+            <h2 class="section-header">
+                Cooking Methods
+                <span class="section-count" id="cooking-count">(0)</span>
+            </h2>
+            <div class="card-grid" id="cooking-grid"></div>
+        </div>
+
+        <!-- Prep Methods -->
+        <div id="prep-section" style="display: none;">
+            <h2 class="section-header">
+                Prep Method Variations
+                <span class="section-count" id="prep-count">(0)</span>
+            </h2>
+            <div class="card-grid" id="prep-grid"></div>
+        </div>
+
+        <!-- Fermentation Transformations -->
+        <div id="fermentation-section" style="display: none;">
+            <h2 class="section-header">
+                Fermentation Transformations
+                <span class="section-count" id="fermentation-count">(0)</span>
+            </h2>
+            <div class="card-grid" id="fermentation-grid"></div>
+        </div>
+
+        <!-- Empty State -->
+        <div class="empty-state" id="empty-state">
+            <div class="empty-state-icon">🔬</div>
+            <h2>Search for an ingredient to explore transformations</h2>
+            <p>Try: tomatoes, garlic, onions, chicken, or any ingredient in the database</p>
+        </div>
+    </div>
+
+    <script>
+        let currentData = null;
+        let currentFilter = 'all';
+
+        // Debounce search
+        let searchTimeout;
+        document.getElementById('ingredient-search').addEventListener('input', (e) => {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                const query = e.target.value.trim();
+                if (query.length >= 2) {
+                    searchIngredient(query);
+                } else if (query.length === 0) {
+                    showEmptyState();
+                }
+            }, 300);
+        });
+
+        // Filter buttons
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentFilter = btn.dataset.filter;
+                if (currentData) {
+                    renderTransformations(currentData);
+                }
+            });
+        });
+
+        async function searchIngredient(query) {
+            try {
+                // Search for ingredient by name
+                const response = await fetch(`/api/ingredients/search?q=${encodeURIComponent(query)}`);
+                const ingredients = await response.json();
+
+                if (ingredients && ingredients.length > 0) {
+                    // Load first match
+                    loadIngredient(ingredients[0].id);
+                } else {
+                    showEmptyState();
+                }
+            } catch (error) {
+                console.error('Search error:', error);
+            }
+        }
+
+        async function loadIngredient(ingredientId) {
+            try {
+                const response = await fetch(`/api/ingredients/${ingredientId}/transformations`);
+                const data = await response.json();
+                currentData = data;
+                renderTransformations(data);
+            } catch (error) {
+                console.error('Load error:', error);
+                showEmptyState();
+            }
+        }
+
+        function renderTransformations(data) {
+            // Hide empty state
+            document.getElementById('empty-state').style.display = 'none';
+
+            // Show ingredient info
+            const infoSection = document.getElementById('ingredient-info');
+            infoSection.style.display = 'block';
+            document.getElementById('ingredient-name').textContent = data.ingredient.name;
+            document.getElementById('base-flavor').textContent = data.ingredient.base_flavor || 'Not specified';
+            document.getElementById('base-texture').textContent = data.ingredient.base_texture || 'Not specified';
+            document.getElementById('key-compounds').textContent = data.ingredient.key_compounds || 'Not specified';
+            document.getElementById('enzyme-systems').textContent = data.ingredient.enzyme_systems || 'Not specified';
+
+            // Filter data
+            const showCooking = currentFilter === 'all' || currentFilter === 'dry-heat' || currentFilter === 'moist-heat';
+            const showPrep = currentFilter === 'all' || currentFilter === 'prep';
+            const showFermentation = currentFilter === 'all' || currentFilter === 'fermentation';
+
+            // Render cooking methods
+            const cookingSection = document.getElementById('cooking-section');
+            const cookingGrid = document.getElementById('cooking-grid');
+            if (showCooking && data.cooking_transformations.length > 0) {
+                cookingSection.style.display = 'block';
+                let filteredCooking = data.cooking_transformations;
+                if (currentFilter === 'dry-heat') {
+                    filteredCooking = filteredCooking.filter(c => c.category === 'dry-heat');
+                } else if (currentFilter === 'moist-heat') {
+                    filteredCooking = filteredCooking.filter(c => c.category === 'moist-heat' || c.category === 'combination');
+                }
+                document.getElementById('cooking-count').textContent = `(${filteredCooking.length})`;
+                cookingGrid.innerHTML = filteredCooking.map(c => renderCookingCard(c)).join('');
+            } else {
+                cookingSection.style.display = 'none';
+            }
+
+            // Render prep methods
+            const prepSection = document.getElementById('prep-section');
+            const prepGrid = document.getElementById('prep-grid');
+            if (showPrep && data.prep_methods.length > 0) {
+                prepSection.style.display = 'block';
+                document.getElementById('prep-count').textContent = `(${data.prep_methods.length})`;
+                prepGrid.innerHTML = data.prep_methods.map(p => renderPrepCard(p)).join('');
+            } else {
+                prepSection.style.display = 'none';
+            }
+
+            // Render fermentation
+            const fermentationSection = document.getElementById('fermentation-section');
+            const fermentationGrid = document.getElementById('fermentation-grid');
+            if (showFermentation && data.fermentation_transformations.length > 0) {
+                fermentationSection.style.display = 'block';
+                document.getElementById('fermentation-count').textContent = `(${data.fermentation_transformations.length})`;
+                fermentationGrid.innerHTML = data.fermentation_transformations.map(f => renderFermentationCard(f)).join('');
+            } else {
+                fermentationSection.style.display = 'none';
+            }
+        }
+
+        function renderCookingCard(cooking) {
+            const cardId = `cooking-${cooking.method.replace(/\s+/g, '-')}`;
+            const categoryClass = cooking.category.replace('-', '');
+
+            // Calculate intensity multiplier
+            const intensityMatch = cooking.flavor_changes.intensity.match(/(\d+)x.*→.*(\d+)x/);
+            const intensityPercent = intensityMatch ? (parseInt(intensityMatch[2]) / 5) * 100 : 50;
+
+            return `
+                <div class="universal-card cooking-card ${cooking.category} card-fade-in">
+                    <div class="card-content">
+                        <h3 class="card-title">
+                            ${cooking.method}
+                            <span class="category-badge badge-${categoryClass}">${cooking.category.replace('-', ' ')}</span>
+                        </h3>
+
+                        <div class="card-meta">
+                            ${cooking.temp_range ? `<span class="card-tag">🌡️ ${cooking.temp_range}</span>` : ''}
+                            ${cooking.duration ? `<span class="card-tag">⏱️ ${cooking.duration}</span>` : ''}
+                        </div>
+
+                        <!-- Flavor Changes -->
+                        <div class="change-section">
+                            <div class="change-title">Flavor Transformation</div>
+                            <div class="change-row">
+                                <span>${cooking.flavor_changes.before}</span>
+                                <span class="change-arrow">→</span>
+                                <span style="font-weight: 600;">${cooking.flavor_changes.after}</span>
+                            </div>
+                            <div class="intensity-bar">
+                                <span class="intensity-label">${cooking.flavor_changes.intensity}</span>
+                                <div class="intensity-visual">
+                                    <div class="intensity-fill" style="width: ${intensityPercent}%"></div>
+                                </div>
+                            </div>
+                            <div style="font-size: 0.8rem; color: #7f8c8d; margin-top: 5px;">
+                                ${cooking.flavor_changes.compounds}
+                            </div>
+                        </div>
+
+                        <!-- Texture Changes -->
+                        <div class="change-section">
+                            <div class="change-title">Texture Transformation</div>
+                            <div class="change-row">
+                                <span>${cooking.texture_changes.before}</span>
+                                <span class="change-arrow">→</span>
+                                <span style="font-weight: 600;">${cooking.texture_changes.after}</span>
+                            </div>
+                            <div style="font-size: 0.8rem; color: #7f8c8d; margin-top: 5px;">
+                                ${cooking.texture_changes.cell_structure}
+                            </div>
+                        </div>
+
+                        <!-- Chemistry Tabs -->
+                        <div class="chemistry-tabs">
+                            <button class="chemistry-tab active" onclick="switchChemistryTab('${cardId}', 'beginner')">Beginner</button>
+                            <button class="chemistry-tab" onclick="switchChemistryTab('${cardId}', 'chemistry')">Chemistry</button>
+                            <button class="chemistry-tab" onclick="switchChemistryTab('${cardId}', 'expert')">Expert</button>
+                        </div>
+                        <div class="chemistry-content active" id="${cardId}-beginner">
+                            ${cooking.chemistry.beginner || 'No beginner explanation available.'}
+                        </div>
+                        <div class="chemistry-content" id="${cardId}-chemistry">
+                            ${cooking.chemistry.chemistry || 'No chemistry explanation available.'}
+                        </div>
+                        <div class="chemistry-content" id="${cardId}-expert">
+                            ${cooking.chemistry.expert || 'No expert explanation available.'}
+                        </div>
+
+                        <!-- Chef Tips -->
+                        ${cooking.notes.chef_tips ? `
+                            <div style="margin-top: 15px; padding: 10px; background: #fff3cd; border-left: 3px solid #ffc107; border-radius: 4px; font-size: 0.85rem;">
+                                <strong>💡 Chef's Tip:</strong> ${cooking.notes.chef_tips}
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderPrepCard(prep) {
+            // Determine intensity class
+            let intensityClass = 'intensity-mild';
+            if (prep.flavor_intensity.includes('very intense')) {
+                intensityClass = 'intensity-very-intense';
+            } else if (prep.flavor_intensity.includes('strong')) {
+                intensityClass = 'intensity-strong';
+            } else if (prep.flavor_intensity.includes('medium')) {
+                intensityClass = 'intensity-medium';
+            }
+
+            // Surface area blocks
+            const blockCount = Math.min(Math.floor(prep.surface_area / 5), 10);
+            const areaBlocks = Array(blockCount).fill('<div class="area-block"></div>').join('');
+
+            return `
+                <div class="universal-card prep-card card-fade-in">
+                    <div class="card-content">
+                        <h3 class="card-title">
+                            ${prep.method}
+                            <span class="category-badge" style="background: #ecf0f1; color: #7f8c8d;">PREP</span>
+                        </h3>
+
+                        <div class="change-section">
+                            <div class="change-title">Flavor Intensity</div>
+                            <div style="font-size: 1.2rem; font-weight: 700; margin: 10px 0;" class="${intensityClass}">
+                                ${prep.flavor_intensity.toUpperCase()}
+                            </div>
+                            <div class="surface-area-visual">
+                                <span style="font-size: 0.85rem; color: #7f8c8d;">Surface area: ${prep.surface_area}x</span>
+                                <div style="display: flex; gap: 3px;">${areaBlocks}</div>
+                            </div>
+                        </div>
+
+                        <div class="change-section">
+                            <div class="change-title">Enzyme Exposure</div>
+                            <div style="font-size: 0.9rem; margin: 5px 0;">
+                                ${prep.enzyme_exposure}
+                            </div>
+                            <div style="font-size: 0.8rem; color: #7f8c8d; margin-top: 5px;">
+                                ${prep.compounds_released}
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 15px;">
+                            <div style="font-weight: 600; margin-bottom: 5px; font-size: 0.9rem;">Best For:</div>
+                            <div style="font-size: 0.85rem; color: #2c3e50;">${prep.best_for}</div>
+                        </div>
+
+                        <div style="margin-top: 10px;">
+                            <div style="font-weight: 600; margin-bottom: 5px; font-size: 0.9rem;">Example Dishes:</div>
+                            <div style="font-size: 0.85rem; color: #7f8c8d;">${prep.example_dishes}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderFermentationCard(fermentation) {
+            return `
+                <div class="universal-card card-fade-in" style="border-left: 4px solid #9b59b6;">
+                    <div class="card-content">
+                        <h3 class="card-title">
+                            ${fermentation.recipe_name}
+                            <span class="category-badge" style="background: #f3e5ff; color: #7d3c98;">FERMENTATION</span>
+                        </h3>
+                        <div class="card-description">
+                            ${fermentation.output.name || 'Fermented product'}
+                        </div>
+                        ${fermentation.process.explanation.beginner ? `
+                            <div style="margin-top: 10px; padding: 10px; background: #f3e5ff; border-radius: 4px; font-size: 0.85rem;">
+                                ${fermentation.process.explanation.beginner}
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        function switchChemistryTab(cardId, level) {
+            // Remove active from all tabs in this card
+            const card = document.querySelector(`#${cardId}-beginner`).closest('.universal-card');
+            card.querySelectorAll('.chemistry-tab').forEach(t => t.classList.remove('active'));
+            card.querySelectorAll('.chemistry-content').forEach(c => c.classList.remove('active'));
+
+            // Add active to selected
+            event.target.classList.add('active');
+            document.getElementById(`${cardId}-${level}`).classList.add('active');
+        }
+
+        function showEmptyState() {
+            document.getElementById('empty-state').style.display = 'block';
+            document.getElementById('ingredient-info').style.display = 'none';
+            document.getElementById('cooking-section').style.display = 'none';
+            document.getElementById('prep-section').style.display = 'none';
+            document.getElementById('fermentation-section').style.display = 'none';
+        }
+
+        // Check for URL parameter
+        const urlParams = new URLSearchParams(window.location.search);
+        const ingredientId = urlParams.get('id');
+        if (ingredientId) {
+            loadIngredient(ingredientId);
+        }
+    </script>
+</body>
+</html>

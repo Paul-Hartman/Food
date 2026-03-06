@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tonight's Mexican Feast - QR Menu</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .menu-container {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+        .menu-header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+        .menu-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .menu-header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        .recipe-card {
+            background: white;
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+        .recipe-info {
+            flex: 1;
+        }
+        .recipe-info h2 {
+            font-size: 1.5rem;
+            margin-bottom: 8px;
+            color: var(--primary);
+        }
+        .recipe-info .meta {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 12px;
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+        .recipe-info .description {
+            color: var(--text);
+            line-height: 1.5;
+        }
+        .recipe-qr {
+            text-align: center;
+        }
+        .recipe-qr img {
+            width: 150px;
+            height: 150px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+        }
+        .recipe-qr p {
+            margin-top: 8px;
+            font-size: 0.8rem;
+            color: var(--text-light);
+        }
+        .step-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: var(--primary-light);
+            color: var(--primary);
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        .cooking-deck-link {
+            display: block;
+            background: white;
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            text-align: center;
+            color: var(--primary);
+            text-decoration: none;
+            font-size: 1.1rem;
+            font-weight: 600;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            transition: var(--transition);
+        }
+        .cooking-deck-link:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 35px rgba(0,0,0,0.4);
+        }
+    </style>
+</head>
+<body>
+    <div class="menu-container">
+        <div class="menu-header">
+            <h1>🌮 Tonight's Mexican Feast</h1>
+            <p>Scan QR codes with your phone to start cooking</p>
+        </div>
+
+        <div class="recipe-card">
+            <div class="recipe-info">
+                <h2>1. Chicken Mole</h2>
+                <div class="meta">
+                    <span class="step-badge">🔥 8 steps</span>
+                    <span>⏱️ ~45 min</span>
+                    <span>🍽️ Main dish</span>
+                </div>
+                <p class="description">Rich and complex mole sauce over crispy chicken thighs</p>
+            </div>
+            <div class="recipe-qr">
+                <img src="/qr_mole_chicken.png" alt="Chicken Mole QR">
+                <p>Scan to cook</p>
+            </div>
+        </div>
+
+        <div class="recipe-card">
+            <div class="recipe-info">
+                <h2>2. Mexican Rice</h2>
+                <div class="meta">
+                    <span class="step-badge">🔥 7 steps</span>
+                    <span>⏱️ ~30 min</span>
+                    <span>🍽️ Side dish</span>
+                </div>
+                <p class="description">Authentic restaurant-style Mexican rice with tomato and aromatics</p>
+            </div>
+            <div class="recipe-qr">
+                <img src="/qr_mexican_rice.png" alt="Mexican Rice QR">
+                <p>Scan to cook</p>
+            </div>
+        </div>
+
+        <div class="recipe-card">
+            <div class="recipe-info">
+                <h2>3. Instant Pot Black Beans</h2>
+                <div class="meta">
+                    <span class="step-badge">🔥 5 steps</span>
+                    <span>⏱️ ~60 min</span>
+                    <span>🍽️ Side dish</span>
+                </div>
+                <p class="description">No-soak black beans cooked to perfection with aromatics</p>
+            </div>
+            <div class="recipe-qr">
+                <img src="/qr_instant_pot_black_beans.png" alt="Black Beans QR">
+                <p>Scan to cook</p>
+            </div>
+        </div>
+
+        <a href="/cooking-deck" class="cooking-deck-link">
+            📋 View All Recipes in Cooking Deck
+        </a>
+    </div>
+</body>
+</html>

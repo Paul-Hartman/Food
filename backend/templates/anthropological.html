@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Culture Kitchen - Anthropological Food Explorer</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            color: #e0e0e0;
+        }
+
+        .app-header {
+            text-align: center;
+            padding: 30px 20px 20px;
+            background: linear-gradient(180deg, rgba(233,196,106,0.15) 0%, transparent 100%);
+        }
+        .app-header h1 {
+            font-size: 2.2rem;
+            color: #e9c46a;
+            margin-bottom: 6px;
+        }
+        .app-header p { color: #a0a0b0; font-size: 1rem; }
+
+        .container { max-width: 1400px; margin: 0 auto; padding: 0 20px 100px; }
+
+        /* Tab Navigation */
+        .tabs {
+            display: flex;
+            gap: 4px;
+            margin: 20px 0;
+            overflow-x: auto;
+            padding-bottom: 4px;
+        }
+        .tab-btn {
+            padding: 10px 20px;
+            border: none;
+            background: rgba(255,255,255,0.06);
+            color: #a0a0b0;
+            border-radius: 10px 10px 0 0;
+            cursor: pointer;
+            font-size: 0.95rem;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+        .tab-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
+        .tab-btn.active {
+            background: rgba(233,196,106,0.2);
+            color: #e9c46a;
+            border-bottom: 2px solid #e9c46a;
+        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* Search & Filters */
+        .search-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .search-input {
+            flex: 1;
+            padding: 12px 18px;
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 12px;
+            background: rgba(255,255,255,0.07);
+            color: #fff;
+            font-size: 1rem;
+        }
+        .search-input:focus { outline: none; border-color: #e9c46a; }
+        .search-input::placeholder { color: #666; }
+
+        .filter-row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+        .filter-chip {
+            padding: 6px 14px;
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.15);
+            background: rgba(255,255,255,0.05);
+            color: #a0a0b0;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+        .filter-chip:hover { border-color: #e9c46a; color: #e9c46a; }
+        .filter-chip.active { background: rgba(233,196,106,0.2); border-color: #e9c46a; color: #e9c46a; }
+
+        /* Culture Cards */
+        .culture-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 16px;
+        }
+        .culture-card {
+            background: rgba(255,255,255,0.06);
+            border-radius: 16px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+        .culture-card:hover {
+            transform: translateY(-3px);
+            border-color: #e9c46a;
+            background: rgba(255,255,255,0.1);
+        }
+        .culture-card h3 { color: #e9c46a; margin-bottom: 6px; font-size: 1.2rem; }
+        .culture-card .region { color: #2a9d8f; font-size: 0.85rem; margin-bottom: 8px; }
+        .culture-card .era { color: #888; font-size: 0.8rem; }
+        .culture-card .stats {
+            display: flex;
+            gap: 12px;
+            margin-top: 10px;
+            font-size: 0.8rem;
+            color: #999;
+        }
+        .culture-card .stats span { display: flex; align-items: center; gap: 4px; }
+        .culture-card .type-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 8px;
+            font-size: 0.7rem;
+            background: rgba(42,157,143,0.2);
+            color: #2a9d8f;
+            margin-bottom: 8px;
+        }
+
+        /* Detail Panel */
+        .detail-panel {
+            display: none;
+            background: rgba(255,255,255,0.08);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(233,196,106,0.2);
+        }
+        .detail-panel.active { display: block; }
+        .detail-panel h2 { color: #e9c46a; margin-bottom: 4px; }
+        .detail-panel .close-btn {
+            float: right;
+            background: none;
+            border: none;
+            color: #999;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        .detail-panel .close-btn:hover { color: #fff; }
+
+        .detail-section { margin-top: 20px; }
+        .detail-section h4 { color: #2a9d8f; margin-bottom: 10px; font-size: 1rem; }
+
+        .era-timeline {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .era-item {
+            display: flex;
+            gap: 12px;
+            padding: 10px 14px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+            border-left: 3px solid #e9c46a;
+        }
+        .era-item .year { color: #e9c46a; font-weight: 600; min-width: 100px; font-size: 0.85rem; }
+        .era-item .desc { color: #ccc; font-size: 0.9rem; }
+
+        /* Food Grid */
+        .food-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 12px;
+        }
+        .food-card {
+            background: rgba(255,255,255,0.06);
+            border-radius: 12px;
+            padding: 14px;
+            border: 1px solid rgba(255,255,255,0.06);
+            transition: all 0.2s;
+        }
+        .food-card:hover { border-color: rgba(233,196,106,0.3); }
+        .food-card h4 { color: #fff; font-size: 0.95rem; margin-bottom: 4px; }
+        .food-card .native { color: #e9c46a; font-size: 0.8rem; font-style: italic; }
+        .food-card .category { color: #2a9d8f; font-size: 0.75rem; margin-top: 4px; }
+        .food-badge {
+            display: inline-block;
+            padding: 1px 6px;
+            border-radius: 6px;
+            font-size: 0.65rem;
+            margin-right: 4px;
+            margin-top: 4px;
+        }
+        .food-badge.veg { background: rgba(76,175,80,0.2); color: #4caf50; }
+        .food-badge.vegan { background: rgba(76,175,80,0.3); color: #66bb6a; }
+        .food-badge.gf { background: rgba(255,152,0,0.2); color: #ffa726; }
+
+        /* Recipe Cards */
+        .recipe-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 16px;
+        }
+        .recipe-card {
+            background: rgba(255,255,255,0.06);
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid rgba(255,255,255,0.06);
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        .recipe-card:hover { border-color: #e9c46a; transform: translateY(-2px); }
+        .recipe-card h3 { color: #fff; font-size: 1.1rem; margin-bottom: 4px; }
+        .recipe-card .recipe-native { color: #e9c46a; font-size: 0.85rem; font-style: italic; }
+        .recipe-card .recipe-meta {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 8px 0;
+            font-size: 0.8rem;
+            color: #888;
+        }
+        .recipe-card .recipe-desc { color: #bbb; font-size: 0.9rem; line-height: 1.5; margin-top: 8px; }
+        .recipe-card .auth-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 8px;
+            font-size: 0.7rem;
+        }
+        .auth-badge.authentic { background: rgba(76,175,80,0.2); color: #4caf50; }
+        .auth-badge.adapted { background: rgba(255,193,7,0.2); color: #ffc107; }
+        .auth-badge.inspired { background: rgba(156,39,176,0.2); color: #ce93d8; }
+        .auth-badge.reconstructed { background: rgba(33,150,243,0.2); color: #64b5f6; }
+
+        /* Recipe Detail Modal */
+        .recipe-modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            overflow-y: auto;
+            padding: 40px 20px;
+        }
+        .recipe-modal.active { display: block; }
+        .recipe-modal-content {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #1a1a2e;
+            border-radius: 20px;
+            padding: 30px;
+            border: 1px solid rgba(233,196,106,0.3);
+        }
+        .recipe-modal-content h2 { color: #e9c46a; margin-bottom: 4px; }
+        .recipe-modal-content .close-modal {
+            float: right;
+            background: none;
+            border: none;
+            color: #999;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        .ingredients-list {
+            list-style: none;
+            padding: 0;
+        }
+        .ingredients-list li {
+            padding: 6px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            color: #ccc;
+            font-size: 0.9rem;
+        }
+        .instructions-list {
+            list-style: decimal;
+            padding-left: 20px;
+        }
+        .instructions-list li {
+            padding: 8px 0;
+            color: #ccc;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+        .history-box {
+            background: rgba(233,196,106,0.08);
+            border-left: 3px solid #e9c46a;
+            padding: 14px;
+            border-radius: 0 10px 10px 0;
+            margin: 16px 0;
+            color: #ccc;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        /* Meal Patterns */
+        .pattern-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 14px;
+        }
+        .pattern-card {
+            background: rgba(255,255,255,0.06);
+            border-radius: 14px;
+            padding: 16px;
+        }
+        .pattern-card .meal-icon { font-size: 1.5rem; }
+        .pattern-card h4 { color: #fff; margin: 4px 0; }
+        .pattern-card .local-name { color: #e9c46a; font-size: 0.85rem; font-style: italic; }
+        .pattern-card .time { color: #2a9d8f; font-size: 0.8rem; }
+        .pattern-card .desc { color: #bbb; font-size: 0.85rem; margin-top: 6px; line-height: 1.4; }
+
+        /* Compare View */
+        .compare-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .compare-column {
+            background: rgba(255,255,255,0.05);
+            border-radius: 16px;
+            padding: 20px;
+        }
+        .compare-column h3 { color: #e9c46a; margin-bottom: 14px; }
+
+        select {
+            padding: 8px 14px;
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.15);
+            background: rgba(255,255,255,0.07);
+            color: #fff;
+            font-size: 0.9rem;
+        }
+        select option { background: #1a1a2e; }
+
+        .loading { text-align: center; padding: 40px; color: #888; }
+        .empty-state { text-align: center; padding: 60px 20px; color: #666; }
+        .empty-state h3 { color: #888; margin-bottom: 8px; }
+
+        .stats-bar {
+            display: flex;
+            gap: 24px;
+            justify-content: center;
+            padding: 16px;
+            margin-bottom: 20px;
+            background: rgba(255,255,255,0.04);
+            border-radius: 14px;
+        }
+        .stat-item { text-align: center; }
+        .stat-item .number { font-size: 1.8rem; font-weight: 700; color: #e9c46a; }
+        .stat-item .label { font-size: 0.75rem; color: #888; }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+        .btn-gold { background: #e9c46a; color: #1a1a2e; }
+        .btn-gold:hover { background: #f4d35e; }
+        .btn-outline {
+            background: transparent;
+            border: 1px solid rgba(233,196,106,0.4);
+            color: #e9c46a;
+        }
+        .btn-outline:hover { background: rgba(233,196,106,0.1); }
+
+        @media (max-width: 768px) {
+            .culture-grid { grid-template-columns: 1fr; }
+            .recipe-grid { grid-template-columns: 1fr; }
+            .food-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+            .stats-bar { flex-wrap: wrap; gap: 16px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-header">
+        <h1>Culture Kitchen</h1>
+        <p>Eat any culture, at any time period</p>
+    </div>
+
+    <div class="container">
+        <!-- Stats -->
+        <div class="stats-bar" id="stats-bar">
+            <div class="stat-item"><div class="number" id="stat-cultures">-</div><div class="label">Cultures</div></div>
+            <div class="stat-item"><div class="number" id="stat-foods">-</div><div class="label">Foods</div></div>
+            <div class="stat-item"><div class="number" id="stat-recipes">-</div><div class="label">Recipes</div></div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('cultures')">Cultures</button>
+            <button class="tab-btn" onclick="switchTab('foods')">Foods</button>
+            <button class="tab-btn" onclick="switchTab('recipes')">Recipes</button>
+            <button class="tab-btn" onclick="switchTab('timeline')">Timeline</button>
+            <button class="tab-btn" onclick="switchTab('compare')">Compare</button>
+        </div>
+
+        <!-- CULTURES TAB -->
+        <div class="tab-content active" id="tab-cultures">
+            <div class="search-bar">
+                <input class="search-input" id="culture-search" placeholder="Search cultures..." oninput="filterCultures()">
+            </div>
+            <div class="filter-row" id="region-filters"></div>
+            <div class="detail-panel" id="culture-detail"></div>
+            <div class="culture-grid" id="culture-grid">
+                <div class="loading">Loading cultures...</div>
+            </div>
+        </div>
+
+        <!-- FOODS TAB -->
+        <div class="tab-content" id="tab-foods">
+            <div class="search-bar">
+                <input class="search-input" id="food-search" placeholder="Search foods..." oninput="searchFoods()">
+            </div>
+            <div class="filter-row" id="food-type-filters"></div>
+            <div class="food-grid" id="food-grid">
+                <div class="loading">Loading foods...</div>
+            </div>
+            <div style="text-align:center;margin-top:20px;">
+                <button class="btn btn-outline" id="load-more-foods" onclick="loadMoreFoods()" style="display:none;">Load More</button>
+            </div>
+        </div>
+
+        <!-- RECIPES TAB -->
+        <div class="tab-content" id="tab-recipes">
+            <div class="search-bar">
+                <input class="search-input" id="recipe-search" placeholder="Search recipes...">
+                <select id="recipe-culture-filter" onchange="loadRecipes()">
+                    <option value="">All Cultures</option>
+                </select>
+                <select id="recipe-meal-filter" onchange="loadRecipes()">
+                    <option value="">All Meals</option>
+                </select>
+                <button class="btn btn-gold" onclick="randomRecipe()">Random</button>
+            </div>
+            <div class="recipe-grid" id="recipe-grid">
+                <div class="loading">Loading recipes...</div>
+            </div>
+        </div>
+
+        <!-- TIMELINE TAB -->
+        <div class="tab-content" id="tab-timeline">
+            <div style="margin-bottom:20px;">
+                <label style="color:#888;font-size:0.85rem;">Jump to year:</label>
+                <input type="range" id="timeline-slider" min="-5000" max="2020" value="0"
+                       style="width:80%;margin:0 10px;" oninput="updateTimeline()">
+                <span id="timeline-year" style="color:#e9c46a;font-weight:600;">0 CE</span>
+            </div>
+            <div class="recipe-grid" id="timeline-recipes">
+                <div class="empty-state"><h3>Slide the timeline to explore</h3><p>See what people were eating across history</p></div>
+            </div>
+        </div>
+
+        <!-- COMPARE TAB -->
+        <div class="tab-content" id="tab-compare">
+            <div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;">
+                <select id="compare-culture-1" onchange="compareCultures()"><option value="">Select culture 1</option></select>
+                <span style="color:#666;align-self:center;">vs</span>
+                <select id="compare-culture-2" onchange="compareCultures()"><option value="">Select culture 2</option></select>
+            </div>
+            <div class="compare-container" id="compare-container"></div>
+        </div>
+    </div>
+
+    <!-- Recipe Detail Modal -->
+    <div class="recipe-modal" id="recipe-modal">
+        <div class="recipe-modal-content" id="recipe-modal-content"></div>
+    </div>
+
+    <script>
+        let allCultures = [];
+        let allFoods = [];
+        let foodPage = 1;
+        let activeRegion = '';
+        let activeFoodType = '';
+
+        // Init
+        document.addEventListener('DOMContentLoaded', () => {
+            loadStats();
+            loadCultures();
+            loadMealTypes();
+        });
+
+        async function loadStats() {
+            try {
+                const res = await fetch('/api/import/status');
+                const data = await res.json();
+                document.getElementById('stat-cultures').textContent = data.counts.cultures;
+                document.getElementById('stat-foods').textContent = data.counts.foods;
+                document.getElementById('stat-recipes').textContent = data.counts.recipes;
+            } catch(e) {}
+        }
+
+        // Tab switching
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.querySelector(`.tab-btn[onclick="switchTab('${tab}')"]`).classList.add('active');
+            document.getElementById(`tab-${tab}`).classList.add('active');
+
+            if (tab === 'foods' && allFoods.length === 0) loadFoods();
+            if (tab === 'recipes') loadRecipes();
+        }
+
+        // CULTURES
+        async function loadCultures() {
+            try {
+                const res = await fetch('/api/cultures');
+                allCultures = await res.json();
+                renderCultures(allCultures);
+                buildRegionFilters();
+                populateCultureSelects();
+            } catch(e) {
+                document.getElementById('culture-grid').innerHTML = '<div class="empty-state"><h3>Could not load cultures</h3></div>';
+            }
+        }
+
+        function buildRegionFilters() {
+            const regions = [...new Set(allCultures.map(c => c.region).filter(Boolean))].sort();
+            const container = document.getElementById('region-filters');
+            container.innerHTML = '<div class="filter-chip active" onclick="filterByRegion(\'\')">All</div>' +
+                regions.map(r => `<div class="filter-chip" onclick="filterByRegion('${r}')">${r}</div>`).join('');
+        }
+
+        function filterByRegion(region) {
+            activeRegion = region;
+            document.querySelectorAll('#region-filters .filter-chip').forEach(c => c.classList.remove('active'));
+            event.target.classList.add('active');
+            filterCultures();
+        }
+
+        function filterCultures() {
+            const q = document.getElementById('culture-search').value.toLowerCase();
+            let filtered = allCultures;
+            if (q) filtered = filtered.filter(c => c.name.toLowerCase().includes(q) || (c.region || '').toLowerCase().includes(q));
+            if (activeRegion) filtered = filtered.filter(c => c.region === activeRegion);
+            renderCultures(filtered);
+        }
+
+        function renderCultures(cultures) {
+            const grid = document.getElementById('culture-grid');
+            if (!cultures.length) {
+                grid.innerHTML = '<div class="empty-state"><h3>No cultures found</h3></div>';
+                return;
+            }
+            grid.innerHTML = cultures.map(c => {
+                const era = formatYear(c.era_start_year) + (c.era_end_year ? ' - ' + formatYear(c.era_end_year) : ' - present');
+                return `
+                <div class="culture-card" onclick="showCultureDetail('${c.slug}')">
+                    <div class="type-badge">${c.culture_type || 'civilization'}</div>
+                    <h3>${c.name}</h3>
+                    <div class="region">${c.region || ''}${c.subregion ? ' / ' + c.subregion : ''}</div>
+                    <div class="era">${era}</div>
+                    <div class="stats">
+                        <span>${c.food_count || 0} foods</span>
+                        <span>${c.is_living_culture ? 'Living' : 'Historical'}</span>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        async function showCultureDetail(slug) {
+            const panel = document.getElementById('culture-detail');
+            panel.innerHTML = '<div class="loading">Loading...</div>';
+            panel.classList.add('active');
+            panel.scrollIntoView({ behavior: 'smooth' });
+
+            try {
+                const [cultureRes, recipesRes, patternsRes] = await Promise.all([
+                    fetch(`/api/cultures/${slug}`),
+                    fetch(`/api/cultures/${slug}/recipes`),
+                    fetch(`/api/cultures/${slug}/meal-patterns`)
+                ]);
+                const culture = await cultureRes.json();
+                const recipes = await recipesRes.json();
+                const patternsData = await patternsRes.json();
+
+                let html = `<button class="close-btn" onclick="closeCultureDetail()">&times;</button>`;
+                html += `<h2>${culture.name}</h2>`;
+                html += `<div style="color:#2a9d8f;margin-bottom:12px;">${culture.region || ''} | ${culture.food_count} foods | ${culture.recipe_count} recipes</div>`;
+                if (culture.description) html += `<p style="color:#bbb;line-height:1.6;margin-bottom:16px;">${culture.description}</p>`;
+
+                // Eras
+                if (culture.eras && culture.eras.length) {
+                    html += `<div class="detail-section"><h4>Historical Eras</h4><div class="era-timeline">`;
+                    culture.eras.forEach(e => {
+                        html += `<div class="era-item">
+                            <div class="year">${formatYear(e.start_year)} - ${formatYear(e.end_year)}</div>
+                            <div class="desc"><strong>${e.era_name}</strong>${e.food_characteristics ? '<br>' + e.food_characteristics : ''}</div>
+                        </div>`;
+                    });
+                    html += `</div></div>`;
+                }
+
+                // Meal Patterns
+                if (patternsData.patterns && patternsData.patterns.length) {
+                    html += `<div class="detail-section"><h4>Daily Eating Patterns</h4><div class="pattern-grid">`;
+                    patternsData.patterns.forEach(p => {
+                        html += `<div class="pattern-card">
+                            <span class="meal-icon">${p.meal_type_icon || ''}</span>
+                            <h4>${p.meal_type_name}</h4>
+                            ${p.local_name ? `<div class="local-name">${p.local_name}</div>` : ''}
+                            ${p.typical_time ? `<div class="time">${p.typical_time}</div>` : ''}
+                            ${p.description ? `<div class="desc">${p.description}</div>` : ''}
+                        </div>`;
+                    });
+                    html += `</div></div>`;
+                }
+
+                // Recipes preview
+                if (recipes.length) {
+                    html += `<div class="detail-section"><h4>Recipes (${recipes.length})</h4><div class="recipe-grid">`;
+                    recipes.slice(0, 6).forEach(r => {
+                        html += renderRecipeCard(r);
+                    });
+                    html += `</div></div>`;
+                }
+
+                panel.innerHTML = html;
+            } catch(e) {
+                panel.innerHTML = '<div class="empty-state"><h3>Error loading culture</h3></div>';
+            }
+        }
+
+        function closeCultureDetail() {
+            document.getElementById('culture-detail').classList.remove('active');
+        }
+
+        // FOODS
+        async function loadFoods() {
+            try {
+                const res = await fetch(`/api/foods?page=${foodPage}&per_page=60`);
+                const data = await res.json();
+                allFoods = data.foods;
+                renderFoods(allFoods);
+                buildFoodTypeFilters();
+                if (data.total > foodPage * 60) {
+                    document.getElementById('load-more-foods').style.display = 'inline-block';
+                }
+            } catch(e) {
+                document.getElementById('food-grid').innerHTML = '<div class="empty-state"><h3>Could not load foods</h3></div>';
+            }
+        }
+
+        function buildFoodTypeFilters() {
+            const types = [...new Set(allFoods.map(f => f.food_type).filter(Boolean))].sort();
+            const container = document.getElementById('food-type-filters');
+            container.innerHTML = '<div class="filter-chip active" onclick="filterFoodType(\'\')">All</div>' +
+                types.map(t => `<div class="filter-chip" onclick="filterFoodType('${t}')">${t}</div>`).join('');
+        }
+
+        function filterFoodType(type) {
+            activeFoodType = type;
+            document.querySelectorAll('#food-type-filters .filter-chip').forEach(c => c.classList.remove('active'));
+            event.target.classList.add('active');
+            const q = document.getElementById('food-search').value.toLowerCase();
+            let filtered = allFoods;
+            if (type) filtered = filtered.filter(f => f.food_type === type);
+            if (q) filtered = filtered.filter(f => f.name.toLowerCase().includes(q));
+            renderFoods(filtered);
+        }
+
+        let searchTimeout;
+        function searchFoods() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(async () => {
+                const q = document.getElementById('food-search').value;
+                if (q.length >= 2) {
+                    const res = await fetch(`/api/foods/search?q=${encodeURIComponent(q)}`);
+                    const data = await res.json();
+                    renderFoods(data);
+                } else if (q.length === 0) {
+                    renderFoods(allFoods);
+                }
+            }, 300);
+        }
+
+        async function loadMoreFoods() {
+            foodPage++;
+            const res = await fetch(`/api/foods?page=${foodPage}&per_page=60`);
+            const data = await res.json();
+            allFoods = allFoods.concat(data.foods);
+            renderFoods(allFoods);
+            if (data.total <= foodPage * 60) {
+                document.getElementById('load-more-foods').style.display = 'none';
+            }
+        }
+
+        function renderFoods(foods) {
+            const grid = document.getElementById('food-grid');
+            if (!foods.length) {
+                grid.innerHTML = '<div class="empty-state"><h3>No foods found</h3></div>';
+                return;
+            }
+            grid.innerHTML = foods.map(f => {
+                let badges = '';
+                if (f.is_vegan) badges += '<span class="food-badge vegan">Vegan</span>';
+                else if (f.is_vegetarian) badges += '<span class="food-badge veg">Vegetarian</span>';
+                if (f.is_gluten_free) badges += '<span class="food-badge gf">GF</span>';
+                return `
+                <div class="food-card">
+                    <h4>${f.name}</h4>
+                    ${f.name_native ? `<div class="native">${f.name_native}</div>` : ''}
+                    <div class="category">${f.food_type || ''} ${f.primary_category ? '/ ' + f.primary_category : ''}</div>
+                    ${badges}
+                </div>`;
+            }).join('');
+        }
+
+        // RECIPES
+        async function loadRecipes() {
+            const grid = document.getElementById('recipe-grid');
+            grid.innerHTML = '<div class="loading">Loading recipes...</div>';
+            const culture = document.getElementById('recipe-culture-filter').value;
+            const meal = document.getElementById('recipe-meal-filter').value;
+            let url = '/api/anthropological-recipes?per_page=100';
+            if (culture) url += `&culture=${culture}`;
+            if (meal) url += `&meal_type=${meal}`;
+            try {
+                const res = await fetch(url);
+                const recipes = await res.json();
+                if (!recipes.length) {
+                    grid.innerHTML = '<div class="empty-state"><h3>No recipes found</h3></div>';
+                    return;
+                }
+                grid.innerHTML = recipes.map(r => renderRecipeCard(r)).join('');
+            } catch(e) {
+                grid.innerHTML = '<div class="empty-state"><h3>Error loading recipes</h3></div>';
+            }
+        }
+
+        function renderRecipeCard(r) {
+            const authClass = r.authenticity_level || 'adapted';
+            return `
+            <div class="recipe-card" onclick="showRecipeDetail('${r.slug}')">
+                <h3>${r.name}</h3>
+                ${r.name_native ? `<div class="recipe-native">${r.name_native}</div>` : ''}
+                <div class="recipe-meta">
+                    <span>${r.culture_name || ''}</span>
+                    ${r.era_name ? `<span>${r.era_name}</span>` : ''}
+                    ${r.approximate_year ? `<span>${formatYear(r.approximate_year)}</span>` : ''}
+                    ${r.meal_type ? `<span>${r.meal_type}</span>` : ''}
+                    <span class="auth-badge ${authClass}">${authClass}</span>
+                </div>
+                ${r.description ? `<div class="recipe-desc">${r.description.substring(0, 150)}${r.description.length > 150 ? '...' : ''}</div>` : ''}
+            </div>`;
+        }
+
+        async function showRecipeDetail(slug) {
+            const modal = document.getElementById('recipe-modal');
+            const content = document.getElementById('recipe-modal-content');
+            content.innerHTML = '<div class="loading">Loading recipe...</div>';
+            modal.classList.add('active');
+
+            try {
+                const res = await fetch(`/api/anthropological-recipes/${slug}`);
+                const r = await res.json();
+
+                let html = `<button class="close-modal" onclick="closeRecipeModal()">&times;</button>`;
+                html += `<h2>${r.name}</h2>`;
+                if (r.name_native) html += `<div style="color:#e9c46a;font-style:italic;margin-bottom:8px;">${r.name_native}</div>`;
+                html += `<div style="color:#2a9d8f;margin-bottom:16px;">${r.culture_name} ${r.era_name ? '| ' + r.era_name : ''} ${r.approximate_year ? '| ' + formatYear(r.approximate_year) : ''}</div>`;
+
+                if (r.historical_context) {
+                    html += `<div class="history-box">${r.historical_context}</div>`;
+                }
+                if (r.description) html += `<p style="color:#bbb;line-height:1.6;margin-bottom:16px;">${r.description}</p>`;
+
+                // Modern ingredients
+                if (r.ingredients_modern) {
+                    const ingredients = tryParseJSON(r.ingredients_modern);
+                    if (ingredients && ingredients.length) {
+                        html += `<div class="detail-section"><h4>Ingredients (Modern Adaptation)</h4><ul class="ingredients-list">`;
+                        ingredients.forEach(i => { html += `<li>${typeof i === 'string' ? i : JSON.stringify(i)}</li>`; });
+                        html += `</ul></div>`;
+                    }
+                }
+
+                // Historical ingredients
+                if (r.ingredients_historical) {
+                    const hist = tryParseJSON(r.ingredients_historical);
+                    if (hist && hist.length) {
+                        html += `<div class="detail-section"><h4>Historical Ingredients</h4><ul class="ingredients-list">`;
+                        hist.forEach(i => { html += `<li style="color:#999;">${typeof i === 'string' ? i : JSON.stringify(i)}</li>`; });
+                        html += `</ul></div>`;
+                    }
+                }
+
+                // Instructions
+                if (r.instructions_modern) {
+                    const steps = tryParseJSON(r.instructions_modern);
+                    if (steps && steps.length) {
+                        html += `<div class="detail-section"><h4>Instructions</h4><ol class="instructions-list">`;
+                        steps.forEach(s => { html += `<li>${typeof s === 'string' ? s : JSON.stringify(s)}</li>`; });
+                        html += `</ol></div>`;
+                    }
+                }
+
+                // Meta
+                html += `<div style="margin-top:20px;padding-top:16px;border-top:1px solid rgba(255,255,255,0.1);font-size:0.8rem;color:#666;">`;
+                if (r.source_type) html += `Source: ${r.source_type} `;
+                if (r.source_reference) html += `(${r.source_reference}) `;
+                if (r.social_class) html += `| Class: ${r.social_class} `;
+                if (r.difficulty) html += `| Difficulty: ${r.difficulty}`;
+                html += `</div>`;
+
+                content.innerHTML = html;
+            } catch(e) {
+                content.innerHTML = '<div class="empty-state"><h3>Error loading recipe</h3></div>';
+            }
+        }
+
+        function closeRecipeModal() {
+            document.getElementById('recipe-modal').classList.remove('active');
+        }
+
+        async function randomRecipe() {
+            try {
+                const res = await fetch('/api/anthropological-recipes/random');
+                const r = await res.json();
+                if (r.slug) showRecipeDetail(r.slug);
+            } catch(e) {}
+        }
+
+        // TIMELINE
+        function updateTimeline() {
+            const year = parseInt(document.getElementById('timeline-slider').value);
+            document.getElementById('timeline-year').textContent = formatYear(year);
+            loadTimelineRecipes(year);
+        }
+
+        let timelineTimeout;
+        async function loadTimelineRecipes(year) {
+            clearTimeout(timelineTimeout);
+            timelineTimeout = setTimeout(async () => {
+                const grid = document.getElementById('timeline-recipes');
+                grid.innerHTML = '<div class="loading">Loading...</div>';
+                try {
+                    const res = await fetch(`/api/anthropological-recipes?era=${year}&per_page=20`);
+                    const recipes = await res.json();
+                    if (!recipes.length) {
+                        grid.innerHTML = `<div class="empty-state"><h3>No recipes from ~${formatYear(year)}</h3><p>Try a different time period</p></div>`;
+                        return;
+                    }
+                    grid.innerHTML = recipes.map(r => renderRecipeCard(r)).join('');
+                } catch(e) {
+                    grid.innerHTML = '<div class="empty-state"><h3>Error</h3></div>';
+                }
+            }, 300);
+        }
+
+        // COMPARE
+        function populateCultureSelects() {
+            const options = allCultures.map(c => `<option value="${c.slug}">${c.name}</option>`).join('');
+            ['recipe-culture-filter', 'compare-culture-1', 'compare-culture-2'].forEach(id => {
+                const sel = document.getElementById(id);
+                const first = sel.querySelector('option');
+                sel.innerHTML = first.outerHTML + options;
+            });
+        }
+
+        async function compareCultures() {
+            const c1 = document.getElementById('compare-culture-1').value;
+            const c2 = document.getElementById('compare-culture-2').value;
+            if (!c1 || !c2) return;
+
+            const container = document.getElementById('compare-container');
+            container.innerHTML = '<div class="loading">Loading...</div>';
+
+            try {
+                const res = await fetch(`/api/meal-patterns/compare?cultures=${c1},${c2}`);
+                const data = await res.json();
+
+                let html = '';
+                for (const [slug, info] of Object.entries(data)) {
+                    html += `<div class="compare-column"><h3>${info.culture.name}</h3>`;
+                    if (info.patterns.length) {
+                        info.patterns.forEach(p => {
+                            html += `<div class="pattern-card" style="margin-bottom:8px;">
+                                <span class="meal-icon">${p.meal_type_icon || ''}</span>
+                                <h4>${p.meal_type_name} ${p.local_name ? '(' + p.local_name + ')' : ''}</h4>
+                                ${p.typical_time ? `<div class="time">${p.typical_time}</div>` : ''}
+                                ${p.description ? `<div class="desc">${p.description}</div>` : ''}
+                            </div>`;
+                        });
+                    } else {
+                        html += '<p style="color:#666;">No meal patterns recorded</p>';
+                    }
+                    html += '</div>';
+                }
+                container.innerHTML = html;
+            } catch(e) {
+                container.innerHTML = '<div class="empty-state"><h3>Error comparing cultures</h3></div>';
+            }
+        }
+
+        // MEAL TYPES
+        async function loadMealTypes() {
+            try {
+                const res = await fetch('/api/meal-types');
+                const types = await res.json();
+                const sel = document.getElementById('recipe-meal-filter');
+                types.forEach(t => {
+                    const opt = document.createElement('option');
+                    opt.value = t.name;
+                    opt.textContent = `${t.icon || ''} ${t.name}`;
+                    sel.appendChild(opt);
+                });
+            } catch(e) {}
+        }
+
+        // UTILS
+        function formatYear(year) {
+            if (year === null || year === undefined) return '?';
+            if (year < 0) return `${Math.abs(year)} BCE`;
+            if (year === 0) return '1 CE';
+            return `${year} CE`;
+        }
+
+        function tryParseJSON(str) {
+            try { return JSON.parse(str); } catch(e) { return null; }
+        }
+
+        // Close modal on background click
+        document.getElementById('recipe-modal').addEventListener('click', function(e) {
+            if (e.target === this) closeRecipeModal();
+        });
+
+        // ESC to close
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeRecipeModal();
+                closeCultureDetail();
+            }
+        });
+    </script>
+</body>
+</html>

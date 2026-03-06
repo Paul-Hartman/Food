@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Process Detail - Food App</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/universal-cards.css">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        }
+
+        .header h1 {
+            margin: 0 0 10px 0;
+            font-size: 2.5rem;
+        }
+
+        .header .process-type {
+            opacity: 0.9;
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .stat-card {
+            background: rgba(255,255,255,0.2);
+            padding: 15px;
+            border-radius: 8px;
+            backdrop-filter: blur(10px);
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            opacity: 0.9;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .chemistry-section {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .chemistry-section h2 {
+            margin: 0 0 20px 0;
+            color: #2c3e50;
+        }
+
+        .explanation-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #ecf0f1;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-size: 1rem;
+            color: #7f8c8d;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+            font-weight: 600;
+        }
+
+        .tab:hover {
+            color: #667eea;
+        }
+
+        .explanation-content {
+            display: none;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            line-height: 1.8;
+        }
+
+        .explanation-content.active {
+            display: block;
+        }
+
+        .used-in-section {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .used-in-section h2 {
+            margin: 0 0 20px 0;
+            color: #2c3e50;
+        }
+
+
+        .recipe-path {
+            font-size: 0.9rem;
+            color: #7f8c8d;
+            margin: 5px 0;
+        }
+
+        .recipe-path span {
+            color: #27ae60;
+            font-weight: 600;
+        }
+
+        .equipment-tag {
+            display: inline-block;
+            padding: 4px 10px;
+            background: #e3f2fd;
+            color: #1976d2;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            margin-top: 10px;
+        }
+
+        .chemical-reaction {
+            background: #fff3e0;
+            padding: 15px;
+            border-left: 4px solid #ff9800;
+            border-radius: 4px;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+        }
+
+        .microorganisms {
+            background: #e8f5e9;
+            padding: 15px;
+            border-left: 4px solid #4caf50;
+            border-radius: 4px;
+            margin: 15px 0;
+        }
+
+        .microorganisms h4 {
+            margin: 0 0 10px 0;
+            color: #2e7d32;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 id="process-name">Loading...</h1>
+            <div class="process-type" id="process-type"></div>
+
+            <div class="stats-grid" id="stats-grid">
+                <!-- Stats will be inserted here -->
+            </div>
+        </div>
+
+        <div class="chemistry-section">
+            <h2>Chemistry & Science</h2>
+
+            <div class="explanation-tabs">
+                <button class="tab active" onclick="switchTab('beginner')">Beginner</button>
+                <button class="tab" onclick="switchTab('chemistry')">Chemistry</button>
+                <button class="tab" onclick="switchTab('expert')">Expert</button>
+            </div>
+
+            <div class="explanation-content active" id="beginner-content">
+                <!-- Beginner explanation -->
+            </div>
+
+            <div class="explanation-content" id="chemistry-content">
+                <!-- Chemistry explanation -->
+            </div>
+
+            <div class="explanation-content" id="expert-content">
+                <!-- Expert explanation -->
+            </div>
+
+            <div id="chemical-reaction"></div>
+            <div id="microorganisms"></div>
+        </div>
+
+        <div class="used-in-section">
+            <h2>Used In <span id="usage-count">(0 recipes)</span></h2>
+            <div class="card-grid" id="recipes-grid">
+                <!-- Recipe cards will be inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Get process ID from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const processId = urlParams.get('id') || 1;
+
+        async function loadProcess() {
+            try {
+                const response = await fetch(`/api/process/${processId}`);
+                const data = await response.json();
+
+                // Update header
+                document.getElementById('process-name').textContent = data.process.name;
+                document.getElementById('process-type').textContent = data.process.type || 'Transformation Process';
+
+                // Build stats
+                const statsGrid = document.getElementById('stats-grid');
+                const stats = [];
+
+                if (data.process.temperature.optimal_f) {
+                    stats.push({
+                        label: 'Temperature',
+                        value: `${data.process.temperature.optimal_f}°F`
+                    });
+                }
+
+                if (data.process.duration.min_hours) {
+                    const hours = data.process.duration.min_hours;
+                    const value = hours >= 24
+                        ? `${Math.round(hours/24)} days`
+                        : `${hours}-${data.process.duration.max_hours || hours}hrs`;
+                    stats.push({
+                        label: 'Duration',
+                        value: value
+                    });
+                }
+
+                if (data.process.ph_change.start && data.process.ph_change.end) {
+                    stats.push({
+                        label: 'pH Change',
+                        value: `${data.process.ph_change.start} → ${data.process.ph_change.end}`
+                    });
+                }
+
+                stats.push({
+                    label: 'Used In',
+                    value: `${data.total_uses} recipes`
+                });
+
+                statsGrid.innerHTML = stats.map(s => `
+                    <div class="stat-card">
+                        <div class="stat-label">${s.label}</div>
+                        <div class="stat-value">${s.value}</div>
+                    </div>
+                `).join('');
+
+                // Chemistry explanations
+                document.getElementById('beginner-content').innerHTML =
+                    data.process.explanations.beginner || 'No beginner explanation available.';
+
+                document.getElementById('chemistry-content').innerHTML =
+                    data.process.explanations.chemistry || 'No chemistry explanation available.';
+
+                document.getElementById('expert-content').innerHTML =
+                    data.process.explanations.expert || 'No expert explanation available.';
+
+                // Chemical reaction
+                if (data.process.chemical_reactions) {
+                    document.getElementById('chemical-reaction').innerHTML = `
+                        <div class="chemical-reaction">
+                            <strong>Chemical Reactions:</strong><br>
+                            ${data.process.chemical_reactions}
+                        </div>
+                    `;
+                }
+
+                // Microorganisms
+                if (data.process.microorganisms) {
+                    document.getElementById('microorganisms').innerHTML = `
+                        <div class="microorganisms">
+                            <h4>Microorganisms Involved:</h4>
+                            ${data.process.microorganisms}
+                        </div>
+                    `;
+                }
+
+                // Used in recipes
+                document.getElementById('usage-count').textContent =
+                    `(${data.total_uses} recipe${data.total_uses !== 1 ? 's' : ''})`;
+
+                const recipesGrid = document.getElementById('recipes-grid');
+
+                if (data.used_in_transformations.length === 0 && data.fermentation_protocols.length === 0 && data.used_in_recipes.length === 0) {
+                    recipesGrid.innerHTML = '<p>No recipes using this process yet.</p>';
+                    return;
+                }
+
+                recipesGrid.innerHTML = '';
+
+                // Transformation recipes
+                data.used_in_transformations.forEach(r => {
+                    const card = document.createElement('div');
+                    card.className = 'universal-card card-fade-in';
+                    card.style.cursor = 'pointer';
+                    card.onclick = () => window.location.href = `/ingredient/transformations?id=${r.base_ingredient.id}`;
+
+                    card.innerHTML = `
+                        <div class="card-content">
+                            <h3 class="card-title">${r.name}</h3>
+                            <p class="card-description">
+                                ${r.base_ingredient.name} → <span style="color: #27ae60; font-weight: 600;">${r.output}</span>
+                            </p>
+                            <div class="card-meta">
+                                ${r.equipment ? `<span class="card-tag">${r.equipment}</span>` : ''}
+                                ${r.yield_percent ? `<span class="card-tag">Yield: ${r.yield_percent}%</span>` : ''}
+                            </div>
+                        </div>
+                    `;
+                    recipesGrid.appendChild(card);
+                });
+
+                // Fermentation protocols
+                data.fermentation_protocols.forEach(f => {
+                    const card = document.createElement('div');
+                    card.className = 'universal-card card-fade-in';
+
+                    card.innerHTML = `
+                        <div class="card-content">
+                            <h3 class="card-title">${f.name}</h3>
+                            <p class="card-description">Fermentation Protocol</p>
+                            <div class="card-meta">
+                                <span class="card-tag" style="background: #e8f5e9; color: #2e7d32;">
+                                    Microbes: ${f.microorganisms || 'Wild fermentation'}
+                                </span>
+                                ${f.duration_days ? `<span class="card-tag">Duration: ${f.duration_days} days</span>` : ''}
+                            </div>
+                        </div>
+                    `;
+                    recipesGrid.appendChild(card);
+                });
+
+                // Regular recipe steps using this process
+                data.used_in_recipes.forEach(s => {
+                    const card = document.createElement('div');
+                    card.className = 'universal-card card-fade-in';
+                    card.style.cursor = 'pointer';
+                    card.onclick = () => window.location.href = `/cook?id=${s.recipe_id}`;
+
+                    card.innerHTML = `
+                        <div class="card-content">
+                            <h3 class="card-title">${s.recipe_name}</h3>
+                            <p class="card-description">Step ${s.step_number}: ${s.step_title}</p>
+                            <p style="margin-top:8px;font-size:0.85rem;color:#666;line-height:1.4;">
+                                ${s.instruction.substring(0, 120)}${s.instruction.length > 120 ? '...' : ''}
+                            </p>
+                            <div class="card-meta">
+                                <span class="card-tag" style="background:#fff3cd;color:#856404;">
+                                    ${s.category || 'Recipe'}
+                                </span>
+                            </div>
+                        </div>
+                    `;
+                    recipesGrid.appendChild(card);
+                });
+
+            } catch (error) {
+                console.error('Error loading process:', error);
+                document.getElementById('process-name').textContent = 'Error loading process';
+            }
+        }
+
+        function switchTab(tabName) {
+            // Remove active from all tabs and contents
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.explanation-content').forEach(c => c.classList.remove('active'));
+
+            // Add active to selected
+            event.target.classList.add('active');
+            document.getElementById(`${tabName}-content`).classList.add('active');
+        }
+
+        loadProcess();
+    </script>
+</body>
+</html>

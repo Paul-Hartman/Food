@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crafting System - Food App</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/universal-cards.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .crafting-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .page-header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+
+        .page-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .crafting-tabs {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin-bottom: 40px;
+        }
+
+        .tab-btn {
+            padding: 14px 28px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .tab-btn.active {
+            background: white;
+            color: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Crafting Tree Visualization */
+        .crafting-tree {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .tree-level {
+            display: flex;
+            align-items: center;
+            gap: 40px;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .tree-arrow {
+            font-size: 2.5rem;
+            color: #667eea;
+        }
+
+        .tree-item {
+            text-align: center;
+        }
+
+        .tree-item-image {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid #667eea;
+            margin-bottom: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .tree-item-name {
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 4px;
+        }
+
+        .tree-item-type {
+            font-size: 0.85rem;
+            color: #6b7280;
+        }
+
+        .process-box {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 20px;
+            border-radius: 16px;
+            text-align: center;
+            min-width: 200px;
+        }
+
+        .process-box h3 {
+            margin-bottom: 8px;
+        }
+
+        .process-details {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        /* Search Section */
+        .search-section {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .search-box {
+            width: 100%;
+            padding: 16px 20px;
+            font-size: 1.1rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .quick-filters {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .filter-chip {
+            padding: 8px 16px;
+            background: #f3f4f6;
+            border-radius: 20px;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .filter-chip.active {
+            background: #667eea;
+            color: white;
+        }
+
+        /* Recipe Requirements */
+        .requirements-section {
+            background: #f0f4ff;
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 20px;
+        }
+
+        .requirements-section h3 {
+            color: #667eea;
+            margin-bottom: 16px;
+        }
+
+        .requirement-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .requirement-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: white;
+            border-radius: 8px;
+        }
+
+        .requirement-icon {
+            font-size: 1.5rem;
+        }
+
+        .requirement-text {
+            flex: 1;
+        }
+
+        .requirement-status {
+            font-weight: 600;
+        }
+
+        .requirement-status.available {
+            color: #10b981;
+        }
+
+        .requirement-status.missing {
+            color: #ef4444;
+        }
+    </style>
+</head>
+<body>
+    <div class="crafting-container">
+        <div class="page-header">
+            <h1>🧬 Ingredient Crafting System</h1>
+            <p>Transform ingredients, combine them, and create recipes</p>
+        </div>
+
+        <div class="crafting-tabs">
+            <button class="tab-btn active" onclick="showTab('transformations')">
+                ⚗️ Transform Ingredients
+            </button>
+            <button class="tab-btn" onclick="showTab('recipes')">
+                🍳 Combine to Recipe
+            </button>
+            <button class="tab-btn" onclick="showTab('tree')">
+                🌳 Full Crafting Tree
+            </button>
+        </div>
+
+        <!-- Tab 1: Transformations -->
+        <div class="tab-content active" id="transformations-tab">
+            <div class="search-section">
+                <h2 style="margin-bottom: 16px;">Transform a Base Ingredient</h2>
+                <input
+                    type="text"
+                    id="transformSearch"
+                    class="search-box"
+                    placeholder="Search for an ingredient (milk, wheat, tomatoes, meat...)"
+                >
+                <div class="quick-filters">
+                    <button class="filter-chip active" onclick="filterTransforms('all')">All</button>
+                    <button class="filter-chip" onclick="filterTransforms('fermentation')">🫙 Fermentation</button>
+                    <button class="filter-chip" onclick="filterTransforms('baking')">🥖 Baking</button>
+                    <button class="filter-chip" onclick="filterTransforms('cooking')">🔥 Cooking</button>
+                    <button class="filter-chip" onclick="filterTransforms('mechanical')">🥣 Mechanical</button>
+                </div>
+            </div>
+
+            <div class="card-grid" id="transformGrid">
+                <div class="card-empty">
+                    <div class="card-empty-icon">🔍</div>
+                    <p class="card-empty-text">Search for an ingredient to see transformations</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 2: Recipes -->
+        <div class="tab-content" id="recipes-tab">
+            <div class="search-section">
+                <h2 style="margin-bottom: 16px;">Find Recipes Using Your Ingredients</h2>
+                <input
+                    type="text"
+                    id="recipeSearch"
+                    class="search-box"
+                    placeholder="Search for recipes by ingredient (yogurt, flour, chicken...)"
+                >
+                <p style="color: #6b7280; margin-top: 12px;">
+                    💡 Tip: Search for a transformed ingredient (like "yogurt" or "bread") to see recipes that use it
+                </p>
+            </div>
+
+            <div class="card-grid" id="recipeGrid">
+                <div class="card-empty">
+                    <div class="card-empty-icon">🍽️</div>
+                    <p class="card-empty-text">Search for an ingredient to see recipes</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 3: Full Crafting Tree -->
+        <div class="tab-content" id="tree-tab">
+            <div class="crafting-tree">
+                <h2 style="text-align: center; margin-bottom: 40px; color: #1f2937;">
+                    Example: Milk → Yogurt → Parfait Recipe
+                </h2>
+
+                <!-- Level 1: Base Ingredient -->
+                <div class="tree-level">
+                    <div class="tree-item">
+                        <img
+                            src="https://images.unsplash.com/photo-1550583724-b2692b85b150?w=200&h=200&fit=crop"
+                            alt="Milk"
+                            class="tree-item-image"
+                        >
+                        <div class="tree-item-name">Milk</div>
+                        <div class="tree-item-type">Base Ingredient</div>
+                    </div>
+                </div>
+
+                <div style="text-align: center;">↓</div>
+
+                <!-- Level 2: Process -->
+                <div class="tree-level">
+                    <div class="process-box">
+                        <h3>🫙 Fermentation</h3>
+                        <div class="process-details">
+                            8-10 hours at 110°F<br>
+                            Add live cultures<br>
+                            pH drops from 6.5 → 4.5
+                        </div>
+                    </div>
+                </div>
+
+                <div style="text-align: center;">↓</div>
+
+                <!-- Level 3: Transformed Ingredient -->
+                <div class="tree-level">
+                    <div class="tree-item">
+                        <img
+                            src="https://images.unsplash.com/photo-1488477181946-6428a0291777?w=200&h=200&fit=crop"
+                            alt="Yogurt"
+                            class="tree-item-image"
+                        >
+                        <div class="tree-item-name">Yogurt</div>
+                        <div class="tree-item-type">Transformed Ingredient</div>
+                    </div>
+                </div>
+
+                <div style="text-align: center;">↓</div>
+
+                <!-- Level 4: Recipe -->
+                <div class="tree-level">
+                    <div class="tree-item">
+                        <img
+                            src="https://images.unsplash.com/photo-1488477181946-6428a0291777?w=200&h=200&fit=crop"
+                            alt="Yogurt"
+                            class="tree-item-image"
+                        >
+                        <div class="tree-item-name">Yogurt</div>
+                    </div>
+
+                    <span class="tree-arrow">+</span>
+
+                    <div class="tree-item">
+                        <img
+                            src="https://images.unsplash.com/photo-1485962398705-ef6a13c41e8f?w=200&h=200&fit=crop"
+                            alt="Berries"
+                            class="tree-item-image"
+                        >
+                        <div class="tree-item-name">Berries</div>
+                    </div>
+
+                    <span class="tree-arrow">+</span>
+
+                    <div class="tree-item">
+                        <img
+                            src="https://images.unsplash.com/photo-1568471173920-ca75933d722e?w=200&h=200&fit=crop"
+                            alt="Granola"
+                            class="tree-item-image"
+                        >
+                        <div class="tree-item-name">Granola</div>
+                    </div>
+                </div>
+
+                <div style="text-align: center;">↓</div>
+
+                <!-- Level 5: Final Recipe -->
+                <div class="tree-level">
+                    <div class="universal-card" style="max-width: 400px; margin: 0 auto;">
+                        <div class="card-image">
+                            <img
+                                src="https://images.unsplash.com/photo-1511690656952-34342bb7c2f2?w=400&h=300&fit=crop"
+                                alt="Parfait"
+                            >
+                            <div class="card-badge badge-easy">Easy</div>
+                        </div>
+                        <div class="card-content">
+                            <h3 class="card-title">Berry Yogurt Parfait</h3>
+                            <p class="card-description">Layered yogurt with fresh berries and crunchy granola</p>
+                            <div class="card-meta">
+                                <span class="card-tag">⏱️ 5 min</span>
+                                <span class="card-tag">🔥 0 cal cooking</span>
+                                <span class="card-tag tag-success">Healthy</span>
+                            </div>
+                        </div>
+                        <div class="card-actions">
+                            <button class="card-btn primary">View Recipe</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="requirements-section">
+                    <h3>📋 What You Need to Craft This:</h3>
+                    <div class="requirement-list">
+                        <div class="requirement-item">
+                            <div class="requirement-icon">🥛</div>
+                            <div class="requirement-text">
+                                <strong>Step 1:</strong> Start with milk<br>
+                                <small>Base ingredient from pantry or store</small>
+                            </div>
+                            <div class="requirement-status available">✓ Available</div>
+                        </div>
+                        <div class="requirement-item">
+                            <div class="requirement-icon">🫙</div>
+                            <div class="requirement-text">
+                                <strong>Step 2:</strong> Ferment into yogurt<br>
+                                <small>Process: Fermentation (8-10 hours)</small>
+                            </div>
+                            <div class="requirement-status available">✓ Can Do</div>
+                        </div>
+                        <div class="requirement-item">
+                            <div class="requirement-icon">🍓</div>
+                            <div class="requirement-text">
+                                <strong>Step 3:</strong> Add berries & granola<br>
+                                <small>Additional ingredients</small>
+                            </div>
+                            <div class="requirement-status missing">! Check Pantry</div>
+                        </div>
+                        <div class="requirement-item">
+                            <div class="requirement-icon">🍳</div>
+                            <div class="requirement-text">
+                                <strong>Step 4:</strong> Assemble parfait<br>
+                                <small>Final recipe assembly (5 minutes)</small>
+                            </div>
+                            <div class="requirement-status available">✓ Ready</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showTab(tabName) {
+            // Update tab buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            // Update tab content
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            document.getElementById(tabName + '-tab').classList.add('active');
+        }
+
+        let currentFilter = 'all';
+
+        function filterTransforms(type) {
+            currentFilter = type;
+            document.querySelectorAll('.filter-chip').forEach(chip => chip.classList.remove('active'));
+            event.target.classList.add('active');
+
+            const search = document.getElementById('transformSearch').value;
+            if (search) {
+                searchTransformations(search);
+            }
+        }
+
+        // Transformation search
+        let searchTimeout;
+        document.getElementById('transformSearch').addEventListener('input', (e) => {
+            clearTimeout(searchTimeout);
+            const query = e.target.value.trim();
+
+            if (query.length < 2) {
+                document.getElementById('transformGrid').innerHTML = `
+                    <div class="card-empty">
+                        <div class="card-empty-icon">🔍</div>
+                        <p class="card-empty-text">Search for an ingredient</p>
+                    </div>
+                `;
+                return;
+            }
+
+            searchTimeout = setTimeout(() => searchTransformations(query), 300);
+        });
+
+        async function searchTransformations(query) {
+            const grid = document.getElementById('transformGrid');
+            grid.innerHTML = '<div class="card-loading"><div class="card-loading-spinner"></div></div>';
+
+            try {
+                // Search for ingredient
+                const ingredientRes = await fetch(`/api/ingredients?search=${encodeURIComponent(query)}`);
+                const ingredients = await ingredientRes.json();
+
+                if (!ingredients || ingredients.length === 0) {
+                    grid.innerHTML = `<div class="card-empty"><p class="card-empty-text">No ingredients found</p></div>`;
+                    return;
+                }
+
+                const ingredientId = ingredients[0].id;
+
+                // Get transformations
+                const transRes = await fetch(`/api/ingredients/${ingredientId}/transformations`);
+                const data = await transRes.json();
+
+                if (!data.transformations || data.transformations.length === 0) {
+                    grid.innerHTML = `<div class="card-empty"><p class="card-empty-text">No transformations for ${ingredients[0].name}</p></div>`;
+                    return;
+                }
+
+                // Filter by process type if needed
+                let filtered = data.transformations;
+                if (currentFilter !== 'all') {
+                    filtered = filtered.filter(t =>
+                        t.process_type && t.process_type.toLowerCase().includes(currentFilter)
+                    );
+                }
+
+                grid.innerHTML = filtered.map(t => `
+                    <div class="universal-card card-fade-in">
+                        <div class="card-image">
+                            <img src="https://source.unsplash.com/400x300/?${t.output_name},food" alt="${t.output_name}">
+                            <div class="card-badge">${t.difficulty || 'Medium'}</div>
+                        </div>
+                        <div class="card-content">
+                            <h3 class="card-title">${ingredients[0].name} → ${t.output_name}</h3>
+                            <p class="card-description">${t.process_description || 'Transformation process'}</p>
+                            <div class="card-meta">
+                                <span class="card-tag tag-primary">${t.process_name || 'Transform'}</span>
+                                ${t.duration ? `<span class="card-tag">⏱️ ${t.duration}</span>` : ''}
+                                ${t.equipment ? `<span class="card-tag">🔧 ${t.equipment}</span>` : ''}
+                            </div>
+                        </div>
+                        <div class="card-actions">
+                            <button class="card-btn primary" onclick="startTransformation(${t.id})">Start Transformation</button>
+                            <button class="card-btn secondary" onclick="viewRecipesUsing('${t.output_name}')">Recipes Using This</button>
+                        </div>
+                    </div>
+                `).join('');
+
+            } catch (error) {
+                console.error('Error:', error);
+                grid.innerHTML = `<div class="card-empty"><p class="card-empty-text">Error loading transformations</p></div>`;
+            }
+        }
+
+        // Recipe search
+        document.getElementById('recipeSearch').addEventListener('input', (e) => {
+            clearTimeout(searchTimeout);
+            const query = e.target.value.trim();
+
+            if (query.length < 2) {
+                document.getElementById('recipeGrid').innerHTML = `
+                    <div class="card-empty">
+                        <div class="card-empty-icon">🍽️</div>
+                        <p class="card-empty-text">Search for an ingredient</p>
+                    </div>
+                `;
+                return;
+            }
+
+            searchTimeout = setTimeout(() => searchRecipes(query), 300);
+        });
+
+        async function searchRecipes(ingredient) {
+            const grid = document.getElementById('recipeGrid');
+            grid.innerHTML = '<div class="card-loading"><div class="card-loading-spinner"></div></div>';
+
+            try {
+                const response = await fetch(`/api/recipes?ingredient=${encodeURIComponent(ingredient)}`);
+                const recipes = await response.json();
+
+                if (!recipes || recipes.length === 0) {
+                    grid.innerHTML = `<div class="card-empty"><p class="card-empty-text">No recipes found with ${ingredient}</p></div>`;
+                    return;
+                }
+
+                grid.innerHTML = recipes.slice(0, 12).map(r => `
+                    <div class="universal-card card-fade-in">
+                        <div class="card-image">
+                            <img src="${r.image_url}" alt="${r.name}" onerror="this.src='https://source.unsplash.com/400x300/?${r.name},food'">
+                            <div class="card-badge badge-${r.difficulty.toLowerCase()}">${r.difficulty}</div>
+                        </div>
+                        <div class="card-content">
+                            <h3 class="card-title">${r.name}</h3>
+                            <p class="card-description">${r.description || 'Delicious recipe'}</p>
+                            <div class="card-meta">
+                                <span class="card-tag">⏱️ ${r.prep_time_min + r.cook_time_min} min</span>
+                                <span class="card-tag">🍽️ ${r.servings} servings</span>
+                                ${r.cuisine ? `<span class="card-tag tag-primary">${r.cuisine}</span>` : ''}
+                            </div>
+                        </div>
+                        <div class="card-actions">
+                            <button class="card-btn primary" onclick="viewRecipe(${r.id})">View Recipe</button>
+                            <button class="card-btn secondary" onclick="startCooking(${r.id})">Cook Now</button>
+                        </div>
+                    </div>
+                `).join('');
+
+            } catch (error) {
+                console.error('Error:', error);
+                grid.innerHTML = `<div class="card-empty"><p class="card-empty-text">Error loading recipes</p></div>`;
+            }
+        }
+
+        function startTransformation(transformId) {
+            alert('Starting transformation! This would open a step-by-step guide.');
+            // window.location.href = `/transformation/${transformId}`;
+        }
+
+        function viewRecipesUsing(ingredient) {
+            document.querySelector('[onclick="showTab(\'recipes\')"]').click();
+            document.getElementById('recipeSearch').value = ingredient;
+            searchRecipes(ingredient);
+        }
+
+        function viewRecipe(recipeId) {
+            window.location.href = `/recipe/${recipeId}`;
+        }
+
+        function startCooking(recipeId) {
+            window.location.href = `/cook/${recipeId}`;
+        }
+    </script>
+</body>
+</html>

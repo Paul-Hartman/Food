@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Food App Testing Checklist</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .server-status {
+            background: #10b981;
+            color: white;
+            padding: 15px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .form-content {
+            padding: 30px;
+        }
+
+        .category {
+            margin-bottom: 40px;
+            border-left: 4px solid #667eea;
+            padding-left: 20px;
+        }
+
+        .category-title {
+            font-size: 1.8rem;
+            color: #667eea;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .feature-block {
+            background: #f9fafb;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 2px solid #e5e7eb;
+            transition: all 0.3s ease;
+        }
+
+        .feature-block:hover {
+            border-color: #667eea;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.1);
+        }
+
+        .feature-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .feature-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .feature-url {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            margin: 10px 0;
+            transition: background 0.3s ease;
+        }
+
+        .feature-url:hover {
+            background: #5568d3;
+        }
+
+        .test-items {
+            margin: 15px 0;
+            padding-left: 20px;
+        }
+
+        .test-items li {
+            margin: 8px 0;
+            color: #4b5563;
+        }
+
+        .rating-group {
+            display: flex;
+            gap: 15px;
+            margin: 15px 0;
+            flex-wrap: wrap;
+        }
+
+        .rating-option {
+            position: relative;
+        }
+
+        .rating-option input[type="radio"] {
+            position: absolute;
+            opacity: 0;
+        }
+
+        .rating-option label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .rating-option input[type="radio"]:checked + label {
+            border-color: #667eea;
+            background: #667eea;
+            color: white;
+        }
+
+        .rating-option label:hover {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .rating-option input[type="radio"]:checked + label:hover {
+            background: #5568d3;
+        }
+
+        .rating-works { color: #10b981; }
+        .rating-needs { color: #f59e0b; }
+        .rating-broken { color: #ef4444; }
+        .rating-skipped { color: #6b7280; }
+
+        textarea {
+            width: 100%;
+            min-height: 100px;
+            padding: 15px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 1rem;
+            resize: vertical;
+            transition: border-color 0.3s ease;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .submit-section {
+            background: #f9fafb;
+            padding: 30px;
+            text-align: center;
+            border-top: 2px solid #e5e7eb;
+        }
+
+        .submit-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-size: 1.2rem;
+            font-weight: bold;
+            padding: 15px 40px;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.3s ease;
+        }
+
+        .submit-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        .submit-button:active {
+            transform: translateY(0);
+        }
+
+        .progress-tracker {
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e5e7eb;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .priority-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        .priority-high {
+            background: #fef2f2;
+            color: #dc2626;
+        }
+
+        .priority-medium {
+            background: #fef3c7;
+            color: #d97706;
+        }
+
+        .priority-low {
+            background: #f0fdf4;
+            color: #16a34a;
+        }
+
+        .success-message {
+            display: none;
+            background: #10b981;
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .instructions {
+            background: #f0f4ff;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            margin-bottom: 30px;
+            border-radius: 8px;
+        }
+
+        .instructions h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .instructions ol {
+            padding-left: 20px;
+        }
+
+        .instructions li {
+            margin: 8px 0;
+            color: #4b5563;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8rem;
+            }
+
+            .category-title {
+                font-size: 1.4rem;
+            }
+
+            .rating-group {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧪 Food App Testing Checklist</h1>
+            <p>Test features and provide feedback</p>
+        </div>
+
+        <div class="server-status">
+            ✅ Server Running: http://localhost:5025
+        </div>
+
+        <div class="form-content">
+            <div class="progress-tracker">
+                <h3>Testing Progress</h3>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressBar"></div>
+                </div>
+                <p id="progressText">0 of 30 features tested</p>
+            </div>
+
+            <div class="instructions">
+                <h3>How to Test</h3>
+                <ol>
+                    <li>Click the "Test Feature" button to open each feature in a new tab</li>
+                    <li>Test the functionality listed in the checklist items</li>
+                    <li>Rate the feature: ✅ Works Great, ⚠️ Needs Work, ❌ Broken, or ⏭️ Skip</li>
+                    <li>Add detailed feedback in the text box</li>
+                    <li>Submit when done - I'll read your feedback and fix everything!</li>
+                </ol>
+            </div>
+
+            <form id="testingForm" action="/api/testing/submit-feedback" method="POST">
+
+                <!-- Category 1: Core Cooking Experience -->
+                <div class="category">
+                    <h2 class="category-title">
+                        🍳 1. Core Cooking Experience
+                        <span class="priority-badge priority-high">HIGH PRIORITY</span>
+                    </h2>
+
+                    <!-- Feature 1.1 -->
+                    <div class="feature-block">
+                        <div class="feature-header">
+                            <h3 class="feature-title">1.1 Flip-Book Cooking Interface</h3>
+                        </div>
+                        <a href="http://localhost:5025/cook" target="_blank" class="feature-url">Test Feature →</a>
+                        <ul class="test-items">
+                            <li>3D card stack displays properly</li>
+                            <li>Can swipe left/right to navigate steps</li>
+                            <li>Timer buttons work on timed steps</li>
+                            <li>Card animations are smooth</li>
+                        </ul>
+                        <div class="rating-group">
+                            <div class="rating-option">
+                                <input type="radio" id="cook_works" name="cook_rating" value="works">
+                                <label for="cook_works" class="rating-works">✅ Works Great</label>
+                            </div>
+                            <div class="rating-option">
+                                <input type="radio" id="cook_needs" name="cook_rating" value="needs">
+                                <label for="cook_needs" class="rating-needs">⚠️ Needs Work</label>
+                            </div>
+                            <div class="rating-option">
+                                <input type="radio" id="cook_broken" name="cook_rating" value="broken">
+                                <label for="cook_broken" class="rating-broken">❌ Broken</label>
+                            </div>
+                            <div class="rating-option">
+                                <input type="radio" id="cook_skipped" name="cook_rating" value="skipped">
+                                <label for="cook_skipped" class="rating-skipped">⏭️ Skip</label>
+                            </div>
+                        </div>
+                        <textarea name="cook_feedback" placeholder="Add your feedback here..."></textarea>
+                    </div>
+
+                    <!-- Feature 1.2 -->
+                    <div class="feature-block">
+                        <div class="feature-header">
+                            <h3 class="feature-title">1.2 Multi-Timer System</h3>
+                        </div>
+                        <a href="http://localhost:5025/cook" target="_blank" class="feature-url">Test Feature →</a>
+                        <ul class="test-items">
+                            <li>Can start multiple timers</li>
+                            <li>Timers count down correctly</li>
+                            <li>Can pause/resume timers</li>
+                            <li>Notifications work</li>
+                        </ul>
+                        <div class="rating-group">
+                            <div class="rating-option">
+                                <input type="radio" id="timer_works" name="timer_rating" value="works">
+                                <label for="timer_works" class="rating-works">✅ Works Great</label>
+                            </div>
+                            <div class="rating-option">
+                                <input type="radio" id="timer_needs" name="timer_rating" value="needs">
+                                <label for="timer_needs" class="rating-needs">⚠️ Needs Work</label>
+                            </div>
+                            <div class="rating-option">
+                                <input type="radio" id="timer_broken" name="timer_rating" value="broken">
+                                <label for="timer_broken" class="rating-broken">❌ Broken</label>
+                            </div>
+                            <div class="rating-option">
+                                <input type="radio" id="timer_skipped" name="timer_rating" value="skipped">
+                                <label for="timer_skipped" class="rating-skipped">⏭️ Skip</label>
+                            </div>
+                        </div>
+                        <textarea name="timer_feedback" placeholder="Add your feedback here..."></textarea>
+                    </div>
+                </div>
+
+                <!-- Category 2: Ingredient Transformation System -->
+                <div class="category">
+                    <h2 class="category-title">
+                        ⚗️ 2. Ingredient Transformation System
+                        <span class="priority-badge priority-high">HIGH PRIORITY</span>
+                    </h2>
+
+                    <!-- Feature 2.1 -->
+                    <div class="feature-block">
+                        <div class="feature-header">
+                            <h3 class="feature-title">2.1 Transformation Discovery</h3>
+                        </div>
+                        <a href="http://localhost:5025/ingredient/transformations" target="_blank" class="feature-url">Test Feature →</a>
+                        <ul class="test-items">
+                            <li>Can search for ingredients (try "milk")</li>
+                            <li>Transformation cards show input → output</li>
+                            <li>Process types displayed (fermentation, etc.)</li>
+                            <li>Chemistry explanations toggle works</li>
+                        </ul>
+                        <div class="rating-group">
+                            <div class="rating-option">
+                                <input type="radio" id="transform_works" name="transform_rating" value="works">
+                                <label for="transform_works" class="rating-works">✅ Works Great</label>
+                            </div>
+                            <div class="rating-option">
+                                <input type="radio" id="transform_needs" name="transform_rating" value="needs">
+                                <label for="transform_needs" class="rating-needs">⚠️ Needs Work</label>
+                            </div>
+                            <div class="rating-option">
+                                <input type="radio" id="transform_broken" name="transform_rating" value="broken">
+                                <label for="transform_broken" class="rating-broken">❌ Broken</label>
+                            </div>
+                            <div class="rating-option">
+                                <input type="radio" id="transform_skipped" name="transform_rating" value="skipped">
+                                <label for="transform_skipped" class="rating-skipped">⏭️ Skip</label>
+                            </div>
+                        </div>
+                        <textarea name="transform_feedback" placeholder="Add your feedback here..."></textarea>
+                    </div>
+
+                    <!-- Feature 2.2 -->
+                    <div class="feature-block">
+                        <div class="feature-header">
+                            <h3 class="feature-title">2.2 Process Detail View</h3>
+                        </div>
+                        <a href="http://localhost:5025/process/detail" target="_blank" class="feature-url">Test Feature →</a>
+                        <ul class="test-items">
+                            <li>Chemistry tab shows explanations</li>
+                            <li>Temperature/pH ranges displayed</li>
+                            <li>Equipment capabilities listed</li>
+                            <li>Step-by-step instructions detailed</li>
+                        </ul>
+                        <div class="rating-group">
+                            <div class="rating-option">
+                                <input type="radio" id="process_works" name="process_rating" value="works">
+                                <label for="process_works" class="rating-works">✅ Works Great</label>
+                            </div>
+                            <div class="rating-option">
+                                <input type="radio" id="process_needs" name="process_rating" value="needs">
+                                <label for="process_needs" class="rating-needs">⚠️ Needs Work</label>
+                            </div>
+                            <div class="rating-option">
+                                <input type="radio" id="process_broken" name="process_rating" value="broken">
+                                <label for="process_broken" class="rating-broken">❌ Broken</label>
+                            </div>
+                            <div class="rating-option">
+                                <input type="radio" id="process_skipped" name="process_rating" value="skipped">
+                                <label for="process_skipped" class="rating-skipped">⏭️ Skip</label>
+                            </div>
+                        </div>
+                        <textarea name="process_feedback" placeholder="Add your feedback here..."></textarea>
+                    </div>
+                </div>
+
+                <!-- Category 3: Alchemy System -->
+                <div class="category">
+                    <h2 class="category-title">
+                        🧪 3. Alchemy / Potion Brewing
+                        <span class="priority-badge priority-high">HIGH PRIORITY</span>
+                    </h2>
+
+                    <div class="feature-block">
+                        <div class="feature-header">
+                            <h3 class="feature-title">3.1 Alchemy Interface</h3>
+                        </div>
+                        <a href="http://localhost:5025/alchemy" target="_blank" class="feature-url">Test Feature →</a>
+                        <ul class="test-items">
+                            <li>5-slot cauldron displays</li>
+                            <li>Can drag/select ingredients</li>
+                            <li>Brewing method selector works</li>
+                            <li>Potion preview shows effects</li>
+                            <li>"Brew Potion" button works</li>
+                        </ul>
+                        <div class="rating-group">
+                            <div class="rating-option">
+                                <input type="radio" id="alchemy_works" name="alchemy_rating" value="works">
+                                <label for="alchemy_works" class="rating-works">✅ Works Great</label>
+                            </div>
+                            <div class="rating-option">
+                                <input type="radio" id="alchemy_needs" name="alchemy_rating" value="needs">
+                                <label for="alchemy_needs" class="rating-needs">⚠️ Needs Work</label>
+                            </div>
+                            <div class="rating-option">
+                                <input type="radio" id="alchemy_broken" name="alchemy_rating" value="broken">
+                                <label for="alchemy_broken" class="rating-broken">❌ Broken</label>
+                            </div>
+                            <div class="rating-option">
+                                <input type="radio" id="alchemy_skipped" name="alchemy_rating" value="skipped">
+                                <label for="alchemy_skipped" class="rating-skipped">⏭️ Skip</label>
+                            </div>
+                        </div>
+                        <textarea name="alchemy_feedback" placeholder="Add your feedback here..."></textarea>
+                    </div>
+                </div>
+
+                <!-- Category 4: Recipe Swipe Discovery -->
+                <div class="category">
+                    <h2 class="category-title">
+                        💝 4. Recipe Swipe Discovery
+                        <span class="priority-badge priority-medium">MEDIUM PRIORITY</span>
+                    </h2>
+
+                    <!-- Feature 4.1 -->
+                    <div class="feature-block">
+                        <div class="feature-header">
+                            <h3 class="feature-title">4.1 Tinder-Style Recipe Swipe</h3>
+                        </div>
+                        <a href="http://localhost:5025/swipe" target="_blank" class="feature-url">Test Feature →</a>
+                        <ul class="test-items">
+                            <li>Recipe cards display with images</li>
+                            <li>Can swipe left (discard) and right (like)</li>
+                            <li>Can swipe up (add to tonight's menu)</li>
+                            <li>Card animations smooth</li>
+                        </ul>
+                        <div class="rating-group">
+                            <div class="rating-option">
+                                <input type="radio" id="swipe_works" name="swipe_rating" value="works">
+                                <label for="swipe_works" class="rating-works">✅ Works Great</label>
+                            </div>
+                            <div class="rating-option">
+                                <input type="radio" id="swipe_needs" name="swipe_rating" value="needs">
+                                <label for="swipe_needs" class="rating-needs">⚠️ Needs Work</label>
+                            </div>
+                            <div class="rating-option">
+                                <input type="radio" id="swipe_broken" name="swipe_rating" value="broken">
+                                <label for="swipe_broken" class="rating-broken">❌ Broken</label>
+                            </div>
+                            <div class="rating-option">
+                                <input type="radio" id="swipe_skipped" name="swipe_rating" value="skipped">
+                                <label for="swipe_skipped" class="rating-skipped">⏭️ Skip</label>
+                            </div>
+                        </div>
+                        <textarea name="swipe_feedback" placeholder="Add your feedback here..."></textarea>
+                    </div>
+
+                    <!-- Feature 4.2 -->
+                    <div class="feature-block">
+                        <div class="feature-header">
+                            <h3 class="feature-title">4.2 Interested Recipes</h3>
+                        </div>
+                        <a href="http://localhost:5025/interested" target="_blank" class="feature-url">Test Feature →</a>
+                        <ul class="test-items">
+                            <li>Shows recipes you've liked</li>
+                            <li>Can remove recipes</li>
+                            <li>Can add to cooking deck</li>
+                        </ul>
+                        <div class="rating-group">
+                            <div class="rating-option">
+                                <input type="radio" id="interested_works" name="interested_rating" value="works">
+                                <label for="interested_works" class="rating-works">✅ Works Great</label>
+                            </div>
+                            <div class="rating-option">
+                                <input type="radio" id="interested_needs" name="interested_rating" value="needs">
+                                <label for="interested_needs" class="rating-needs">⚠️ Needs Work</label>
+                            </div>
+                            <div class="rating-option">
+                                <input type="radio" id="interested_broken" name="interested_rating" value="broken">
+                                <label for="interested_broken" class="rating-broken">❌ Broken</label>
+                            </div>
+                            <div class="rating-option">
+                                <input type="radio" id="interested_skipped" name="interested_rating" value="skipped">
+                                <label for="interested_skipped" class="rating-skipped">⏭️ Skip</label>
+                            </div>
+                        </div>
+                        <textarea name="interested_feedback" placeholder="Add your feedback here..."></textarea>
+                    </div>
+
+                    <!-- Feature 4.3 -->
+                    <div class="feature-block">
+                        <div class="feature-header">
+                            <h3 class="feature-title">4.3 Tonight's Menu / Cooking Deck</h3>
+                        </div>
+                        <a href="http://localhost:5025/cooking-deck" target="_blank" class="feature-url">Test Feature →</a>
+                        <ul class="test-items">
+                            <li>Shows recipes added via swipe-up</li>
+                            <li>Organized by meal type</li>
+                            <li>Can mark recipes as completed</li>
+                            <li>3D card hover effects work</li>
+                        </ul>
+                        <div class="rating-group">
+                            <div class="rating-option">
+                                <input type="radio" id="deck_works" name="deck_rating" value="works">
+                                <label for="deck_works" class="rating-works">✅ Works Great</label>
+                            </div>
+                            <div class="rating-option">
+                                <input type="radio" id="deck_needs" name="deck_rating" value="needs">
+                                <label for="deck_needs" class="rating-needs">⚠️ Needs Work</label>
+                            </div>
+                            <div class="rating-option">
+                                <input type="radio" id="deck_broken" name="deck_rating" value="broken">
+                                <label for="deck_broken" class="rating-broken">❌ Broken</label>
+                            </div>
+                            <div class="rating-option">
+                                <input type="radio" id="deck_skipped" name="deck_rating" value="skipped">
+                                <label for="deck_skipped" class="rating-skipped">⏭️ Skip</label>
+                            </div>
+                        </div>
+                        <textarea name="deck_feedback" placeholder="Add your feedback here..."></textarea>
+                    </div>
+                </div>
+
+                <!-- Category 5: Pantry Management -->
+                <div class="category">
+                    <h2 class="category-title">
+                        📦 5. Pantry Management
+                        <span class="priority-badge priority-medium">MEDIUM PRIORITY</span>
+                    </h2>
+
+                    <!-- Feature 5.1 -->
+                    <div class="feature-block">
+                        <div class="feature-header">
+                            <h3 class="feature-title">5.1 Pantry Inventory</h3>
+                        </div>
+                        <a href="http://localhost:5025/pantry" target="_blank" class="feature-url">Test Feature →</a>
+                        <ul class="test-items">
+                            <li>Pantry items display</li>
+                            <li>Can add/update items</li>
+                            <li>Expiry dates work</li>
+                            <li>Location organization works</li>
+                        </ul>
+                        <div class="rating-group">
+                            <div class="rating-option">
+                                <input type="radio" id="pantry_works" name="pantry_rating" value="works">
+                                <label for="pantry_works" class="rating-works">✅ Works Great</label>
+                            </div>
+                            <div class="rating-option">
+                                <input type="radio" id="pantry_needs" name="pantry_rating" value="needs">
+                                <label for="pantry_needs" class="rating-needs">⚠️ Needs Work</label>
+                            </div>
+                            <div class="rating-option">
+                                <input type="radio" id="pantry_broken" name="pantry_rating" value="broken">
+                                <label for="pantry_broken" class="rating-broken">❌ Broken</label>
+                            </div>
+                            <div class="rating-option">
+                                <input type="radio" id="pantry_skipped" name="pantry_rating" value="skipped">
+                                <label for="pantry_skipped" class="rating-skipped">⏭️ Skip</label>
+                            </div>
+                        </div>
+                        <textarea name="pantry_feedback" placeholder="Add your feedback here..."></textarea>
+                    </div>
+
+                    <!-- Feature 5.2 -->
+                    <div class="feature-block">
+                        <div class="feature-header">
+                            <h3 class="feature-title">5.2 Barcode Scanner</h3>
+                        </div>
+                        <a href="http://localhost:5025/scanner" target="_blank" class="feature-url">Test Feature →</a>
+                        <ul class="test-items">
+                            <li>Scanner interface loads</li>
+                            <li>Can enter barcode manually</li>
+                            <li>Product lookup works</li>
+                            <li>Can add to pantry</li>
+                        </ul>
+                        <div class="rating-group">
+                            <div class="rating-option">
+                                <input type="radio" id="scanner_works" name="scanner_rating" value="works">
+                                <label for="scanner_works" class="rating-works">✅ Works Great</label>
+                            </div>
+                            <div class="rating-option">
+                                <input type="radio" id="scanner_needs" name="scanner_rating" value="needs">
+                                <label for="scanner_needs" class="rating-needs">⚠️ Needs Work</label>
+                            </div>
+                            <div class="rating-option">
+                                <input type="radio" id="scanner_broken" name="scanner_rating" value="broken">
+                                <label for="scanner_broken" class="rating-broken">❌ Broken</label>
+                            </div>
+                            <div class="rating-option">
+                                <input type="radio" id="scanner_skipped" name="scanner_rating" value="skipped">
+                                <label for="scanner_skipped" class="rating-skipped">⏭️ Skip</label>
+                            </div>
+                        </div>
+                        <textarea name="scanner_feedback" placeholder="Add your feedback here..."></textarea>
+                    </div>
+                </div>
+
+                <!-- Category 6: Shopping & Meal Planning -->
+                <div class="category">
+                    <h2 class="category-title">
+                        🛒 6. Shopping & Meal Planning
+                        <span class="priority-badge priority-medium">MEDIUM PRIORITY</span>
+                    </h2>
+
+                    <!-- Feature 6.1 -->
+                    <div class="feature-block">
+                        <div class="feature-header">
+                            <h3 class="feature-title">6.1 Shopping List</h3>
+                        </div>
+                        <a href="http://localhost:5025/shopping" target="_blank" class="feature-url">Test Feature →</a>
+                        <ul class="test-items">
+                            <li>Shopping list displays</li>
+                            <li>Organized by Aldi sections</li>
+                            <li>Can check off items</li>
+                            <li>Can generate from recipes</li>
+                        </ul>
+                        <div class="rating-group">
+                            <div class="rating-option">
+                                <input type="radio" id="shopping_works" name="shopping_rating" value="works">
+                                <label for="shopping_works" class="rating-works">✅ Works Great</label>
+                            </div>
+                            <div class="rating-option">
+                                <input type="radio" id="shopping_needs" name="shopping_rating" value="needs">
+                                <label for="shopping_needs" class="rating-needs">⚠️ Needs Work</label>
+                            </div>
+                            <div class="rating-option">
+                                <input type="radio" id="shopping_broken" name="shopping_rating" value="broken">
+                                <label for="shopping_broken" class="rating-broken">❌ Broken</label>
+                            </div>
+                            <div class="rating-option">
+                                <input type="radio" id="shopping_skipped" name="shopping_rating" value="skipped">
+                                <label for="shopping_skipped" class="rating-skipped">⏭️ Skip</label>
+                            </div>
+                        </div>
+                        <textarea name="shopping_feedback" placeholder="Add your feedback here..."></textarea>
+                    </div>
+
+                    <!-- Feature 6.2 -->
+                    <div class="feature-block">
+                        <div class="feature-header">
+                            <h3 class="feature-title">6.2 Meal Planning</h3>
+                        </div>
+                        <a href="http://localhost:5025/meal_plan" target="_blank" class="feature-url">Test Feature →</a>
+                        <ul class="test-items">
+                            <li>Weekly view displays</li>
+                            <li>Can add recipes to days</li>
+                            <li>Can generate shopping list</li>
+                            <li>Navigation works</li>
+                        </ul>
+                        <div class="rating-group">
+                            <div class="rating-option">
+                                <input type="radio" id="mealplan_works" name="mealplan_rating" value="works">
+                                <label for="mealplan_works" class="rating-works">✅ Works Great</label>
+                            </div>
+                            <div class="rating-option">
+                                <input type="radio" id="mealplan_needs" name="mealplan_rating" value="needs">
+                                <label for="mealplan_needs" class="rating-needs">⚠️ Needs Work</label>
+                            </div>
+                            <div class="rating-option">
+                                <input type="radio" id="mealplan_broken" name="mealplan_rating" value="broken">
+                                <label for="mealplan_broken" class="rating-broken">❌ Broken</label>
+                            </div>
+                            <div class="rating-option">
+                                <input type="radio" id="mealplan_skipped" name="mealplan_rating" value="skipped">
+                                <label for="mealplan_skipped" class="rating-skipped">⏭️ Skip</label>
+                            </div>
+                        </div>
+                        <textarea name="mealplan_feedback" placeholder="Add your feedback here..."></textarea>
+                    </div>
+                </div>
+
+                <!-- Category 7: Other Features -->
+                <div class="category">
+                    <h2 class="category-title">
+                        ⚙️ 7. Other Features
+                        <span class="priority-badge priority-low">LOW PRIORITY</span>
+                    </h2>
+
+                    <!-- Feature 7.1 -->
+                    <div class="feature-block">
+                        <div class="feature-header">
+                            <h3 class="feature-title">7.1 Nutrition Dashboard</h3>
+                        </div>
+                        <a href="http://localhost:5025/nutrition" target="_blank" class="feature-url">Test Feature →</a>
+                        <ul class="test-items">
+                            <li>Nutrition summary displays</li>
+                            <li>Goals/targets shown</li>
+                            <li>Can log meals</li>
+                        </ul>
+                        <div class="rating-group">
+                            <div class="rating-option">
+                                <input type="radio" id="nutrition_works" name="nutrition_rating" value="works">
+                                <label for="nutrition_works" class="rating-works">✅ Works Great</label>
+                            </div>
+                            <div class="rating-option">
+                                <input type="radio" id="nutrition_needs" name="nutrition_rating" value="needs">
+                                <label for="nutrition_needs" class="rating-needs">⚠️ Needs Work</label>
+                            </div>
+                            <div class="rating-option">
+                                <input type="radio" id="nutrition_broken" name="nutrition_rating" value="broken">
+                                <label for="nutrition_broken" class="rating-broken">❌ Broken</label>
+                            </div>
+                            <div class="rating-option">
+                                <input type="radio" id="nutrition_skipped" name="nutrition_rating" value="skipped">
+                                <label for="nutrition_skipped" class="rating-skipped">⏭️ Skip</label>
+                            </div>
+                        </div>
+                        <textarea name="nutrition_feedback" placeholder="Add your feedback here..."></textarea>
+                    </div>
+
+                    <!-- Feature 7.2 -->
+                    <div class="feature-block">
+                        <div class="feature-header">
+                            <h3 class="feature-title">7.2 Personal Dashboard</h3>
+                        </div>
+                        <a href="http://localhost:5025/me" target="_blank" class="feature-url">Test Feature →</a>
+                        <ul class="test-items">
+                            <li>Personal stats display</li>
+                            <li>Favorite recipes listed</li>
+                            <li>Smart suggestions work</li>
+                        </ul>
+                        <div class="rating-group">
+                            <div class="rating-option">
+                                <input type="radio" id="personal_works" name="personal_rating" value="works">
+                                <label for="personal_works" class="rating-works">✅ Works Great</label>
+                            </div>
+                            <div class="rating-option">
+                                <input type="radio" id="personal_needs" name="personal_rating" value="needs">
+                                <label for="personal_needs" class="rating-needs">⚠️ Needs Work</label>
+                            </div>
+                            <div class="rating-option">
+                                <input type="radio" id="personal_broken" name="personal_rating" value="broken">
+                                <label for="personal_broken" class="rating-broken">❌ Broken</label>
+                            </div>
+                            <div class="rating-option">
+                                <input type="radio" id="personal_skipped" name="personal_rating" value="skipped">
+                                <label for="personal_skipped" class="rating-skipped">⏭️ Skip</label>
+                            </div>
+                        </div>
+                        <textarea name="personal_feedback" placeholder="Add your feedback here..."></textarea>
+                    </div>
+
+                    <!-- Feature 7.3 -->
+                    <div class="feature-block">
+                        <div class="feature-header">
+                            <h3 class="feature-title">7.3 Family/Game Dashboard</h3>
+                        </div>
+                        <a href="http://localhost:5025/family" target="_blank" class="feature-url">Test Feature →</a>
+                        <ul class="test-items">
+                            <li>Family members display</li>
+                            <li>Gamification elements work</li>
+                            <li>Skills/achievements visible</li>
+                        </ul>
+                        <div class="rating-group">
+                            <div class="rating-option">
+                                <input type="radio" id="family_works" name="family_rating" value="works">
+                                <label for="family_works" class="rating-works">✅ Works Great</label>
+                            </div>
+                            <div class="rating-option">
+                                <input type="radio" id="family_needs" name="family_rating" value="needs">
+                                <label for="family_needs" class="rating-needs">⚠️ Needs Work</label>
+                            </div>
+                            <div class="rating-option">
+                                <input type="radio" id="family_broken" name="family_rating" value="broken">
+                                <label for="family_broken" class="rating-broken">❌ Broken</label>
+                            </div>
+                            <div class="rating-option">
+                                <input type="radio" id="family_skipped" name="family_rating" value="skipped">
+                                <label for="family_skipped" class="rating-skipped">⏭️ Skip</label>
+                            </div>
+                        </div>
+                        <textarea name="family_feedback" placeholder="Add your feedback here..."></textarea>
+                    </div>
+                </div>
+
+                <!-- Overall Feedback -->
+                <div class="category">
+                    <h2 class="category-title">📝 Overall Feedback</h2>
+                    <div class="feature-block">
+                        <h3 class="feature-title">What should be fixed first?</h3>
+                        <textarea name="priority_fixes" placeholder="List the most critical issues that need fixing..."></textarea>
+                    </div>
+                    <div class="feature-block">
+                        <h3 class="feature-title">What works really well?</h3>
+                        <textarea name="what_works" placeholder="What features are great and should stay as-is?"></textarea>
+                    </div>
+                    <div class="feature-block">
+                        <h3 class="feature-title">General impressions</h3>
+                        <textarea name="general_feedback" placeholder="Overall thoughts, ideas, concerns..."></textarea>
+                    </div>
+                </div>
+
+                <div class="submit-section">
+                    <div class="success-message" id="successMessage">
+                        ✅ Feedback submitted successfully! Claude will now read your responses and create a fix list.
+                    </div>
+                    <button type="submit" class="submit-button">Submit Testing Feedback</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Progress tracking
+        const form = document.getElementById('testingForm');
+        const progressBar = document.getElementById('progressBar');
+        const progressText = document.getElementById('progressText');
+        const totalFeatures = 15;
+
+        function updateProgress() {
+            const checkedRadios = form.querySelectorAll('input[type="radio"]:checked').length;
+            const percentage = (checkedRadios / totalFeatures) * 100;
+            progressBar.style.width = percentage + '%';
+            progressText.textContent = `${checkedRadios} of ${totalFeatures} features tested`;
+        }
+
+        // Listen for radio button changes
+        form.querySelectorAll('input[type="radio"]').forEach(radio => {
+            radio.addEventListener('change', updateProgress);
+        });
+
+        // Form submission
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const formData = new FormData(form);
+            const data = {};
+
+            for (let [key, value] of formData.entries()) {
+                data[key] = value;
+            }
+
+            try {
+                const response = await fetch('/api/testing/submit-feedback', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    document.getElementById('successMessage').style.display = 'block';
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+                    // Optionally disable form after submission
+                    setTimeout(() => {
+                        form.querySelectorAll('input, textarea, button').forEach(el => {
+                            el.disabled = true;
+                        });
+                    }, 2000);
+                } else {
+                    alert('Failed to submit feedback. Please try again.');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error submitting feedback. Check console for details.');
+            }
+        });
+
+        // Initialize progress on page load
+        updateProgress();
+    </script>
+</body>
+</html>
