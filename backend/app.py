@@ -21214,6 +21214,278 @@ def api_food_history_timeline():
     return jsonify({"periods": result})
 
 
+# ============================================================================
+# WORLD FOOD MAP ENDPOINTS
+# ============================================================================
+
+@app.route("/api/food-map")
+def api_food_map():
+    """Overview: all regions with cultures and meal pattern counts."""
+    db = get_db()
+    rows = db.execute("""
+        SELECT c.id, c.name, c.slug, c.region,
+               (SELECT COUNT(*) FROM food_culture_origins WHERE culture_id = c.id) as food_count,
+               (SELECT COUNT(*) FROM culture_meal_patterns WHERE culture_id = c.id) as meal_pattern_count
+        FROM cultures c
+        WHERE c.slug IS NOT NULL AND c.slug != ''
+          AND (SELECT COUNT(*) FROM culture_meal_patterns WHERE culture_id = c.id) > 0
+        ORDER BY c.region, c.name
+    """).fetchall()
+
+    regions = {}
+    for row in rows:
+        r = row["region"] or "Other"
+        if r not in regions:
+            regions[r] = {"cultures": []}
+        regions[r]["cultures"].append({
+            "name": row["name"],
+            "slug": row["slug"],
+            "food_count": row["food_count"],
+            "meal_pattern_count": row["meal_pattern_count"],
+        })
+
+    return jsonify({"regions": regions})
+
+
+@app.route("/api/food-map/stats")
+def api_food_map_stats():
+    """Summary statistics for the food map."""
+    db = get_db()
+    stats = {}
+    stats["cultures_with_patterns"] = db.execute(
+        "SELECT COUNT(DISTINCT culture_id) as cnt FROM culture_meal_patterns"
+    ).fetchone()["cnt"]
+    stats["total_meal_patterns"] = db.execute(
+        "SELECT COUNT(*) as cnt FROM culture_meal_patterns"
+    ).fetchone()["cnt"]
+    stats["foods_with_culture_meals"] = db.execute(
+        "SELECT COUNT(DISTINCT food_id) as cnt FROM food_meal_types WHERE culture_id IS NOT NULL"
+    ).fetchone()["cnt"]
+    stats["culture_meal_links"] = db.execute(
+        "SELECT COUNT(*) as cnt FROM food_meal_types WHERE culture_id IS NOT NULL"
+    ).fetchone()["cnt"]
+
+    # Check if ingredient_categories exists
+    has_ic = db.execute(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='ingredient_categories'"
+    ).fetchone()
+    if has_ic:
+        stats["ingredient_categories"] = db.execute(
+            "SELECT COUNT(DISTINCT category) as cnt FROM ingredient_categories"
+        ).fetchone()["cnt"]
+        cats = db.execute(
+            "SELECT category, COUNT(*) as cnt FROM ingredient_categories GROUP BY category ORDER BY cnt DESC"
+        ).fetchall()
+        stats["ingredient_breakdown"] = [dict(c) for c in cats]
+
+    # Regions summary
+    regions = db.execute("""
+        SELECT c.region, COUNT(DISTINCT c.id) as culture_count,
+               COUNT(DISTINCT cmp.id) as pattern_count
+        FROM cultures c
+        JOIN culture_meal_patterns cmp ON cmp.culture_id = c.id
+        GROUP BY c.region ORDER BY culture_count DESC
+    """).fetchall()
+    stats["regions"] = [dict(r) for r in regions]
+
+    return jsonify(stats)
+
+
+def _classify_food_ingredient(db, food_id, food_name, has_ic):
+    """Classify a food into an ingredient category using multiple signals."""
+    # 1. Try ingredient_categories via food_ingredients_wiki
+    if has_ic:
+        ic_row = db.execute("""
+            SELECT ic.category FROM ingredient_categories ic
+            JOIN food_ingredients_wiki fiw ON LOWER(fiw.ingredient_name) = LOWER(ic.ingredient_name)
+            WHERE fiw.food_id = ? AND ic.category != 'other'
+            ORDER BY ic.category LIMIT 1
+        """, (food_id,)).fetchone()
+        if ic_row:
+            return ic_row["category"]
+
+    # 2. Try ingredient tags
+    if has_ic:
+        ic_row = db.execute("""
+            SELECT ic.category FROM ingredient_categories ic
+            JOIN food_tags ft ON LOWER(ft.tag_value) = LOWER(ic.ingredient_name)
+            WHERE ft.food_id = ? AND ft.tag_category = 'ingredient' AND ic.category != 'other'
+            ORDER BY ic.category LIMIT 1
+        """, (food_id,)).fetchone()
+        if ic_row:
+            return ic_row["category"]
+
+    # 3. Pattern match on food name
+    name = food_name.lower()
+    name_patterns = [
+        ("rice", ["rice", "risotto", "pilaf", "biryani", "congee", "paella", "nasi", "arroz"]),
+        ("noodles_pasta", ["noodle", "pasta", "spaghetti", "ramen", "pho", "udon", "soba", "lasagna", "macaroni", "fettuccine", "penne", "linguine", "mee", "mien", "kway teow"]),
+        ("fish_seafood", ["fish", "shrimp", "prawn", "crab", "lobster", "salmon", "tuna", "cod", "sushi", "sashimi", "ceviche", "seafood", "oyster", "clam", "mussel", "calamari", "sardine"]),
+        ("meat", ["beef", "pork", "chicken", "lamb", "steak", "burger", "sausage", "bacon", "ham", "kebab", "meatball", "brisket", "rib", "wing", "schnitzel", "cutlet"]),
+        ("egg", ["egg", "omelette", "frittata", "quiche"]),
+        ("dairy", ["cheese", "yogurt", "cream", "butter", "milk", "paneer", "khachapuri"]),
+        ("coconut", ["coconut"]),
+        ("sugar_sweets", ["cake", "cookie", "chocolate", "candy", "pastry", "pudding", "pie", "tart", "sweet", "dessert", "ice cream", "gelato"]),
+        ("wheat_flour", ["bread", "toast", "baguette", "croissant", "naan", "roti", "flatbread", "pita", "tortilla", "waffle", "pancake", "crepe"]),
+        ("legumes", ["bean", "lentil", "hummus", "falafel", "tofu", "tempeh", "dal", "edamame"]),
+        ("fruit", ["fruit", "banana", "mango", "apple", "berry", "orange", "melon", "papaya", "pineapple"]),
+        ("vegetables", ["salad", "soup", "vegetable", "potato", "tomato", "corn", "squash", "cabbage", "spinach", "mushroom"]),
+        ("spices", ["curry", "masala", "chili", "spice"]),
+    ]
+    for category, keywords in name_patterns:
+        for kw in keywords:
+            if kw in name:
+                return category
+
+    return "other"
+
+
+@app.route("/api/food-map/<culture_slug>")
+def api_food_map_culture(culture_slug):
+    """One culture's meal patterns with foods grouped by ingredient category."""
+    db = get_db()
+    culture = db.execute(
+        "SELECT * FROM cultures WHERE slug = ?", (culture_slug,)
+    ).fetchone()
+    if not culture:
+        return jsonify({"error": "Culture not found"}), 404
+
+    result = {
+        "id": culture["id"],
+        "name": culture["name"],
+        "slug": culture["slug"],
+        "region": culture["region"],
+        "meal_patterns": {},
+    }
+
+    # Get meal patterns
+    patterns = db.execute(
+        "SELECT * FROM culture_meal_patterns WHERE culture_id = ? ORDER BY id",
+        (culture["id"],),
+    ).fetchall()
+
+    # Determine meal type from meal_name parenthetical
+    meal_type_map = {
+        "breakfast": 1, "lunch": 2, "dinner": 3, "snack": 4,
+    }
+
+    # Check if ingredient_categories table exists
+    has_ic = db.execute(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='ingredient_categories'"
+    ).fetchone()
+
+    for pattern in patterns:
+        meal_name = pattern["meal_name"]
+        # Extract meal type from parenthetical e.g. "phở sáng (breakfast)"
+        meal_key = "other"
+        for key in meal_type_map:
+            if key in meal_name.lower():
+                meal_key = key
+                break
+
+        mt_id = meal_type_map.get(meal_key)
+
+        # Get foods for this culture + meal type
+        by_ingredient = {}
+        if mt_id:
+            foods = db.execute("""
+                SELECT DISTINCT f.id, f.name, f.slug, f.image_url
+                FROM foods f
+                JOIN food_meal_types fmt ON f.id = fmt.food_id
+                WHERE fmt.culture_id = ? AND fmt.meal_type_id = ?
+                ORDER BY CASE WHEN f.image_url IS NOT NULL THEN 0 ELSE 1 END, f.name
+                LIMIT 100
+            """, (culture["id"], mt_id)).fetchall()
+
+            for food in foods:
+                category = _classify_food_ingredient(db, food["id"], food["name"], has_ic)
+
+                if category not in by_ingredient:
+                    by_ingredient[category] = []
+                by_ingredient[category].append({
+                    "id": food["id"],
+                    "name": food["name"],
+                    "slug": food["slug"],
+                    "image_url": food["image_url"],
+                })
+
+        result["meal_patterns"][meal_key] = {
+            "local_name": meal_name,
+            "typical_time": pattern["typical_time"],
+            "description": pattern["description"],
+            "typical_foods": pattern["typical_foods"],
+            "social_context": pattern["social_context"],
+            "by_ingredient": by_ingredient,
+        }
+
+    return jsonify(result)
+
+
+@app.route("/api/food-map/<culture_slug>/<meal_type>")
+def api_food_map_meal(culture_slug, meal_type):
+    """Full food list for one culture + meal type, grouped by ingredient."""
+    db = get_db()
+    culture = db.execute(
+        "SELECT * FROM cultures WHERE slug = ?", (culture_slug,)
+    ).fetchone()
+    if not culture:
+        return jsonify({"error": "Culture not found"}), 404
+
+    meal_type_map = {"breakfast": 1, "lunch": 2, "dinner": 3, "snack": 4}
+    mt_id = meal_type_map.get(meal_type)
+    if not mt_id:
+        return jsonify({"error": "Invalid meal type. Use: breakfast, lunch, dinner, snack"}), 400
+
+    ingredient_filter = request.args.get("ingredient", "")
+    limit = min(int(request.args.get("limit", 200)), 500)
+
+    has_ic = db.execute(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='ingredient_categories'"
+    ).fetchone()
+
+    # Get all foods for this culture + meal type
+    foods = db.execute("""
+        SELECT DISTINCT f.id, f.name, f.slug, f.image_url, f.description
+        FROM foods f
+        JOIN food_meal_types fmt ON f.id = fmt.food_id
+        WHERE fmt.culture_id = ? AND fmt.meal_type_id = ?
+        ORDER BY CASE WHEN f.image_url IS NOT NULL THEN 0 ELSE 1 END, f.name
+        LIMIT ?
+    """, (culture["id"], mt_id, limit)).fetchall()
+
+    by_ingredient = {}
+    for food in foods:
+        category = _classify_food_ingredient(db, food["id"], food["name"], has_ic)
+
+        if ingredient_filter and category != ingredient_filter:
+            continue
+
+        if category not in by_ingredient:
+            by_ingredient[category] = []
+        by_ingredient[category].append({
+            "id": food["id"],
+            "name": food["name"],
+            "slug": food["slug"],
+            "image_url": food["image_url"],
+            "description": food["description"],
+        })
+
+    # Get meal pattern info
+    pattern = db.execute("""
+        SELECT * FROM culture_meal_patterns
+        WHERE culture_id = ? AND LOWER(meal_name) LIKE ?
+        LIMIT 1
+    """, (culture["id"], f"%{meal_type}%")).fetchone()
+
+    return jsonify({
+        "culture": {"name": culture["name"], "slug": culture["slug"], "region": culture["region"]},
+        "meal_type": meal_type,
+        "pattern": dict(pattern) if pattern else None,
+        "by_ingredient": by_ingredient,
+        "total_foods": sum(len(v) for v in by_ingredient.values()),
+    })
+
+
 @app.route("/api/database-stats")
 def api_database_stats():
     """Comprehensive database statistics for all food data."""

@@ -14,6 +14,7 @@ import ProductDetailScreen from './screens/ProductDetailScreen';
 import ProductBrowserScreen from './screens/ProductBrowserScreen';
 import KitchenToolsScreen from './screens/KitchenToolsScreen';
 import CookingScreen from './screens/CookingScreen';
+import WorldFoodMapScreen from './screens/WorldFoodMapScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -121,6 +122,15 @@ export default function App() {
           options={{
             title: 'Product Details',
             headerStyle: { backgroundColor: '#4CAF50' },
+            headerTintColor: '#fff',
+          }}
+        />
+        <Stack.Screen
+          name="WorldFoodMap"
+          component={WorldFoodMapScreen}
+          options={{
+            title: 'World Food Map',
+            headerStyle: { backgroundColor: '#2E7D32' },
             headerTintColor: '#fff',
           }}
         />

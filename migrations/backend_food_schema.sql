@@ -1,6 +1,6 @@
 -- Schema: food.db
 -- Source: C:\Users\paulh\Documents\lotus eater 2.0\Food\backend\food.db
--- Dumped: 2026-03-06T19:55:26.300395
+-- Dumped: 2026-03-17T15:57:34.422690
 
 -- Row counts:
 --   achievements: 29
@@ -26,8 +26,8 @@
 --   cooking_steps: 613
 --   cooking_streaks: 4
 --   culture_eras: 59
---   culture_meal_patterns: 32
---   cultures: 334
+--   culture_meal_patterns: 320
+--   cultures: 340
 --   daily_journal: 2
 --   daily_micronutrients_log: 1
 --   daily_nutrition_goals: 1
@@ -44,7 +44,7 @@
 --   folk_remedies: 0
 --   food_culture_origins: 10139
 --   food_ingredients_wiki: 9454
---   food_meal_types: 12905
+--   food_meal_types: 32009
 --   food_pairings: 0
 --   food_tags: 112660
 --   foods: 26159
@@ -60,6 +60,7 @@
 --   infusion_check_ins: 0
 --   infusion_tracking: 0
 --   ingredient_botanical_classification: 31
+--   ingredient_categories: 2441
 --   ingredient_composition: 0
 --   ingredient_cooking_profiles: 7
 --   ingredient_interactions: 0
@@ -1048,6 +1049,13 @@ CREATE TABLE ingredient_botanical_classification (
                 FOREIGN KEY (family_id) REFERENCES botanical_families(id)
             );
 
+CREATE TABLE ingredient_categories (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            ingredient_name TEXT UNIQUE NOT NULL,
+            category TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+
 CREATE TABLE ingredient_composition (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 prepared_ingredient_id INTEGER,
@@ -2017,6 +2025,12 @@ CREATE INDEX idx_brew_logs_method ON brew_logs(brew_method);
 
 CREATE INDEX idx_brew_logs_rating ON brew_logs(rating);
 
+CREATE INDEX idx_fco_culture ON food_culture_origins(culture_id);
+
+CREATE INDEX idx_fmt_culture ON food_meal_types(culture_id);
+
+CREATE INDEX idx_fmt_meal_culture ON food_meal_types(meal_type_id, culture_id);
+
 CREATE INDEX idx_food_tags_cat_val ON food_tags(tag_category, tag_value);
 
 CREATE INDEX idx_food_tags_category ON food_tags(tag_category);
@@ -2024,6 +2038,10 @@ CREATE INDEX idx_food_tags_category ON food_tags(tag_category);
 CREATE INDEX idx_food_tags_food ON food_tags(food_id);
 
 CREATE INDEX idx_food_tags_value ON food_tags(tag_value);
+
+CREATE INDEX idx_ft_cuisine ON food_tags(tag_category, tag_value) WHERE tag_category = 'cuisine';
+
+CREATE INDEX idx_ic_ingredient ON ingredient_categories(ingredient_name);
 
 CREATE INDEX idx_infusion_check_ins_day ON infusion_check_ins(day_number);
 
